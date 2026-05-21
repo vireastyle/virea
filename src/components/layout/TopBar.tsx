@@ -1,12 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { Search, ShoppingBag } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Search, ShoppingBag, Heart, User, Shirt } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { useCartStore } from "@/store/cart.store";
+import { useWishlistStore } from "@/store/wishlist.store";
+
+const navLinks = [
+  { href: "/shop/DRESS",    label: "Shop" },
+  { href: "/try-on",        label: "Try On" },
+  { href: "/avatar-studio", label: "Studio" },
+];
+
+const iconBtn: React.CSSProperties = {
+  position: "relative",
+  width: "40px",
+  height: "40px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "var(--color-on-surface-variant)",
+  borderRadius: "var(--shape-full)",
+  textDecoration: "none",
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  flexShrink: 0,
+};
 
 export function TopBar() {
-  const count = useCartStore((s) => s.count);
+  const pathname  = usePathname();
+  const cartCount = useCartStore((s) => s.count);
+  const wishCount = useWishlistStore((s) => s.itemIds.length);
 
   return (
     <header
@@ -16,66 +42,168 @@ export function TopBar() {
         top: 0,
         left: 0,
         right: 0,
-        height: "56px",
+        height: "64px",
         background: "var(--color-surface)",
         borderBottom: "1px solid var(--color-outline-variant)",
         alignItems: "center",
         justifyContent: "space-between",
         padding: "0 var(--space-4)",
-        zIndex: 100,
-        boxShadow: "var(--elevation-1)",
+        zIndex: 200,
       }}
     >
-      {/* Logo */}
-      <Link
-        href="/"
-        style={{
-          fontFamily: "var(--type-display-small-family)",
-          fontSize: "clamp(1.25rem, 4vw, 1.5rem)",
-          fontWeight: 300,
-          color: "var(--color-primary)",
-          textDecoration: "none",
-          letterSpacing: "0.08em",
-        }}
-      >
-        virea
-      </Link>
-
-      {/* Actions */}
+      {/* ── LEFT SLOT ── */}
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+
+        {/* Mobile: search icon */}
         <Link
           href="/shop/DRESS"
           aria-label="Search"
-          style={{
-            width: "40px",
-            height: "40px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "var(--color-on-surface-variant)",
-            borderRadius: "var(--shape-full)",
-            transition: `color var(--duration-standard) var(--easing-standard)`,
-          }}
+          className="topbar-search-mobile"
+          style={iconBtn}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
         >
           <Search size={20} strokeWidth={1.5} />
         </Link>
 
+        {/* Desktop: logo left */}
         <Link
-          href="/cart"
-          aria-label={`Cart — ${count} items`}
+          href="/"
+          className="topbar-logo-desktop"
           style={{
-            position: "relative",
-            width: "40px",
-            height: "40px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "var(--color-on-surface-variant)",
-            borderRadius: "var(--shape-full)",
+            fontFamily: "var(--font-display)",
+            fontSize: "1.5rem",
+            fontWeight: 300,
+            letterSpacing: "0.14em",
+            color: "var(--color-on-background)",
+            textDecoration: "none",
+            whiteSpace: "nowrap",
           }}
         >
+          VIRÉA
+        </Link>
+      </div>
+
+      {/* ── CENTER SLOT ── */}
+      <div
+        className="topbar-center"
+        style={{
+          position: "absolute",
+          left: "50%",
+          transform: "translateX(-50%)",
+        }}
+      >
+        {/* Mobile: logo centered */}
+        <Link
+          href="/"
+          className="topbar-logo-mobile"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "clamp(1.25rem, 4vw, 1.5rem)",
+            fontWeight: 300,
+            letterSpacing: "0.14em",
+            color: "var(--color-on-background)",
+            textDecoration: "none",
+            whiteSpace: "nowrap",
+          }}
+        >
+          VIRÉA
+        </Link>
+
+        {/* Desktop: nav links */}
+        <nav
+          className="topbar-nav-links"
+          style={{ gap: "var(--space-2)", alignItems: "center" }}
+        >
+          {navLinks.map(({ href, label }) => {
+            const isActive = pathname.startsWith(href) && href !== "/";
+            return (
+              <Link
+                key={href}
+                href={href}
+                style={{
+                  fontFamily: "var(--type-label-large-family)",
+                  fontSize: "var(--type-label-large-size)",
+                  fontWeight: isActive ? 600 : 400,
+                  letterSpacing: "0.02em",
+                  color: isActive ? "var(--color-primary)" : "var(--color-on-surface-variant)",
+                  textDecoration: "none",
+                  padding: "var(--space-2) var(--space-3)",
+                  borderRadius: "var(--shape-sm)",
+                  whiteSpace: "nowrap",
+                  transition: `color var(--duration-standard) var(--easing-standard), background var(--duration-standard) var(--easing-standard)`,
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  if (!isActive) {
+                    el.style.color = "var(--color-on-surface)";
+                    el.style.background = "var(--color-surface-variant)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  if (!isActive) {
+                    el.style.color = "var(--color-on-surface-variant)";
+                    el.style.background = "transparent";
+                  }
+                }}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* ── RIGHT SLOT ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>
+
+        {/* Search — desktop only */}
+        <Link
+          href="/shop/DRESS"
+          aria-label="Search"
+          className="topbar-profile-link"
+          style={iconBtn}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
+        >
+          <Search size={20} strokeWidth={1.5} />
+        </Link>
+
+        {/* Wishlist */}
+        <Link
+          href="/wishlist"
+          aria-label={`Wishlist — ${wishCount} items`}
+          style={iconBtn}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
+        >
+          <Heart size={20} strokeWidth={1.5} />
+          {wishCount > 0 && <Badge count={wishCount} />}
+        </Link>
+
+        {/* Cart */}
+        <Link
+          href="/bag"
+          aria-label={`Cart — ${cartCount} items`}
+          style={iconBtn}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
+        >
           <ShoppingBag size={20} strokeWidth={1.5} />
-          <Badge count={count} />
+          <Badge count={cartCount} />
+        </Link>
+
+        {/* Profile — desktop only */}
+        <Link
+          href="/profile"
+          aria-label="Profile"
+          className="topbar-profile-link"
+          style={iconBtn}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
+        >
+          <User size={20} strokeWidth={1.5} />
         </Link>
       </div>
     </header>

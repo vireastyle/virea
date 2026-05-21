@@ -20,17 +20,24 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - All components use **inline styles referencing CSS custom properties** — do NOT use Tailwind utility classes on components
 - Fluid type scale via `clamp()` — display/headline roles scale between 320px–900px viewport
 - Responsive layout via CSS classes in `globals.css` (not Tailwind breakpoints):
-  - `.app-shell`, `.app-sidebar`, `.app-content`, `.app-topbar`, `.app-bottomnav`
+  - `.app-shell`, `.app-sidebar` (always hidden — replaced by top header), `.app-content`, `.app-topbar`, `.app-bottomnav`
   - `.vendor-shell`, `.vendor-sidebar`, `.vendor-content`, `.vendor-topbar`
   - `.product-grid` — 2 col mobile → 3 col ≥900px → 4 col ≥1200px
-  - `.content-inner` — max-width 1100px, centered on desktop
+  - `.content-inner` — max-width **1280px**, centered on desktop
   - `.trending-card` — 160px mobile, 220px desktop
+  - `.topbar-*` — responsive TopBar slots (see Layout Architecture below)
+  - `.shop-sidebar` — hidden mobile, 200px desktop (categories + filters on shop page)
+  - `.product-detail-layout` — block mobile, 55/45 grid desktop
+  - `--topbar-height` CSS var — `64px` mobile, `68px` desktop; use for `top:` on any `position:sticky` element
 
 ## Layout Architecture
 ### Shopper (main)
-- Mobile: `TopBar` + `BottomNav` (fixed, 64px) — hidden on desktop via `.app-topbar` / `.app-bottomnav` CSS
-- Desktop: `Sidebar` (fixed left column, 260px) — hidden on mobile via `.app-sidebar` CSS
-- `AppShell` wraps `<Sidebar>` + `.app-content` div; used in `src/app/(main)/layout.tsx`
+- **Mobile** (`< 900px`): `TopBar` (64px, fixed) + `BottomNav` (64px, fixed)
+  - TopBar layout: `[Search icon]` · `[VIRÉA logo — abs center]` · `[Wishlist + Cart]`
+- **Desktop** (`≥ 900px`): `TopBar` (68px, fixed) only — no sidebar, no BottomNav
+  - TopBar layout: `[VIRÉA logo]` · `[Shop · Try On · Studio — nav links]` · `[Search · Wishlist · Cart · Profile]`
+  - Uses `.topbar-*` CSS classes for responsive slot switching (`.topbar-logo-mobile/desktop`, `.topbar-nav-links`, `.topbar-search-mobile`, `.topbar-profile-link`)
+- `AppShell` wraps only `.app-content` div (Sidebar removed); used in `src/app/(main)/layout.tsx`
 - `(main)/layout.tsx` → `<ThemeProvider><TopBar /><AppShell>{children}</AppShell><BottomNav /><ToastContainer />`
 
 ### Vendor Portal (vendor)
@@ -84,8 +91,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | `src/types/vendor.ts` | `Vendor`, `VendorProduct`, `VendorProductCategory`, `StylingRequest`, `EventType` |
 | `src/types/order.ts` | `Order`, `OrderStatus`, `PreOrder`, `PreOrderStatus`, `OrderItem` |
 | `src/components/ui/` | Button, BottomSheet, BackLink, EmptyState, SizeChip, ColourSwatch, Badge, Toast, SkeletonCard |
-| `src/components/catalogue/` | ProductCard, CategoryIconChip |
-| `src/components/layout/` | TopBar, BottomNav, Sidebar, AppShell, PageShell, ThemeProvider, ServiceWorkerRegistrar |
+| `src/components/catalogue/` | ProductCard (white bg, objectFit:contain, brand label, Cormorant name, colour dots), CategoryIconChip |
+| `src/components/layout/` | TopBar (responsive: mobile compact / desktop full-nav), BottomNav, Sidebar (unused — kept for reference), AppShell (no Sidebar), PageShell, ThemeProvider, ServiceWorkerRegistrar |
+| `src/app/(main)/product/[id]/ProductGallery.tsx` | Client image carousel — prev/next arrows + thumbnail strip from colour variants |
 | `src/components/vendor/` | VendorShell, VendorSidebar, VendorTopBar, VendorDrawerNav, DashboardStats, VendorProductCard, ProductUploadForm, OrderInboxItem, PreOrderInboxItem, StylingRequestItem |
 | `src/components/orders/` | CheckoutModal, OrderStatusTracker, OrderCard |
 | `src/components/pre-orders/` | PreOrderForm, QuoteReviewModal |
@@ -96,7 +104,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | `src/app/offline/page.tsx` | Offline fallback page served by SW when navigation fails |
 
 ## Build Status
-- **Build passes cleanly** (`npm run build`) — 33 routes, no type errors
+- **Build passes cleanly** (`npm run build`) — 27 routes, no type errors
 - All server/client boundary issues resolved
 - Google Fonts loaded via CSS `@import` in `globals.css` (runtime, not build-time) — build environment cannot reach Google CDN
 
@@ -163,14 +171,25 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - **Vendor portal entry** — authenticated profile: "Sell on Virea" card (`/vendor/login`); unauthenticated profile: "Are you a vendor? Go to your store →" link; profile page Sign In button changed to `variant="outlined"` to match Create Account
   - **Auth form brand links** — "virea" heading in `LoginForm`, `RegisterPage`, `VendorRegisterPage` changed from static text to `<Link href="/">` routing home
 
+- [x] Phase 15 — World-Standard UI Overhaul
+  - **Top header replaces desktop sidebar** — `AppShell` no longer renders `<Sidebar>`; `TopBar` is now always visible at all breakpoints; desktop shows full nav (logo left · Shop/Try On/Studio center · Search/Wishlist/Cart/Profile right); mobile keeps compact layout (search left · centered logo · wishlist+cart right)
+  - **TopBar responsive slots** — `.topbar-logo-mobile/desktop`, `.topbar-nav-links`, `.topbar-search-mobile`, `.topbar-profile-link` CSS classes handle slot switching at 900px breakpoint
+  - **`--topbar-height` CSS variable** — `64px` mobile / `68px` desktop; always use `top: var(--topbar-height)` for any `position: sticky` element in the main shell (e.g. shop category strip)
+  - **`content-inner` max-width** bumped from 1100px → 1280px (page breathes now that 260px sidebar is gone)
+  - **ProductCard redesign** — white (`#FFFFFF`) image background, `objectFit: contain` with 12px padding (clothing centred, no cropping), brand name as uppercase label above product name (Cormorant 15px), colour dot indicators next to price
+  - **ProductGallery** — new client component at `src/app/(main)/product/[id]/ProductGallery.tsx`; image carousel (prev/next arrows) + thumbnail strip from all colour variant images
+  - **Product detail page** — full redesign: `product-detail-layout` CSS (55/45 grid on desktop), gallery left + details right, brand label, star rating summary, price, ProductActions, description, meta info, share button; Ratings & Reviews section (score block + bar breakdown + featured review card); Related Products row at bottom
+  - **Shop page sidebar** — `.shop-sidebar` CSS (hidden mobile, 200px desktop); categories list with active highlight + availability checkboxes sit to the left of the product grid on desktop
+  - **Clothing image URLs** — all DRESS/TOP/OUTERWEAR mock images replaced with product-photography-style Unsplash shots (ghost mannequin / flat-lay, no people); BAG/SHOES already were product shots
+
 ## Up Next
-- [ ] **Phase 15** — Backend Core (Express + Prisma + JWT auth)
+- [ ] **Phase 16** — Backend Core (Express + Prisma + JWT auth)
 
 ## Backend (after all frontend phases are complete)
-- [ ] Phase 15 — Backend Core (Express + Prisma + JWT auth)
-- [ ] Phase 16 — Orders, Pre-Orders, Styling Requests + Flutterwave split payments
-- [ ] Phase 17 — Background Jobs (BullMQ + Redis — notifications, payment verify fallback)
-- [ ] Phase 18 — Frontend-Backend Wiring (swap mock data for React Query hooks)
+- [ ] Phase 16 — Backend Core (Express + Prisma + JWT auth)
+- [ ] Phase 17 — Orders, Pre-Orders, Styling Requests + Flutterwave split payments
+- [ ] Phase 18 — Background Jobs (BullMQ + Redis — notifications, payment verify fallback)
+- [ ] Phase 19 — Frontend-Backend Wiring (swap mock data for React Query hooks)
 
 ## Gotchas
 - `next/image` requires `images.remotePatterns` in `next.config.ts` for Unsplash — already configured
@@ -180,6 +199,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Toast: `useUIStore(s => s.addToast)` — NOT a separate store
 - Vendor portal auth guard: `useEffect(() => { if (!isAuthenticated) router.replace("/vendor/login"); }, [isAuthenticated, router])` pattern used in every vendor page
 - Dynamic route params: `const { id } = use(params)` (Next.js 16 — params is a Promise)
+- **Sticky elements must use `top: var(--topbar-height)`** — the fixed TopBar is 64px mobile / 68px desktop; any `position: sticky` element must offset by this amount or it will slide behind the header
 - **Hover states use JS, not CSS** — all components use inline styles, so CSS `:hover` rules cannot reliably override them. Always wire `onMouseEnter`/`onMouseLeave` directly on elements and mutate `e.currentTarget.style.*`. Never rely on CSS class hover rules for interactive feedback on inline-styled elements.
 - **`BottomSheet` render prop** — accepts `children: ReactNode | ((close: () => void) => ReactNode)`. Pass a function child when action buttons inside the sheet need to trigger the animated close sequence (e.g. `CheckoutModal`, `QuoteReviewModal`).
 - **`Button` filled variant mouseLeave** — never clear `el.style.background` on leave for `filled` buttons. Only `boxShadow` and `transform` are set on enter; clearing background removes React's inline primary color and makes the button transparent until next render.

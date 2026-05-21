@@ -11,6 +11,16 @@
   --font-display: var(--font-display);
 }
 
+/* ── TopBar height token (used by sticky elements) ── */
+:root {
+  --topbar-height: 64px;
+}
+@media (min-width: 900px) {
+  :root {
+    --topbar-height: 68px;
+  }
+}
+
 /* ── Base resets ── */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -154,10 +164,37 @@ select:focus-visible {
   display: none;
 }
 
+/* ── Shop page sidebar (desktop only) ── */
+.shop-sidebar {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .shop-sidebar {
+    display: block;
+    width: 200px;
+    flex-shrink: 0;
+  }
+}
+
+/* ── Product detail: stacked mobile, 2-col desktop ── */
+.product-detail-layout {
+  display: block;
+}
+
+@media (min-width: 900px) {
+  .product-detail-layout {
+    display: grid;
+    grid-template-columns: 55fr 45fr;
+    align-items: start;
+    gap: 0;
+  }
+}
+
 /* ────────────────────────────────────────────────────────────────
    RESPONSIVE SHELL LAYOUT
-   Mobile  (<900px): fixed TopBar + fixed BottomNav
-   Desktop (≥900px): sticky left Sidebar, no TopBar/BottomNav
+   Mobile  (<900px): fixed TopBar (compact) + fixed BottomNav
+   Desktop (≥900px): fixed TopBar (full nav) — no sidebar, no BottomNav
    ──────────────────────────────────────────────────────────────── */
 
 .app-shell {
@@ -165,46 +202,75 @@ select:focus-visible {
   min-height: 100dvh;
 }
 
-/* Sidebar — hidden on mobile */
+/* Sidebar — permanently off (replaced by top header) */
 .app-sidebar {
   display: none;
 }
 
-/* Content — leaves room for TopBar + BottomNav on mobile */
+/* Content — always leaves room for fixed TopBar at top, BottomNav on mobile */
 .app-content {
   flex: 1;
   min-width: 0;
-  padding-top: 56px;
+  padding-top: 64px;
   padding-bottom: 80px;
 }
 
-/* TopBar + BottomNav — visible on mobile, gone on desktop */
-.app-topbar   { display: flex; }
+/* TopBar — always visible at all breakpoints */
+.app-topbar { display: flex; }
+
+/* BottomNav — mobile only */
 .app-bottomnav { display: flex; }
 
 @media (min-width: 900px) {
-  .app-sidebar {
-    display: flex;
-    flex-direction: column;
-    width: 260px;
-    flex-shrink: 0;
-    position: sticky;
-    top: 0;
-    height: 100dvh;
-    overflow-y: auto;
-    border-right: 1px solid var(--color-outline-variant);
-    background: var(--color-surface);
-    padding: var(--space-8) var(--space-6);
-    gap: var(--space-6);
-  }
-
   .app-content {
-    padding-top: 0;
     padding-bottom: 0;
   }
-
-  .app-topbar    { display: none; }
   .app-bottomnav { display: none; }
+}
+
+/* ── TopBar responsive internals ── */
+
+/* Left slot: search icon (mobile), logo (desktop) */
+.topbar-search-mobile { display: flex; }
+.topbar-logo-desktop  { display: none; }
+
+/* Center slot: logo (mobile, abs-centered), nav links (desktop) */
+.topbar-logo-mobile   { display: block; }
+.topbar-nav-links     { display: none; }
+
+/* Right slot: profile link (desktop only) */
+.topbar-profile-link  { display: none; }
+
+@media (min-width: 900px) {
+  .app-topbar {
+    padding-inline: var(--space-8) !important;
+    height: 68px !important;
+  }
+
+  /* Center slot switches from abs logo → flex nav */
+  .topbar-center {
+    position: static !important;
+    transform: none !important;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+  .topbar-logo-mobile  { display: none; }
+  .topbar-nav-links    { display: flex; }
+
+  /* Left slot switches from search → logo */
+  .topbar-search-mobile { display: none; }
+  .topbar-logo-desktop  { display: block; }
+
+  /* Right slot gains profile link */
+  .topbar-profile-link  { display: flex; }
+}
+
+/* Also bump app-content top padding for taller desktop header */
+@media (min-width: 900px) {
+  .app-content {
+    padding-top: 68px;
+  }
 }
 
 /* ── Product grid ── */
@@ -245,7 +311,7 @@ select:focus-visible {
 
 @media (min-width: 900px) {
   .content-inner {
-    max-width: 1100px;
+    max-width: 1280px;
     margin: 0 auto;
     padding: var(--space-10) var(--space-8);
   }

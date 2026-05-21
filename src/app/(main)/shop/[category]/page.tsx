@@ -26,7 +26,7 @@ export default async function ShopPage({ params }: Props) {
   return (
     <main style={{ background: "var(--color-background)", minHeight: "100%" }}>
 
-      {/* Desktop editorial header */}
+      {/* ── Editorial header ── */}
       <div
         style={{
           background: "var(--color-surface)",
@@ -46,15 +46,16 @@ export default async function ShopPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Category tabs */}
+      {/* ── Category tab strip (mobile) ── */}
       <div
         style={{
           background: "var(--color-surface)",
           borderBottom: "1px solid var(--color-outline-variant)",
           position: "sticky",
-          top: 0,
+          top: "var(--topbar-height)",
           zIndex: 10,
         }}
+        className="shop-sidebar-hide-tabs"
       >
         <div
           className="content-inner scrollbar-hide"
@@ -94,65 +95,180 @@ export default async function ShopPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="content-inner" style={{ paddingInline: "var(--space-4)", paddingTop: "var(--space-6)", paddingBottom: "var(--space-10)" }}>
+      {/* ── Content: sidebar + grid ── */}
+      <div
+        className="content-inner"
+        style={{
+          paddingInline: "var(--space-4)",
+          paddingTop: "var(--space-6)",
+          paddingBottom: "var(--space-10)",
+        }}
+      >
+        <div style={{ display: "flex", gap: "var(--space-8)", alignItems: "flex-start" }}>
 
-        {/* Item count + sort */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "var(--space-5)",
-          }}
-        >
-          <p className="body-medium" style={{ color: "var(--color-on-surface-variant)" }}>
-            {items.length} item{items.length !== 1 ? "s" : ""}
-          </p>
+          {/* ── Left sidebar (desktop only) ── */}
+          <aside className="shop-sidebar">
+
+            {/* Categories */}
+            <div style={{ marginBottom: "var(--space-8)" }}>
+              <p
+                style={{
+                  fontFamily: "var(--type-label-medium-family)",
+                  fontSize: "var(--type-label-medium-size)",
+                  fontWeight: 600,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "var(--color-on-surface-variant)",
+                  marginBottom: "var(--space-3)",
+                }}
+              >
+                Categories
+              </p>
+              <nav style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                {categories.map((c) => {
+                  const isActive = c.id === category;
+                  return (
+                    <Link
+                      key={c.id}
+                      href={`/shop/${c.id}`}
+                      style={{
+                        display: "block",
+                        padding: "var(--space-2) var(--space-3)",
+                        borderRadius: "var(--shape-sm)",
+                        textDecoration: "none",
+                        fontFamily: "var(--type-body-medium-family)",
+                        fontSize: "var(--type-body-medium-size)",
+                        fontWeight: isActive ? 600 : 400,
+                        color: isActive ? "var(--color-on-primary-container)" : "var(--color-on-surface-variant)",
+                        background: isActive ? "var(--color-primary-container)" : "transparent",
+                        transition: `background var(--duration-standard) var(--easing-standard),
+                                     color var(--duration-standard) var(--easing-standard)`,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isActive) {
+                          (e.currentTarget as HTMLElement).style.background = "var(--color-surface-variant)";
+                          (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isActive) {
+                          (e.currentTarget as HTMLElement).style.background = "transparent";
+                          (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)";
+                        }
+                      }}
+                    >
+                      {c.label}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* Availability filter */}
+            <div>
+              <p
+                style={{
+                  fontFamily: "var(--type-label-medium-family)",
+                  fontSize: "var(--type-label-medium-size)",
+                  fontWeight: 600,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "var(--color-on-surface-variant)",
+                  marginBottom: "var(--space-3)",
+                }}
+              >
+                Availability
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+                {["In stock", "New arrivals", "On sale"].map((label) => (
+                  <label
+                    key={label}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "var(--space-2)",
+                      cursor: "pointer",
+                      fontFamily: "var(--type-body-medium-family)",
+                      fontSize: "var(--type-body-medium-size)",
+                      color: "var(--color-on-surface-variant)",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      style={{
+                        width: "16px",
+                        height: "16px",
+                        accentColor: "var(--color-primary)",
+                        cursor: "pointer",
+                      }}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </aside>
+
+          {/* ── Product grid ── */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+
+            {/* Item count */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "var(--space-5)",
+              }}
+            >
+              <p className="body-medium" style={{ color: "var(--color-on-surface-variant)" }}>
+                {items.length} item{items.length !== 1 ? "s" : ""}
+              </p>
+            </div>
+
+            {items.length > 0 ? (
+              <div className="product-grid">
+                {items.map((item) => (
+                  <ProductCard key={item.id} item={item} />
+                ))}
+              </div>
+            ) : (
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "var(--space-16) 0",
+                  color: "var(--color-on-surface-variant)",
+                }}
+              >
+                <p className="headline-small">Nothing here yet</p>
+                <p className="body-medium" style={{ marginTop: "var(--space-2)" }}>
+                  Check back soon for new arrivals.
+                </p>
+              </div>
+            )}
+
+            {/* Desktop: cross-category explore links */}
+            <div
+              style={{
+                marginTop: "var(--space-12)",
+                paddingTop: "var(--space-8)",
+                borderTop: "1px solid var(--color-outline-variant)",
+              }}
+            >
+              <h3 className="headline-medium" style={{ marginBottom: "var(--space-5)" }}>
+                Explore more
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                {categories
+                  .filter((c) => c.id !== category)
+                  .map((c) => (
+                    <ExploreCategoryLink key={c.id} href={`/shop/${c.id}`} label={c.label} />
+                  ))}
+              </div>
+            </div>
+          </div>
+
         </div>
-
-        {/* Grid */}
-        {items.length > 0 ? (
-          <div className="product-grid">
-            {items.map((item) => (
-              <ProductCard key={item.id} item={item} />
-            ))}
-          </div>
-        ) : (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "var(--space-16) 0",
-              color: "var(--color-on-surface-variant)",
-            }}
-          >
-            <p className="headline-small">Nothing here yet</p>
-            <p className="body-medium" style={{ marginTop: "var(--space-2)" }}>
-              Check back soon for new arrivals.
-            </p>
-          </div>
-        )}
-
-        {/* Desktop: cross-category explore links */}
-        <div
-          style={{
-            marginTop: "var(--space-12)",
-            paddingTop: "var(--space-8)",
-            borderTop: "1px solid var(--color-outline-variant)",
-          }}
-        >
-          <h3 className="headline-medium" style={{ marginBottom: "var(--space-5)" }}>
-            Explore more
-          </h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-            {categories
-              .filter((c) => c.id !== category)
-              .map((c) => (
-                <ExploreCategoryLink key={c.id} href={`/shop/${c.id}`} label={c.label} />
-              ))}
-          </div>
-        </div>
-
       </div>
     </main>
   );

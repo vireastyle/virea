@@ -37,46 +37,68 @@ export function ProductCard({ item }: ProductCardProps) {
         background: "var(--color-surface)",
         borderRadius: "var(--shape-md)",
         overflow: "hidden",
-        boxShadow: "var(--elevation-1)",
+        border: "1px solid var(--color-outline-variant)",
         transition: `box-shadow var(--duration-standard) var(--easing-standard),
                      transform var(--duration-standard) var(--easing-standard)`,
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLElement).style.boxShadow = "var(--elevation-3)";
-        (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+        (e.currentTarget as HTMLElement).style.transform = "translateY(-3px)";
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.boxShadow = "var(--elevation-1)";
+        (e.currentTarget as HTMLElement).style.boxShadow = "none";
         (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
       }}
     >
-      {/* Image */}
-      <div style={{ aspectRatio: "3 / 4", background: "var(--color-surface-variant)", position: "relative", overflow: "hidden" }}>
+      {/* Image — white background, objectFit contain, clothing centered */}
+      <div
+        style={{
+          aspectRatio: "3 / 4",
+          background: "#FFFFFF",
+          position: "relative",
+          overflow: "hidden",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
         <Image
-          src={item.image_urls[defaultColour.name] ?? "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400&q=80"}
+          src={item.image_urls[defaultColour.name] ?? "https://images.unsplash.com/photo-1585487000160-6ebf0b355a02?w=400&q=80"}
           alt={item.name}
           fill
-          style={{ objectFit: "cover" }}
+          style={{ objectFit: "contain", padding: "12px" }}
           sizes="(max-width: 600px) 50vw, 33vw"
         />
-        {item.is_new_arrival && (
-          <span
-            style={{
-              position: "absolute",
-              top: "var(--space-2)",
-              left: "var(--space-2)",
-              padding: "2px var(--space-2)",
-              borderRadius: "var(--shape-xs)",
-              background: "var(--color-primary)",
-              color: "var(--color-on-primary)",
-              fontFamily: "var(--type-label-small-family)",
-              fontSize: "var(--type-label-small-size)",
-              fontWeight: "var(--type-label-small-weight)",
-            }}
-          >
-            New
-          </span>
-        )}
+
+        {/* Badges */}
+        <div
+          style={{
+            position: "absolute",
+            top: "var(--space-2)",
+            left: "var(--space-2)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+          }}
+        >
+          {item.is_new_arrival && (
+            <span
+              style={{
+                padding: "3px var(--space-2)",
+                borderRadius: "var(--shape-xs)",
+                background: "var(--color-primary)",
+                color: "var(--color-on-primary)",
+                fontFamily: "var(--type-label-small-family)",
+                fontSize: "10px",
+                fontWeight: 600,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+            >
+              New
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Wishlist button */}
@@ -85,12 +107,12 @@ export function ProductCard({ item }: ProductCardProps) {
         aria-label={isWished ? "Remove from wishlist" : "Add to wishlist"}
         style={{
           position: "absolute",
-          top: "var(--space-3)",
-          right: "var(--space-3)",
-          width: "32px",
-          height: "32px",
+          top: "var(--space-2)",
+          right: "var(--space-2)",
+          width: "30px",
+          height: "30px",
           borderRadius: "var(--shape-full)",
-          background: "rgba(253,252,248,0.9)",
+          background: "rgba(253,252,248,0.92)",
           border: "none",
           cursor: "pointer",
           display: "flex",
@@ -100,19 +122,41 @@ export function ProductCard({ item }: ProductCardProps) {
           transition: `color var(--duration-fast) var(--easing-standard)`,
         }}
       >
-        <Heart size={16} fill={isWished ? "currentColor" : "none"} strokeWidth={1.5} />
+        <Heart size={14} fill={isWished ? "currentColor" : "none"} strokeWidth={1.5} />
       </button>
 
       {/* Body */}
-      <div style={{ padding: "var(--space-3) var(--space-4)" }}>
+      <div
+        style={{
+          padding: "var(--space-3) var(--space-3)",
+          borderTop: "1px solid var(--color-outline-variant)",
+          background: "var(--color-surface)",
+        }}
+      >
+        {/* Brand */}
         <p
           style={{
-            fontFamily: "var(--type-title-medium-family)",
-            fontSize: "var(--type-title-medium-size)",
-            lineHeight: "var(--type-title-medium-line-height)",
-            fontWeight: "var(--type-title-medium-weight)",
+            fontFamily: "var(--type-label-small-family)",
+            fontSize: "10px",
+            fontWeight: 500,
+            letterSpacing: "0.09em",
+            textTransform: "uppercase",
+            color: "var(--color-on-surface-variant)",
+            marginBottom: "3px",
+          }}
+        >
+          {item.brand}
+        </p>
+
+        {/* Product name — Cormorant for editorial feel */}
+        <p
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "15px",
+            lineHeight: 1.3,
+            fontWeight: 400,
             color: "var(--color-on-surface)",
-            marginBottom: "var(--space-1)",
+            marginBottom: "var(--space-2)",
             overflow: "hidden",
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -121,16 +165,52 @@ export function ProductCard({ item }: ProductCardProps) {
         >
           {item.name}
         </p>
-        <p
-          style={{
-            fontFamily: "var(--type-price-small-family)",
-            fontSize: "var(--type-price-small-size)",
-            fontWeight: "var(--type-price-small-weight)",
-            color: "var(--color-on-surface-variant)",
-          }}
-        >
-          {formatPrice(item.price)}
-        </p>
+
+        {/* Price + colour dots row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <p
+            style={{
+              fontFamily: "var(--type-price-small-family)",
+              fontSize: "var(--type-price-small-size)",
+              fontWeight: "var(--type-price-small-weight)",
+              color: "var(--color-on-background)",
+            }}
+          >
+            {formatPrice(item.price)}
+          </p>
+
+          {/* Colour dots */}
+          {item.available_colours.length > 1 && (
+            <div style={{ display: "flex", gap: "4px" }}>
+              {item.available_colours.slice(0, 3).map((c) => (
+                <span
+                  key={c.name}
+                  title={c.name}
+                  style={{
+                    width: "10px",
+                    height: "10px",
+                    borderRadius: "var(--shape-full)",
+                    background: c.hex,
+                    border: "1px solid var(--color-outline-variant)",
+                    display: "block",
+                  }}
+                />
+              ))}
+              {item.available_colours.length > 3 && (
+                <span
+                  style={{
+                    fontFamily: "var(--type-label-small-family)",
+                    fontSize: "9px",
+                    color: "var(--color-on-surface-variant)",
+                    lineHeight: "10px",
+                  }}
+                >
+                  +{item.available_colours.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </Link>
   );

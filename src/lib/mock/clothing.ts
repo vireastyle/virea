@@ -15,9 +15,9 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["XS", "S", "M", "L", "XL"],
     image_urls: {
-      Midnight: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400&q=80",
-      Champagne: "https://images.unsplash.com/photo-1566479179817-c3c19b6e6ca9?w=400&q=80",
-      Forest: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400&q=80",
+      Midnight: "https://images.unsplash.com/photo-1583496661160-fb5218f3b77b?w=400&q=80",
+      Champagne: "https://images.unsplash.com/photo-1585487000160-6ebf0b355a02?w=400&q=80",
+      Forest: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80",
     },
     try_on_asset_urls: {
       Midnight: "/try-on/satin-flow-midnight.png",
@@ -40,8 +40,8 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["S", "M", "L", "XL", "XXL"],
     image_urls: {
-      Terracotta: "https://images.unsplash.com/photo-1572804013427-4d7ca7268217?w=400&q=80",
-      Ivory: "https://images.unsplash.com/photo-1529898329131-589bbab9ebca?w=400&q=80",
+      Terracotta: "https://images.unsplash.com/photo-1614676471928-2ed0ad1061a4?w=400&q=80",
+      Ivory: "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=400&q=80",
     },
     try_on_asset_urls: {
       Terracotta: "/try-on/lagos-wrap-terracotta.png",
@@ -63,8 +63,8 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["XS", "S", "M", "L"],
     image_urls: {
-      Sand: "https://images.unsplash.com/photo-1539008835657-9e8e9680c956?w=400&q=80",
-      Blush: "https://images.unsplash.com/photo-1521577352947-9bb58764b69a?w=400&q=80",
+      Sand: "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400&q=80",
+      Blush: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400&q=80",
     },
     try_on_asset_urls: {
       Sand: "/try-on/linen-slip-sand.png",
@@ -86,8 +86,8 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["S", "M", "L", "XL"],
     image_urls: {
-      "Gold Print": "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=400&q=80",
-      "Blue Print": "https://images.unsplash.com/photo-1485462537746-965f33f7f6a7?w=400&q=80",
+      "Gold Print": "https://images.unsplash.com/photo-1619603364929-c35f5b7a4394?w=400&q=80",
+      "Blue Print": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&q=80",
     },
     try_on_asset_urls: {
       "Gold Print": "/try-on/ankara-midi-gold.png",
@@ -110,9 +110,9 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["XS", "S", "M", "L", "XL", "XXL"],
     image_urls: {
-      Onyx: "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=400&q=80",
-      "Dusty Rose": "https://images.unsplash.com/photo-1618932260643-eee4a2f652a6?w=400&q=80",
-      Sage: "https://images.unsplash.com/photo-1510627489930-0c1b0bfb6785?w=400&q=80",
+      Onyx: "https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=400&q=80",
+      "Dusty Rose": "https://images.unsplash.com/photo-1603217040527-a11e6946b8e6?w=400&q=80",
+      Sage: "https://images.unsplash.com/photo-1519235624215-85175d5eb36e?w=400&q=80",
     },
     try_on_asset_urls: {
       Onyx: "/try-on/pleated-maxi-onyx.png",
@@ -137,8 +137,8 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["XS", "S", "M", "L", "XL"],
     image_urls: {
-      Cream: "https://images.unsplash.com/photo-1548624313-0396c75e4b1a?w=400&q=80",
-      Chocolate: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400&q=80",
+      Cream: "https://images.unsplash.com/photo-1617137968427-85924c800a22?w=400&q=80",
+      Chocolate: "https://images.unsplash.com/photo-1618354691792-d1d42acfd860?w=400&q=80",
     },
     try_on_asset_urls: {
       Cream: "/try-on/draped-shoulder-cream.png",
@@ -161,8 +161,8 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["XS", "S", "M", "L", "XL"],
     image_urls: {
-      Caramel: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=80",
-      Black: "https://images.unsplash.com/photo-1607346256330-dee7af15f7c5?w=400&q=80",
+      Caramel: "https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?w=400&q=80",
+      Black: "https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=400&q=80",
       Cobalt: "https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?w=400&q=80",
     },
     try_on_asset_urls: {
@@ -187,7 +187,7 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["XS", "S", "M", "L"],
     image_urls: {
-      Ivory: "https://images.unsplash.com/photo-1485462537746-965f33f7f6a7?w=400&q=80",
+      Ivory: "https://images.unsplash.com/photo-1516762689617-e1cffcef479d?w=400&q=80",
       Blush: "https://images.unsplash.com/photo-1521577352947-9bb58764b69a?w=400&q=80",
       Sage: "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&q=80",
     },
@@ -212,8 +212,8 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["S", "M", "L", "XL"],
     image_urls: {
-      Camel: "https://images.unsplash.com/photo-1551163943-3f6a855d1153?w=400&q=80",
-      Ecru: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400&q=80",
+      Camel: "https://images.unsplash.com/photo-1620799139507-2a76f79a2f4d?w=400&q=80",
+      Ecru: "https://images.unsplash.com/photo-1617137968427-85924c800a22?w=400&q=80",
     },
     try_on_asset_urls: {
       Camel: "/try-on/knit-crop-camel.png",
@@ -237,8 +237,8 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["XS", "S", "M", "L", "XL"],
     image_urls: {
-      "Classic Tan": "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400&q=80",
-      Black: "https://images.unsplash.com/photo-1548624313-0396c75e4b1a?w=400&q=80",
+      "Classic Tan": "https://images.unsplash.com/photo-1580657018950-c7f7d09a891e?w=400&q=80",
+      Black: "https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=400&q=80",
     },
     try_on_asset_urls: {
       "Classic Tan": "/try-on/trench-tan.png",
@@ -261,9 +261,9 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["S", "M", "L", "XL", "XXL"],
     image_urls: {
-      Oatmeal: "https://images.unsplash.com/photo-1572804013427-4d7ca7268217?w=400&q=80",
-      Forest: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400&q=80",
-      Burgundy: "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=400&q=80",
+      Oatmeal: "https://images.unsplash.com/photo-1607345366928-199ea26cfe3e?w=400&q=80",
+      Forest: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&q=80",
+      Burgundy: "https://images.unsplash.com/photo-1603217040527-a11e6946b8e6?w=400&q=80",
     },
     try_on_asset_urls: {
       Oatmeal: "/try-on/cardigan-oatmeal.png",
@@ -286,8 +286,8 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["XS", "S", "M", "L", "XL"],
     image_urls: {
-      "Light Wash": "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400&q=80",
-      "Dark Wash": "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&q=80",
+      "Light Wash": "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400&q=80",
+      "Dark Wash": "https://images.unsplash.com/photo-1551537482-f2075a1d41f2?w=400&q=80",
     },
     try_on_asset_urls: {
       "Light Wash": "/try-on/denim-light.png",
