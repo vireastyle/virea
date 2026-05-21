@@ -1,0 +1,45 @@
+{
+  "name": "Virea",
+  "short_name": "Virea",
+  "description": "See it on you. Before you buy.",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F1EB",
+  "theme_color": "#3B6F68",
+  "categories": ["shopping", "lifestyle"],
+  "lang": "en",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+  ],
+  "shortcuts": [
+    {
+      "name": "Shop",
+      "url": "/shop",
+      "description": "Browse the catalogue"
+    },
+    {
+      "name": "Try On",
+      "url": "/try-on",
+      "description": "Virtual try-on"
+    },
+    {
+      "name": "Avatar Studio",
+      "url": "/avatar-studio",
+      "description": "Style your avatar"
+    }
+  ]
+}

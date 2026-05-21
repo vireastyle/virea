@@ -1,0 +1,18 @@
+import { TopBar } from "@/components/layout/TopBar";
+import { BottomNav } from "@/components/layout/BottomNav";
+import { AppShell } from "@/components/layout/AppShell";
+import { ThemeProvider } from "@/components/layout/ThemeProvider";
+import { ToastContainer } from "@/components/ui/Toast";
+
+export default function MainLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <ThemeProvider>
+      <TopBar />
+      <AppShell>
+        {children}
+      </AppShell>
+      <BottomNav />
+      <ToastContainer />
+    </ThemeProvider>
+  );
+}

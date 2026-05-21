@@ -1,0 +1,149 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { Heart, ShoppingBag, Shirt } from "lucide-react";
+import { PageShell } from "@/components/layout/PageShell";
+import { Button } from "@/components/ui/Button";
+import { useWishlistStore } from "@/store/wishlist.store";
+import { useCartStore } from "@/store/cart.store";
+import { useUIStore } from "@/store/ui.store";
+import { getItemById } from "@/lib/mock/clothing";
+import type { Size } from "@/types/clothing";
+
+const formatPrice = (n: number) => `₦${n.toLocaleString("en-NG")}`;
+
+export default function WishlistPage() {
+  const { itemIds, remove } = useWishlistStore();
+  const { add: addToCart } = useCartStore();
+  const { addToast } = useUIStore();
+
+  const items = itemIds.map((id) => getItemById(id)).filter(Boolean);
+
+  return (
+    <PageShell>
+      <div style={{ paddingTop: "var(--space-6)" }}>
+        <h1 className="headline-large" style={{ marginBottom: "var(--space-6)" }}>Wishlist</h1>
+
+        {items.length === 0 ? (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "var(--space-16) var(--space-4)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "var(--space-4)",
+            }}
+          >
+            <Heart size={48} strokeWidth={1} style={{ color: "var(--color-outline-variant)" }} />
+            <div>
+              <p className="headline-small">Your wishlist is empty</p>
+              <p className="body-medium" style={{ color: "var(--color-on-surface-variant)", marginTop: "var(--space-2)" }}>
+                Tap the heart on any item to save it here.
+              </p>
+            </div>
+            <Link href="/shop/DRESS">
+              <Button variant="filled">Start Browsing</Button>
+            </Link>
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+            {items.map((item) => {
+              if (!item) return null;
+              const colour = item.available_colours[0];
+              return (
+                <div
+                  key={item.id}
+                  style={{
+                    display: "flex",
+                    gap: "var(--space-3)",
+                    background: "var(--color-surface)",
+                    borderRadius: "var(--shape-md)",
+                    padding: "var(--space-3)",
+                    boxShadow: "var(--elevation-1)",
+                  }}
+                >
+                  <Link href={`/product/${item.id}`} style={{ flexShrink: 0 }}>
+                    <div
+                      style={{
+                        width: "88px",
+                        height: "112px",
+                        borderRadius: "var(--shape-sm)",
+                        overflow: "hidden",
+                        position: "relative",
+                        background: "var(--color-surface-variant)",
+                      }}
+                    >
+                      <Image
+                        src={item.image_urls[colour.name]}
+                        alt={item.name}
+                        fill
+                        style={{ objectFit: "cover" }}
+                        sizes="88px"
+                      />
+                    </div>
+                  </Link>
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                    <div>
+                      <p className="label-small" style={{ color: "var(--color-on-surface-variant)", textTransform: "uppercase" }}>{item.brand}</p>
+                      <Link href={`/product/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                        <p className="headline-small" style={{ marginTop: "var(--space-1)" }}>{item.name}</p>
+                      </Link>
+                      <p className="price-small" style={{ marginTop: "var(--space-1)" }}>{formatPrice(item.price)}</p>
+                    </div>
+                    <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
+                      <button
+                        onClick={() => {
+                          addToCart(item, colour, item.available_sizes[0] as Size);
+                          addToast(`${item.name} added to bag`);
+                        }}
+                        aria-label={`Add ${item.name} to bag`}
+                        style={{
+                          flex: 1,
+                          height: "36px",
+                          borderRadius: "var(--shape-xl)",
+                          border: "1.5px solid var(--color-outline-variant)",
+                          background: "transparent",
+                          cursor: "pointer",
+                          fontFamily: "var(--type-label-large-family)",
+                          fontSize: "var(--type-label-large-size)",
+                          fontWeight: "var(--type-label-large-weight)",
+                          color: "var(--color-primary)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "var(--space-1)",
+                        }}
+                      >
+                        <ShoppingBag size={14} strokeWidth={1.5} /> Add to Bag
+                      </button>
+                      <button
+                        onClick={() => remove(item.id)}
+                        aria-label="Remove from wishlist"
+                        style={{
+                          width: "36px",
+                          height: "36px",
+                          borderRadius: "var(--shape-full)",
+                          border: "1.5px solid var(--color-outline-variant)",
+                          background: "transparent",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "var(--color-on-surface-variant)",
+                        }}
+                      >
+                        <Heart size={14} fill="currentColor" strokeWidth={1.5} style={{ color: "var(--color-tertiary)" }} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </PageShell>
+  );
+}

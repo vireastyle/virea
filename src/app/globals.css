@@ -1,26 +1,429 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&display=swap");
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import "../styles/tokens.css";
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-on-background);
+  --color-primary: var(--color-primary);
+  --color-surface: var(--color-surface);
+  --font-sans: var(--font-sans);
+  --font-display: var(--font-display);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Base resets ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  font-family: var(--font-sans);
+  font-size: var(--type-body-large-size);
+  line-height: var(--type-body-large-line-height);
+  font-weight: var(--type-body-large-weight);
+  letter-spacing: var(--type-body-large-tracking);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Focus rings ── */
+/* !important overrides inline outline:none so keyboard focus always shows */
+:focus-visible {
+  outline: 2px solid var(--color-primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* Form controls: use border+shadow ring instead of outline for cleaner look */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px var(--color-primary-container) !important;
+}
+
+/* ── Shared form field styles ── */
+/* Apply className="field" to any input/textarea/select to get consistent styling */
+.field {
+  width: 100%;
+  height: 56px;
+  padding: 0 var(--space-4);
+  background: var(--color-surface-variant);
+  border: 1.5px solid var(--color-outline-variant);
+  border-radius: var(--shape-sm);
+  font-family: var(--type-body-large-family);
+  font-size: var(--type-body-large-size);
+  color: var(--color-on-surface);
+  outline: none;
+  transition: border-color var(--duration-standard) var(--easing-standard);
+}
+.field::placeholder { color: var(--color-on-surface-variant); opacity: 0.7; }
+.field--textarea { height: auto; padding: var(--space-3) var(--space-4); resize: vertical; }
+.field--select { cursor: pointer; }
+
+.field-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  color: var(--color-on-surface-variant);
+  font-family: var(--type-label-medium-family);
+  font-size: var(--type-label-medium-size);
+  font-weight: var(--type-label-medium-weight);
+}
+
+.field-error {
+  color: var(--color-error);
+  font-family: var(--type-label-medium-family);
+  font-size: var(--type-label-medium-size);
+  margin-top: var(--space-1);
+}
+
+/* ── Hover states ── */
+
+/* Buttons — apply .btn--filled / .btn--outlined / .btn--text via className on <Button> */
+.btn--filled:not(:disabled):hover {
+  box-shadow: inset 0 0 0 100px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+.btn--outlined:not(:disabled):hover {
+  background: var(--color-primary-container);
+  border-color: var(--color-primary);
+}
+.btn--text:not(:disabled):hover {
+  background: var(--color-surface-container);
+}
+
+/* Text links (inline anchors like "Are you a vendor?") */
+.text-link:hover { text-decoration: underline; }
+
+/* Menu/list row links (profile page items, vendor sidebar items) */
+.menu-row:hover { background: var(--color-surface-container) !important; }
+
+/* Sidebar nav items — only non-active */
+.nav-link:not(.nav-link--active):hover {
+  background: var(--color-surface-container) !important;
+  color: var(--color-on-surface) !important;
+}
+
+/* Icon action links (search, bag, small square icon buttons) */
+.icon-action:hover {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+/* Primary CTA links styled as buttons (Try On, Sell on Virea card) */
+.cta-link:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+/* ── Keyframe animations ── */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Scrollbar hide utility ── */
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   RESPONSIVE SHELL LAYOUT
+   Mobile  (<900px): fixed TopBar + fixed BottomNav
+   Desktop (≥900px): sticky left Sidebar, no TopBar/BottomNav
+   ──────────────────────────────────────────────────────────────── */
+
+.app-shell {
+  display: flex;
+  min-height: 100dvh;
+}
+
+/* Sidebar — hidden on mobile */
+.app-sidebar {
+  display: none;
+}
+
+/* Content — leaves room for TopBar + BottomNav on mobile */
+.app-content {
+  flex: 1;
+  min-width: 0;
+  padding-top: 56px;
+  padding-bottom: 80px;
+}
+
+/* TopBar + BottomNav — visible on mobile, gone on desktop */
+.app-topbar   { display: flex; }
+.app-bottomnav { display: flex; }
+
+@media (min-width: 900px) {
+  .app-sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 260px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow-y: auto;
+    border-right: 1px solid var(--color-outline-variant);
+    background: var(--color-surface);
+    padding: var(--space-8) var(--space-6);
+    gap: var(--space-6);
+  }
+
+  .app-content {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .app-topbar    { display: none; }
+  .app-bottomnav { display: none; }
+}
+
+/* ── Product grid ── */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+@media (min-width: 900px) {
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-5);
+  }
+}
+
+@media (min-width: 1200px) {
+  .product-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ── Trending scroll row ── */
+.trending-card {
+  flex: 0 0 160px;
+}
+
+@media (min-width: 900px) {
+  .trending-card {
+    flex: 0 0 220px;
+  }
+}
+
+/* ── Desktop content max-width ── */
+.content-inner {
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .content-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--space-10) var(--space-8);
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   VENDOR PORTAL SHELL
+   Mobile (<900px): fixed VendorTopBar + content
+   Desktop (≥900px): sticky VendorSidebar + content
+   ──────────────────────────────────────────────────────────────── */
+
+.vendor-shell {
+  display: flex;
+  min-height: 100dvh;
+}
+
+.vendor-sidebar {
+  display: none;
+}
+
+.vendor-content {
+  flex: 1;
+  min-width: 0;
+  padding-top: 56px;
+}
+
+.vendor-topbar {
+  display: flex;
+}
+
+@media (min-width: 900px) {
+  .vendor-sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 240px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow-y: auto;
+    border-right: 1px solid var(--color-outline-variant);
+    background: var(--color-surface);
+    padding: var(--space-8) var(--space-5);
+    gap: var(--space-6);
+  }
+
+  .vendor-content {
+    padding-top: 0;
+  }
+
+  .vendor-topbar {
+    display: none;
+  }
+}
+
+/* ── Typography utility classes ── */
+.display-large {
+  font-family: var(--type-display-large-family);
+  font-size: var(--type-display-large-size);
+  line-height: var(--type-display-large-line-height);
+  font-weight: var(--type-display-large-weight);
+  letter-spacing: var(--type-display-large-tracking);
+}
+.display-medium {
+  font-family: var(--type-display-medium-family);
+  font-size: var(--type-display-medium-size);
+  line-height: var(--type-display-medium-line-height);
+  font-weight: var(--type-display-medium-weight);
+  letter-spacing: var(--type-display-medium-tracking);
+}
+.display-small {
+  font-family: var(--type-display-small-family);
+  font-size: var(--type-display-small-size);
+  line-height: var(--type-display-small-line-height);
+  font-weight: var(--type-display-small-weight);
+  letter-spacing: var(--type-display-small-tracking);
+}
+
+.headline-large {
+  font-family: var(--type-headline-large-family);
+  font-size: var(--type-headline-large-size);
+  line-height: var(--type-headline-large-line-height);
+  font-weight: var(--type-headline-large-weight);
+  letter-spacing: var(--type-headline-large-tracking);
+}
+.headline-medium {
+  font-family: var(--type-headline-medium-family);
+  font-size: var(--type-headline-medium-size);
+  line-height: var(--type-headline-medium-line-height);
+  font-weight: var(--type-headline-medium-weight);
+  letter-spacing: var(--type-headline-medium-tracking);
+}
+.headline-small {
+  font-family: var(--type-headline-small-family);
+  font-size: var(--type-headline-small-size);
+  line-height: var(--type-headline-small-line-height);
+  font-weight: var(--type-headline-small-weight);
+  letter-spacing: var(--type-headline-small-tracking);
+}
+
+.title-large {
+  font-family: var(--type-title-large-family);
+  font-size: var(--type-title-large-size);
+  line-height: var(--type-title-large-line-height);
+  font-weight: var(--type-title-large-weight);
+  letter-spacing: var(--type-title-large-tracking);
+}
+.title-medium {
+  font-family: var(--type-title-medium-family);
+  font-size: var(--type-title-medium-size);
+  line-height: var(--type-title-medium-line-height);
+  font-weight: var(--type-title-medium-weight);
+  letter-spacing: var(--type-title-medium-tracking);
+}
+.title-small {
+  font-family: var(--type-title-small-family);
+  font-size: var(--type-title-small-size);
+  line-height: var(--type-title-small-line-height);
+  font-weight: var(--type-title-small-weight);
+  letter-spacing: var(--type-title-small-tracking);
+}
+
+.body-large {
+  font-family: var(--type-body-large-family);
+  font-size: var(--type-body-large-size);
+  line-height: var(--type-body-large-line-height);
+  font-weight: var(--type-body-large-weight);
+  letter-spacing: var(--type-body-large-tracking);
+}
+.body-medium {
+  font-family: var(--type-body-medium-family);
+  font-size: var(--type-body-medium-size);
+  line-height: var(--type-body-medium-line-height);
+  font-weight: var(--type-body-medium-weight);
+  letter-spacing: var(--type-body-medium-tracking);
+}
+.body-small {
+  font-family: var(--type-body-small-family);
+  font-size: var(--type-body-small-size);
+  line-height: var(--type-body-small-line-height);
+  font-weight: var(--type-body-small-weight);
+  letter-spacing: var(--type-body-small-tracking);
+}
+
+.label-large {
+  font-family: var(--type-label-large-family);
+  font-size: var(--type-label-large-size);
+  line-height: var(--type-label-large-line-height);
+  font-weight: var(--type-label-large-weight);
+  letter-spacing: var(--type-label-large-tracking);
+}
+.label-medium {
+  font-family: var(--type-label-medium-family);
+  font-size: var(--type-label-medium-size);
+  line-height: var(--type-label-medium-line-height);
+  font-weight: var(--type-label-medium-weight);
+  letter-spacing: var(--type-label-medium-tracking);
+}
+.label-small {
+  font-family: var(--type-label-small-family);
+  font-size: var(--type-label-small-size);
+  line-height: var(--type-label-small-line-height);
+  font-weight: var(--type-label-small-weight);
+  letter-spacing: var(--type-label-small-tracking);
+}
+
+.price-large {
+  font-family: var(--type-price-large-family);
+  font-size: var(--type-price-large-size);
+  line-height: var(--type-price-large-line-height);
+  font-weight: var(--type-price-large-weight);
+  letter-spacing: var(--type-price-large-tracking);
+}
+.price-small {
+  font-family: var(--type-price-small-family);
+  font-size: var(--type-price-small-size);
+  line-height: var(--type-price-small-line-height);
+  font-weight: var(--type-price-small-weight);
+  letter-spacing: var(--type-price-small-tracking);
+  color: var(--color-on-surface-variant);
 }
