@@ -1,13 +1,15 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { ProductCard } from "@/components/catalogue/ProductCard";
 import { CategoryIconChip } from "@/components/catalogue/CategoryIconChip";
-import { Button } from "@/components/ui/Button";
+import { FadeIn } from "@/components/ui/FadeIn";
+import { HeroSlider } from "@/components/home/HeroSlider";
+import { MarqueeStrip } from "@/components/home/MarqueeStrip";
+import { PromoSection } from "@/components/home/PromoSection";
+import { VendorsOfTheWeek } from "@/components/home/VendorsOfTheWeek";
 import { heroBanners, getHomeFeed, categories } from "@/lib/mock/feed";
 import { getNewArrivals } from "@/lib/mock/clothing";
 
-// Minimal SVG icons matching the mockup's fashion silhouettes
 const CategoryIcons: Record<string, React.ReactNode> = {
   DRESS: (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -37,15 +39,7 @@ const CategoryIcons: Record<string, React.ReactNode> = {
   ),
 };
 
-const featurePoints = [
-  { label: "Curated", sub: "Handpicked styles just for you" },
-  { label: "Timeless", sub: "Pieces that never go out of style" },
-  { label: "Quality", sub: "Premium materials, made to last" },
-  { label: "For You", sub: "Designed to fit your lifestyle" },
-];
-
 export default function HomePage() {
-  const banner = heroBanners[0];
   const newArrivals = getNewArrivals().slice(0, 6);
   const feed = getHomeFeed();
   const trending = feed.find((s) => s.id === "trending")?.items.slice(0, 6) ?? [];
@@ -53,230 +47,108 @@ export default function HomePage() {
   return (
     <main style={{ background: "var(--color-background)", minHeight: "100%" }}>
 
-      {/* ── Hero Banner ── */}
-      <section
-        style={{
-          position: "relative",
-          height: "clamp(380px, 65vw, 620px)",
-          overflow: "hidden",
-        }}
-      >
-        <Image
-          src={banner.image_url}
-          alt={banner.headline}
-          fill
-          style={{ objectFit: "cover", objectPosition: "center top" }}
-          priority
-          sizes="100vw"
-        />
-        {/* Gradient overlay */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(135deg, rgba(26,26,24,0.72) 0%, rgba(26,26,24,0.15) 65%)",
-          }}
-        />
-        {/* Text */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "flex-end",
-            padding: "clamp(var(--space-8), 5vw, var(--space-16))",
-            maxWidth: "560px",
-          }}
-        >
-          <p
-            className="display-medium"
-            style={{
-              color: "#FDFCF8",
-              marginBottom: "var(--space-3)",
-              lineHeight: 1.05,
-            }}
-          >
-            {banner.headline}
-          </p>
-          <p
-            className="body-large"
-            style={{
-              color: "rgba(253,252,248,0.8)",
-              marginBottom: "var(--space-6)",
-              maxWidth: "340px",
-            }}
-          >
-            {banner.subheadline}
-          </p>
-          <div>
-            <Link href={banner.cta_href}>
-              <Button variant="filled">{banner.cta_label}</Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* ── Hero ── */}
+      <HeroSlider banners={heroBanners} />
 
       <div className="content-inner" style={{ paddingInline: "var(--space-4)" }}>
 
         {/* ── Shop by Category ── */}
-        <section style={{ paddingTop: "var(--space-8)" }}>
-          <h2 className="title-large" style={{ marginBottom: "var(--space-5)", color: "var(--color-on-surface-variant)" }}>
-            Shop by Category
-          </h2>
-          <div
-            className="scrollbar-hide"
-            style={{
-              display: "flex",
-              gap: "var(--space-4)",
-              overflowX: "auto",
-              paddingBottom: "var(--space-2)",
-            }}
-          >
-            {categories.map((cat) => (
-              <CategoryIconChip
-                key={cat.id}
-                id={cat.id}
-                label={cat.label}
-                href={`/shop/${cat.id}`}
-                icon={CategoryIcons[cat.id]}
-              />
-            ))}
-          </div>
-        </section>
+        <FadeIn delay={0.05}>
+          <section style={{ paddingTop: "var(--space-10)" }}>
+            <h2
+              className="title-large"
+              style={{ marginBottom: "var(--space-5)", color: "var(--color-on-surface-variant)" }}
+            >
+              Shop by Category
+            </h2>
+            <div
+              className="scrollbar-hide"
+              style={{ display: "flex", gap: "var(--space-4)", overflowX: "auto", paddingBottom: "var(--space-2)" }}
+            >
+              {categories.map((cat) => (
+                <CategoryIconChip
+                  key={cat.id}
+                  id={cat.id}
+                  label={cat.label}
+                  href={`/shop/${cat.id}`}
+                  icon={CategoryIcons[cat.id]}
+                />
+              ))}
+            </div>
+          </section>
+        </FadeIn>
 
         {/* ── New In ── */}
-        <section style={{ paddingTop: "var(--space-10)" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "baseline",
-              justifyContent: "space-between",
-              marginBottom: "var(--space-5)",
-            }}
-          >
-            <h2 className="headline-large">New In</h2>
-            <Link
-              href="/shop/DRESS"
-              className="label-large"
-              style={{ color: "var(--color-primary)", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}
-            >
-              View all <ArrowRight size={14} strokeWidth={2} />
-            </Link>
-          </div>
-          <div className="product-grid">
-            {newArrivals.map((item) => (
-              <ProductCard key={item.id} item={item} />
-            ))}
-          </div>
-        </section>
-
-        {/* ── Trending Now ── */}
-        <section style={{ paddingTop: "var(--space-10)" }}>
-          <h2 className="headline-large" style={{ marginBottom: "var(--space-5)" }}>
-            Trending Now
-          </h2>
-          <div
-            className="scrollbar-hide"
-            style={{
-              display: "flex",
-              gap: "var(--space-3)",
-              overflowX: "auto",
-              paddingBottom: "var(--space-2)",
-              marginInline: "calc(-1 * var(--space-4))",
-              paddingInline: "var(--space-4)",
-            }}
-          >
-            {trending.map((item) => (
-              <div key={item.id} className="trending-card">
-                <ProductCard item={item} />
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── Editorial promo strip ── */}
-        <section style={{ paddingTop: "var(--space-10)" }}>
-          <div
-            style={{
-              position: "relative",
-              borderRadius: "var(--shape-lg)",
-              overflow: "hidden",
-              background: "var(--color-primary)",
-              padding: "var(--space-10) var(--space-8)",
-              display: "flex",
-              flexDirection: "column",
-              gap: "var(--space-4)",
-            }}
-          >
-            <p
-              className="display-small"
-              style={{ color: "var(--color-on-primary)", lineHeight: 1.05 }}
-            >
-              See it on you.
-              <br />
-              <em>Before you buy.</em>
-            </p>
-            <p className="body-large" style={{ color: "rgba(227,248,244,0.8)", maxWidth: "320px" }}>
-              Build your avatar and try on any look — from anywhere, on any phone.
-            </p>
-            <div>
-              <Link href="/avatar-builder">
-                <button
-                  style={{
-                    padding: "var(--space-3) var(--space-6)",
-                    borderRadius: "var(--shape-xl)",
-                    background: "var(--color-on-primary)",
-                    color: "var(--color-primary)",
-                    border: "none",
-                    cursor: "pointer",
-                    fontFamily: "var(--type-label-large-family)",
-                    fontSize: "var(--type-label-large-size)",
-                    fontWeight: 600,
-                    letterSpacing: "var(--type-label-large-tracking)",
-                  }}
-                >
-                  Build My Avatar
-                </button>
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Feature points ── */}
-        <section
-          style={{
-            paddingTop: "var(--space-10)",
-            paddingBottom: "var(--space-10)",
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: "var(--space-4)",
-          }}
-        >
-          {featurePoints.map(({ label, sub }) => (
+        <FadeIn delay={0.05}>
+          <section style={{ paddingTop: "var(--space-16)" }}>
             <div
-              key={label}
               style={{
-                padding: "var(--space-5) var(--space-4)",
-                background: "var(--color-surface)",
-                borderRadius: "var(--shape-md)",
-                boxShadow: "var(--elevation-1)",
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "space-between",
+                marginBottom: "var(--space-6)",
               }}
             >
-              <p
-                className="title-medium"
-                style={{ color: "var(--color-primary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "var(--space-1)" }}
+              <h2 className="headline-large">New In</h2>
+              <Link
+                href="/shop/DRESS"
+                className="label-large"
+                style={{ color: "var(--color-primary)", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}
               >
-                {label}
-              </p>
-              <p className="body-small" style={{ color: "var(--color-on-surface-variant)" }}>
-                {sub}
-              </p>
+                View all <ArrowRight size={14} strokeWidth={2} />
+              </Link>
             </div>
-          ))}
-        </section>
+            <div className="product-grid">
+              {newArrivals.map((item) => (
+                <ProductCard key={item.id} item={item} />
+              ))}
+            </div>
+          </section>
+        </FadeIn>
+
+        {/* ── Trending Now ── */}
+        <FadeIn>
+          <section style={{ paddingTop: "var(--space-16)" }}>
+            <h2 className="headline-large" style={{ marginBottom: "var(--space-6)" }}>
+              Trending Now
+            </h2>
+            <div
+              className="scrollbar-hide"
+              style={{
+                display: "flex",
+                gap: "var(--space-3)",
+                overflowX: "auto",
+                paddingBottom: "var(--space-2)",
+                marginInline: "calc(-1 * var(--space-4))",
+                paddingInline: "var(--space-4)",
+              }}
+            >
+              {trending.map((item) => (
+                <div key={item.id} className="trending-card">
+                  <ProductCard item={item} />
+                </div>
+              ))}
+            </div>
+          </section>
+        </FadeIn>
+
+        {/* ── Vendors of the Week ── */}
+        <div style={{ paddingTop: "var(--space-16)" }}>
+          <VendorsOfTheWeek />
+        </div>
 
       </div>
+
+      {/* ── Marquee strip (full-bleed) ── */}
+      <div style={{ marginTop: "var(--space-16)" }}>
+        <MarqueeStrip />
+      </div>
+
+      {/* ── Promo section + feature strip ── */}
+      <div className="content-inner" style={{ paddingInline: "var(--space-4)" }}>
+        <PromoSection />
+      </div>
+
     </main>
   );
 }

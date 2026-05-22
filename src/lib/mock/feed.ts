@@ -13,19 +13,19 @@ export type HeroBanner = {
 export const heroBanners: HeroBanner[] = [
   {
     id: "banner-001",
-    headline: "Timeless elegance.",
+    headline: "TIMELESS ELEGANCE",
     subheadline: "Discover the new season collection — curated for your style.",
-    cta_label: "Explore Now",
+    cta_label: "Shop New Arrivals",
     cta_href: "/shop/DRESS",
-    image_url: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=800&q=80",
+    image_url: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=1400&q=90",
   },
   {
     id: "banner-002",
-    headline: "Bold and proud.",
+    headline: "BOLD AND PROUD",
     subheadline: "Ankara prints. Contemporary silhouettes. Unapologetically you.",
-    cta_label: "Shop Ankara",
+    cta_label: "Shop the Look",
     cta_href: "/shop/DRESS",
-    image_url: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=800&q=80",
+    image_url: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=1400&q=90",
   },
 ];
 

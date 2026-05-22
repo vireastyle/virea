@@ -12,7 +12,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Tailwind CSS v4** — CSS-first config via `@theme inline` in `globals.css`. No `tailwind.config.ts`.
 - **Zustand v5** with `persist` middleware (localStorage)
 - **Framer Motion v12**, **Lucide React v1**
-- **Google Fonts** — loaded via CSS `@import` in `globals.css` (runtime); Cormorant Garamond (`--font-display`) + DM Sans (`--font-sans`) defined in `tokens.css`
+- **Google Fonts** — loaded via CSS `@import` in `globals.css` (runtime); Cormorant Garamond (`--font-display`) + DM Sans (`--font-sans`, weights 300–800) defined in `tokens.css`
 
 ## Design System
 - All tokens in `src/styles/tokens.css` (colors, spacing, shape, elevation, motion)
@@ -28,7 +28,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - `.topbar-*` — responsive TopBar slots (see Layout Architecture below)
   - `.shop-sidebar` — hidden mobile, 200px desktop (categories + filters on shop page)
   - `.product-detail-layout` — block mobile, 55/45 grid desktop
+  - `.promo-inner` / `.promo-text` / `.promo-image` — responsive promo banner (column mobile → row desktop)
+  - `.vendor-week-grid` — horizontal scroll mobile → 3-col desktop grid for Vendors of the Week
+  - `.footer-grid` — 1-col mobile → 2-col tablet → 5-col desktop footer layout
   - `--topbar-height` CSS var — `64px` mobile, `68px` desktop; use for `top:` on any `position:sticky` element
+  - `@keyframes marquee` — infinite `-50%` translateX; element must be 2× content wide for seamless loop
 
 ## Layout Architecture
 ### Shopper (main)
@@ -38,7 +42,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - TopBar layout: `[VIRÉA logo]` · `[Shop · Try On · Studio — nav links]` · `[Search · Wishlist · Cart · Profile]`
   - Uses `.topbar-*` CSS classes for responsive slot switching (`.topbar-logo-mobile/desktop`, `.topbar-nav-links`, `.topbar-search-mobile`, `.topbar-profile-link`)
 - `AppShell` wraps only `.app-content` div (Sidebar removed); used in `src/app/(main)/layout.tsx`
-- `(main)/layout.tsx` → `<ThemeProvider><TopBar /><AppShell>{children}</AppShell><BottomNav /><ToastContainer />`
+- `(main)/layout.tsx` → `<ThemeProvider><TopBar /><AppShell>{children}<Footer /></AppShell><BottomNav /><ToastContainer />`
 
 ### Vendor Portal (vendor)
 - Mobile: `VendorTopBar` (fixed, 56px) + `VendorDrawerNav` (slide-in from left)
@@ -82,7 +86,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | `src/styles/tokens.css` | All CSS custom property design tokens |
 | `src/app/globals.css` | Tailwind + token imports, typography classes, responsive layout classes (shopper + vendor shells) |
 | `src/lib/mock/clothing.ts` | 20 mock ClothingItem objects (brands, ₦ prices, Unsplash images) |
-| `src/lib/mock/feed.ts` | heroBanners, getHomeFeed(), categories array |
+| `src/lib/mock/feed.ts` | heroBanners (2 slides, uppercase headlines for stacked display), getHomeFeed(), categories array |
 | `src/lib/mock/orders.ts` | 3 mock orders (vendor-001, vendor-002, vendor-003) |
 | `src/lib/mock/pre-orders.ts` | 2 mock pre-orders |
 | `src/lib/mock/styling-requests.ts` | 3 mock styling requests (all for vendor-001) |
@@ -90,9 +94,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | `src/store/*.store.ts` | Zustand stores (see table above) |
 | `src/types/vendor.ts` | `Vendor`, `VendorProduct`, `VendorProductCategory`, `StylingRequest`, `EventType` |
 | `src/types/order.ts` | `Order`, `OrderStatus`, `PreOrder`, `PreOrderStatus`, `OrderItem` |
-| `src/components/ui/` | Button, BottomSheet, BackLink, EmptyState, SizeChip, ColourSwatch, Badge, Toast, SkeletonCard |
+| `src/components/ui/` | Button, BottomSheet, BackLink, EmptyState, SizeChip, ColourSwatch, Badge, Toast, SkeletonCard, **FadeIn** (whileInView scroll-reveal wrapper) |
 | `src/components/catalogue/` | ProductCard (white bg, objectFit:contain, brand label, Cormorant name, colour dots), CategoryIconChip |
-| `src/components/layout/` | TopBar (responsive: mobile compact / desktop full-nav), BottomNav, Sidebar (unused — kept for reference), AppShell (no Sidebar), PageShell, ThemeProvider, ServiceWorkerRegistrar |
+| `src/components/layout/` | TopBar, BottomNav, Sidebar (unused), AppShell, PageShell, ThemeProvider, ServiceWorkerRegistrar, **Footer** (dark footer — marquee + brand col + 4 link cols + email subscribe) |
+| `src/components/home/` | **HeroSlider** (client carousel — announcement bar, stacked bold DM Sans 800 headline, crossfade slides, prev/next arrows, dot indicators), **MarqueeStrip** (CSS marquee — dark strip, brand values), **PromoSection** (editorial dark banner + staggered feature strip), **VendorsOfTheWeek** (3-card editorial spotlight) |
 | `src/app/(main)/product/[id]/ProductGallery.tsx` | Client image carousel — prev/next arrows + thumbnail strip from colour variants |
 | `src/components/vendor/` | VendorShell, VendorSidebar, VendorTopBar, VendorDrawerNav, DashboardStats, VendorProductCard, ProductUploadForm, OrderInboxItem, PreOrderInboxItem, StylingRequestItem |
 | `src/components/orders/` | CheckoutModal, OrderStatusTracker, OrderCard |
@@ -182,14 +187,25 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - **Shop page sidebar** — `.shop-sidebar` CSS (hidden mobile, 200px desktop); categories list with active highlight + availability checkboxes sit to the left of the product grid on desktop
   - **Clothing image URLs** — all DRESS/TOP/OUTERWEAR mock images replaced with product-photography-style Unsplash shots (ghost mannequin / flat-lay, no people); BAG/SHOES already were product shots
 
+- [x] Phase 16 — Home Page Elevation & Footer
+  - **`HeroSlider`** (`src/components/home/HeroSlider.tsx`) — full client carousel replacing the static hero; dismissible announcement bar, crossfade background image transition, per-word stacked `AnimatePresence` text entry, DM Sans 800 headline at `clamp(72px, 14vw, 190px)`, dual CTAs (white pill + underlined text link), prev/next arrow buttons, animated dot indicators
+  - **`FadeIn`** (`src/components/ui/FadeIn.tsx`) — reusable Framer Motion `whileInView` scroll-reveal wrapper (opacity 0→1, y 28→0, `once: true`); used on every home page section
+  - **`MarqueeStrip`** (`src/components/home/MarqueeStrip.tsx`) — full-bleed dark strip scrolling brand values (CURATED · TIMELESS · QUALITY · FOR YOU · MADE IN AFRICA · DRESS BOLD · TRY ON FREE · NEW SEASON); uses `@keyframes marquee` with duplicate content for seamless loop
+  - **`PromoSection`** (`src/components/home/PromoSection.tsx`) — replaces the old editorial promo + boring 2×2 feature grid; deep viridian gradient banner (`#0A1F1E → #174542`), stacked bold display headline, fashion photo with left-edge gradient fade, gold circle badge, gold CTA button, staggered 4-card feature strip below
+  - **`VendorsOfTheWeek`** (`src/components/home/VendorsOfTheWeek.tsx`) — editorial 3-card vendor spotlight between Trending Now and the marquee; portrait `2/3` aspect ratio images with scale-on-hover, no card border (Fashion Insider–style), staggered entrance animation, "Shop Store →" link with letter-spacing hover
+  - **`Footer`** (`src/components/layout/Footer.tsx`) — dark `#111310` footer; ghost-opacity marquee watermark ("FAVOURITE STYLES AT UNMISSABLE PRICES"), brand col + email subscribe form, 4 link columns (Quick Links / Collections / Legal / Follow Us), copyright bar + "Sell on Virea →" link; all hover states in gold `#C7A760`
+  - **`mockVendors`** updated — all 4 vendors now have `cover_image_url` (Unsplash editorial/lifestyle shots)
+  - **Hero banner copy** updated — uppercase 2–3 word headlines ("TIMELESS ELEGANCE", "BOLD AND PROUD") designed for per-word stacked display
+  - **Section spacing** bumped — `--space-10` (40px) → `--space-16` (64px) between all home page sections (New In, Trending Now, Vendors of the Week, Marquee)
+
 ## Up Next
-- [ ] **Phase 16** — Backend Core (Express + Prisma + JWT auth)
+- [ ] **Phase 17** — Backend Core (Express + Prisma + JWT auth)
 
 ## Backend (after all frontend phases are complete)
-- [ ] Phase 16 — Backend Core (Express + Prisma + JWT auth)
-- [ ] Phase 17 — Orders, Pre-Orders, Styling Requests + Flutterwave split payments
-- [ ] Phase 18 — Background Jobs (BullMQ + Redis — notifications, payment verify fallback)
-- [ ] Phase 19 — Frontend-Backend Wiring (swap mock data for React Query hooks)
+- [ ] Phase 17 — Backend Core (Express + Prisma + JWT auth)
+- [ ] Phase 18 — Orders, Pre-Orders, Styling Requests + Flutterwave split payments
+- [ ] Phase 19 — Background Jobs (BullMQ + Redis — notifications, payment verify fallback)
+- [ ] Phase 20 — Frontend-Backend Wiring (swap mock data for React Query hooks)
 
 ## Gotchas
 - `next/image` requires `images.remotePatterns` in `next.config.ts` for Unsplash — already configured
@@ -203,3 +219,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Hover states use JS, not CSS** — all components use inline styles, so CSS `:hover` rules cannot reliably override them. Always wire `onMouseEnter`/`onMouseLeave` directly on elements and mutate `e.currentTarget.style.*`. Never rely on CSS class hover rules for interactive feedback on inline-styled elements.
 - **`BottomSheet` render prop** — accepts `children: ReactNode | ((close: () => void) => ReactNode)`. Pass a function child when action buttons inside the sheet need to trigger the animated close sequence (e.g. `CheckoutModal`, `QuoteReviewModal`).
 - **`Button` filled variant mouseLeave** — never clear `el.style.background` on leave for `filled` buttons. Only `boxShadow` and `transform` are set on enter; clearing background removes React's inline primary color and makes the button transparent until next render.
+- **`next/image fill` inside `AnimatePresence`** — `motion.div` with `position: absolute` is NOT a valid fill parent. Always wrap the `<Image fill>` in an inner `<div style={{ position: "relative", width: "100%", height: "100%" }}>` inside the motion wrapper. Skipping this causes the image to render only as broken alt text.
+- **Marquee seamless loop** — render the content twice side-by-side (not via CSS `content`) then animate `translateX(0) → translateX(-50%)`. Single-copy marquee will jump at the end of each cycle.
+- **DM Sans 800** — loaded in the Google Fonts `@import` (`0,9..40,800`). Use `fontFamily: "var(--font-sans)", fontWeight: 800` for hero-scale impact headlines. Cormorant tops out at 600; use DM Sans for maximum visual weight.

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,300;1,9..40,400&display=swap");
 @import "tailwindcss";
 @import "../styles/tokens.css";
 
@@ -154,6 +154,75 @@ select:focus-visible {
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Seamless marquee — element must be 2× content wide, animation shifts -50% */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ── Promo section responsive layout ── */
+.promo-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.promo-image {
+  position: relative;
+  height: 280px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 900px) {
+  .promo-inner {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .promo-text {
+    flex: 0 0 55%;
+  }
+
+  .promo-image {
+    flex: 1;
+    height: auto;
+  }
+}
+
+/* ── Vendors of the Week — desktop static 3-col ── */
+@media (min-width: 900px) {
+  .vendor-week-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    overflow-x: visible !important;
+    margin-inline: 0 !important;
+    padding-inline: 0 !important;
+  }
+}
+
+/* ── Footer responsive grid ── */
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-10);
+  padding: var(--space-12) var(--space-6);
+}
+
+@media (min-width: 640px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 900px) {
+  .footer-grid {
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: var(--space-16) var(--space-8);
+  }
 }
 
 /* ── Scrollbar hide utility ── */
