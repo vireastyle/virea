@@ -18,9 +18,12 @@ export type HeightRange = "petite" | "average" | "tall";
 
 export type SizeRange = "XS-S" | "M-L" | "XL-XXL";
 
+export type AvatarGender = "female" | "male";
+
 export type Avatar = {
   id: string;
   user_id: string;
+  gender: AvatarGender;
   body_shape: BodyShape;
   skin_tone: SkinTone;
   hair_style: HairStyle;

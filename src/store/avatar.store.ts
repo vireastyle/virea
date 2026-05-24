@@ -2,13 +2,14 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { Avatar, BodyShape, SkinTone, HairStyle, HairColour, HeightRange, SizeRange } from "@/types/avatar";
+import type { Avatar, AvatarGender, BodyShape, SkinTone, HairStyle, HairColour, HeightRange, SizeRange } from "@/types/avatar";
 import { mockAvatar } from "@/lib/mock/user";
 
 type AvatarState = {
   avatar: Avatar | null;
   isComplete: boolean;
   setAvatar: (avatar: Avatar) => void;
+  updateGender: (gender: AvatarGender) => void;
   updateBodyShape: (shape: BodyShape) => void;
   updateSkinTone: (tone: SkinTone) => void;
   updateHairStyle: (style: HairStyle) => void;
@@ -25,6 +26,11 @@ export const useAvatarStore = create<AvatarState>()(
       isComplete: false,
 
       setAvatar: (avatar) => set({ avatar, isComplete: true }),
+
+      updateGender: (gender) => {
+        const current = get().avatar ?? { ...mockAvatar, id: "avatar-draft", user_id: "" };
+        set({ avatar: { ...current, gender, updated_at: new Date().toISOString() } });
+      },
 
       updateBodyShape: (body_shape) => {
         const current = get().avatar ?? { ...mockAvatar, id: "avatar-draft", user_id: "" };

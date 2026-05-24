@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ChevronRight, Heart, User, Moon, Sun, LogOut, Package, Sparkles, Store } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
+import { SelfieUploadSection } from "@/components/profile/SelfieUploadSection";
 import { useAuthStore } from "@/store/auth.store";
 import { useUIStore } from "@/store/ui.store";
 import { useWishlistStore } from "@/store/wishlist.store";
@@ -145,6 +146,9 @@ export default function ProfilePage() {
             </Link>
           ))}
         </div>
+
+        {/* AI Try-On Photo */}
+        <SelfieUploadSection />
 
         {/* Menu items */}
         <div

@@ -26,6 +26,7 @@ export const mockUser: User = {
 export const mockAvatar: Avatar = {
   id: "avatar-001",
   user_id: "user-001",
+  gender: "female",
   body_shape: "hourglass",
   skin_tone: { id: "st-5", label: "Mocha", hex: "#8D5524" },
   hair_style: "natural-coils",

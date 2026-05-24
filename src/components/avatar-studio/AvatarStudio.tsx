@@ -11,6 +11,7 @@ import { useCartStore } from "@/store/cart.store";
 import { useStylingRequestsStore } from "@/store/styling-requests.store";
 import { useUIStore } from "@/store/ui.store";
 import { Button } from "@/components/ui/Button";
+import { AvatarSVG } from "@/components/ui/AvatarSVG";
 import { ColourSwitcher } from "@/components/try-on/ColourSwitcher";
 import { ItemLayerCard } from "./ItemLayerCard";
 import { LayerPanel } from "./LayerPanel";
@@ -18,9 +19,9 @@ import { SendToVendorModal } from "./SendToVendorModal";
 
 export function AvatarStudio() {
   const {
-    canvasRef,
-    canvasWidth,
-    canvasHeight,
+    svgRef,
+    avatar,
+    clothingLayers,
     layers,
     addLayer,
     removeLayer,
@@ -88,11 +89,11 @@ export function AvatarStudio() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
-      {/* Canvas */}
+      {/* SVG Avatar */}
       <div
         style={{
           width: "100%",
-          maxWidth: `${canvasWidth}px`,
+          maxWidth: "400px",
           margin: "0 auto",
           borderRadius: "var(--shape-lg)",
           overflow: "hidden",
@@ -100,12 +101,15 @@ export function AvatarStudio() {
           boxShadow: "var(--elevation-2)",
         }}
       >
-        <canvas
-          ref={canvasRef}
-          width={canvasWidth}
-          height={canvasHeight}
-          style={{ display: "block", width: "100%", height: "auto" }}
-          aria-label="Avatar studio canvas"
+        <AvatarSVG
+          ref={svgRef}
+          gender={avatar?.gender ?? "female"}
+          bodyShape={avatar?.body_shape ?? "hourglass"}
+          skinToneHex={avatar?.skin_tone.hex ?? "#8D5524"}
+          hairStyle={avatar?.hair_style ?? "natural-coils"}
+          hairColourHex={avatar?.hair_colour.hex ?? "#0D0D0D"}
+          clothing={clothingLayers}
+          width="100%"
         />
       </div>
 
