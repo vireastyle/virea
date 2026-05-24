@@ -2,77 +2,114 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
-import { Sparkles, Camera, User } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Sparkles, Camera, User, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { ClothingItem, Colour } from "@/types/clothing";
 import type { OutfitItem } from "@/types/outfit";
-import { ColourSwitcher } from "./ColourSwitcher";
-import { TryOnActionBar } from "./TryOnActionBar";
-import { AiTryOnPanel } from "./AiTryOnPanel";
-import { AvatarSVG } from "@/components/ui/AvatarSVG";
-import { useFashnTryOn } from "@/hooks/useFashnTryOn";
-import { useTryOn } from "@/hooks/useTryOn";
+import { ColourSwitcher }  from "./ColourSwitcher";
+import { TryOnActionBar }  from "./TryOnActionBar";
+import { AiTryOnPanel }    from "./AiTryOnPanel";
+import { useFashnTryOn }   from "@/hooks/useFashnTryOn";
+import { useAvatarTryOn }  from "@/hooks/useAvatarTryOn";
+import { useAvatarStore }  from "@/store/avatar.store";
 import { useWishlistStore } from "@/store/wishlist.store";
-import { useCartStore } from "@/store/cart.store";
+import { useCartStore }    from "@/store/cart.store";
 import { useOutfitsStore } from "@/store/outfits.store";
-import { useUIStore } from "@/store/ui.store";
-import { motionTokens } from "@/lib/motionTokens";
+import { useUIStore }      from "@/store/ui.store";
+import { motionTokens }    from "@/lib/motionTokens";
 
 type TryOnMode = "avatar" | "real";
 
 type Props = {
-  initialItem: ClothingItem;
+  initialItem:   ClothingItem;
   initialColour: Colour;
 };
 
 export function TryOnView({ initialItem, initialColour }: Props) {
-  const [mode, setMode]                   = useState<TryOnMode>("avatar");
+  const [mode, setMode]                     = useState<TryOnMode>("avatar");
   const [selectedColour, setSelectedColour] = useState<Colour>(initialColour);
 
-  // ── Avatar mode ────────────────────────────────────────────────────────────
-  const { svgRef, avatar, clothingLayers, addLayer, exportSnapshot } = useTryOn();
+  // ── Avatar mode (FLUX-generated photo + IDM-VTON) ─────────────────────────
+  const avatar = useAvatarStore((s) => s.avatar);
+  const {
+    hasAvatarPhoto,
+    avatarPhotoUrl,
+    status:    avatarStatus,
+    resultUrl: avatarResultUrl,
+    error:     avatarError,
+    generate:  avatarGenerate,
+    reset:     avatarReset,
+    saveAvatarPhoto,
+    isAiSupported: avatarAiSupported,
+  } = useAvatarTryOn();
 
-  // Keep the current item in sync with the avatar layer whenever colour changes
-  useEffect(() => {
-    addLayer(initialItem, selectedColour);
-  }, [initialItem, selectedColour, addLayer]);
+  // Inline avatar photo generation state (when user hasn't generated yet)
+  const [generatingPhoto,    setGeneratingPhoto]    = useState(false);
+  const [photoGenError,      setPhotoGenError]      = useState<string | null>(null);
 
-  // ── AI / Real Photo mode ───────────────────────────────────────────────────
+  const generateAvatarPhoto = useCallback(async () => {
+    if (!avatar) return;
+    setGeneratingPhoto(true);
+    setPhotoGenError(null);
+    try {
+      const res = await fetch("/api/generate-avatar", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gender:      avatar.gender,
+          bodyShape:   avatar.body_shape,
+          skinToneHex: avatar.skin_tone.hex,
+          heightRange: avatar.height_range,
+        }),
+      });
+      const data = await res.json() as { avatarUrl?: string; error?: string };
+      if (!res.ok || !data.avatarUrl) throw new Error(data.error ?? "Generation failed.");
+      saveAvatarPhoto(data.avatarUrl);
+    } catch (err) {
+      setPhotoGenError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setGeneratingPhoto(false);
+    }
+  }, [avatar, saveAvatarPhoto]);
+
+  // ── Real Photo mode (selfie + IDM-VTON) ───────────────────────────────────
   const {
     hasSelfie,
-    status:    aiStatus,
-    resultUrl: aiResultUrl,
-    error:     aiError,
-    generate,
-    reset:     resetAi,
-    isAiSupported,
+    status:    realStatus,
+    resultUrl: realResultUrl,
+    error:     realError,
+    generate:  realGenerate,
+    reset:     realReset,
+    isAiSupported: realAiSupported,
   } = useFashnTryOn();
 
+  // ── Shared ─────────────────────────────────────────────────────────────────
   const { toggle: toggleWishlist, has: isWished } = useWishlistStore();
   const { add: addToCart }                         = useCartStore();
   const { save: saveOutfit }                       = useOutfitsStore();
   const { addToast }                               = useUIStore();
 
-  const aiSupported = isAiSupported(initialItem.category);
+  const aiSupported =
+    mode === "avatar"
+      ? avatarAiSupported(initialItem.category)
+      : realAiSupported(initialItem.category);
 
   const garmentUrl =
     initialItem.image_urls[selectedColour.name] ??
     Object.values(initialItem.image_urls)[0] ?? "";
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
   const handleColourSwap = (colour: Colour) => {
     setSelectedColour(colour);
-    if (aiStatus !== "idle") resetAi();
+    avatarReset();
+    realReset();
   };
 
   const handleModeSwitch = (next: TryOnMode) => {
     setMode(next);
-    if (next === "avatar") resetAi(); // clear AI result when switching back
-  };
-
-  const handleGenerate = () => {
-    generate(garmentUrl, initialItem.category);
+    avatarReset();
+    realReset();
+    setPhotoGenError(null);
   };
 
   const handleAddToBag = () => {
@@ -82,11 +119,9 @@ export function TryOnView({ initialItem, initialColour }: Props) {
 
   const handleSaveLook = () => {
     const snapshot =
-      mode === "real" && aiResultUrl
-        ? aiResultUrl
-        : mode === "avatar"
-        ? exportSnapshot()
-        : garmentUrl;
+      mode === "avatar" && avatarResultUrl ? avatarResultUrl
+      : mode === "real"  && realResultUrl  ? realResultUrl
+      : garmentUrl;
 
     const outfitItems: OutfitItem[] = [{
       id:              `oi-${initialItem.id}-${Date.now()}`,
@@ -98,15 +133,11 @@ export function TryOnView({ initialItem, initialColour }: Props) {
     addToast("Look saved!");
   };
 
-  const showAiResult  = mode === "real" && aiStatus === "success" && !!aiResultUrl;
-  const showAiLoading = mode === "real" && aiStatus === "loading";
-
-  // Avatar properties — fall back to defaults so the avatar always renders
-  const gender      = avatar?.gender           ?? "female";
-  const bodyShape   = avatar?.body_shape        ?? "hourglass";
-  const skinToneHex = avatar?.skin_tone.hex     ?? "#8D5524";
-  const hairStyle   = avatar?.hair_style        ?? "natural-coils";
-  const hairHex     = avatar?.hair_colour.hex   ?? "#0D0D0D";
+  // Derived booleans
+  const avatarShowResult  = mode === "avatar" && avatarStatus === "success" && !!avatarResultUrl;
+  const avatarShowLoading = mode === "avatar" && avatarStatus === "loading";
+  const realShowResult    = mode === "real"   && realStatus   === "success" && !!realResultUrl;
+  const realShowLoading   = mode === "real"   && realStatus   === "loading";
 
   return (
     <div>
@@ -161,72 +192,58 @@ export function TryOnView({ initialItem, initialColour }: Props) {
           borderRadius: "var(--shape-lg)",
           overflow:     "hidden",
           position:     "relative",
-          background:   mode === "avatar"
-            ? "var(--color-surface)"
-            : "var(--color-surface-variant)",
+          background:   "var(--color-surface-variant)",
           boxShadow:    "var(--elevation-2)",
           aspectRatio:  "3 / 4",
-          transition:   `background var(--duration-standard) var(--easing-standard)`,
         }}
       >
         <AnimatePresence mode="wait">
+
           {/* ── Avatar panel ─────────────────────────────────────────────── */}
           {mode === "avatar" && (
             <motion.div
-              key="avatar"
+              key="avatar-panel"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: motionTokens.duration.standard }}
-              style={{
-                position:       "absolute",
-                inset:          0,
-                display:        "flex",
-                alignItems:     "center",
-                justifyContent: "center",
-              }}
+              style={{ position: "absolute", inset: 0 }}
             >
-              <AvatarSVG
-                ref={svgRef}
-                gender={gender}
-                bodyShape={bodyShape}
-                skinToneHex={skinToneHex}
-                hairStyle={hairStyle}
-                hairColourHex={hairHex}
-                clothing={clothingLayers}
-                width="100%"
-                style={{ maxHeight: "100%" }}
-              />
-
-              {/* Personalise nudge — only if user hasn't built their avatar */}
-              {!avatar && (
-                <div
-                  style={{
-                    position:       "absolute",
-                    bottom:         "var(--space-4)",
-                    left:           "50%",
-                    transform:      "translateX(-50%)",
-                    background:     "rgba(246,241,235,0.92)",
-                    backdropFilter: "blur(8px)",
-                    WebkitBackdropFilter: "blur(8px)",
-                    borderRadius:   "var(--shape-full)",
-                    padding:        "6px var(--space-4)",
-                    whiteSpace:     "nowrap",
-                  }}
-                >
-                  <Link
-                    href="/avatar-builder"
-                    style={{
-                      color:          "var(--color-primary)",
-                      textDecoration: "none",
-                      fontFamily:     "var(--type-label-medium-family)",
-                      fontSize:       "var(--type-label-medium-size)",
-                      fontWeight:     "var(--type-label-medium-weight)",
-                    }}
-                  >
-                    Personalise your avatar →
-                  </Link>
+              {/* Show avatar photo when available, garment image as fallback */}
+              {avatarPhotoUrl && !avatarShowResult ? (
+                <div style={{ position: "relative", width: "100%", height: "100%" }}>
+                  <Image
+                    src={avatarPhotoUrl}
+                    alt="Your avatar"
+                    fill
+                    sizes="(max-width: 900px) 100vw, 420px"
+                    style={{ objectFit: "cover" }}
+                  />
                 </div>
+              ) : !avatarShowResult && !avatarShowLoading ? (
+                /* No avatar photo yet — show garment as placeholder */
+                <div style={{ position: "relative", width: "100%", height: "100%" }}>
+                  <Image
+                    src={garmentUrl}
+                    alt={initialItem.name}
+                    fill
+                    priority
+                    sizes="(max-width: 900px) 100vw, 420px"
+                    style={{ objectFit: "contain", padding: "12px" }}
+                  />
+                </div>
+              ) : null}
+
+              {/* Loading overlay */}
+              {avatarShowLoading && <AiTryOnPanel status="loading" />}
+
+              {/* Try-on result */}
+              {avatarShowResult && avatarResultUrl && (
+                <AiTryOnPanel
+                  status="success"
+                  resultUrl={avatarResultUrl}
+                  onReset={avatarReset}
+                />
               )}
             </motion.div>
           )}
@@ -234,15 +251,14 @@ export function TryOnView({ initialItem, initialColour }: Props) {
           {/* ── Real Photo panel ─────────────────────────────────────────── */}
           {mode === "real" && (
             <motion.div
-              key="real"
+              key="real-panel"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: motionTokens.duration.standard }}
               style={{ position: "absolute", inset: 0 }}
             >
-              {/* Product image — shown until AI result arrives */}
-              {!showAiResult && (
+              {!realShowResult && (
                 <div style={{ position: "relative", width: "100%", height: "100%" }}>
                   <Image
                     src={garmentUrl}
@@ -254,36 +270,66 @@ export function TryOnView({ initialItem, initialColour }: Props) {
                   />
                 </div>
               )}
-
-              {/* Loading overlay */}
-              {showAiLoading && <AiTryOnPanel status="loading" />}
-
-              {/* AI result */}
-              {showAiResult && aiResultUrl && (
-                <AiTryOnPanel status="success" resultUrl={aiResultUrl} onReset={resetAi} />
+              {realShowLoading && <AiTryOnPanel status="loading" />}
+              {realShowResult && realResultUrl && (
+                <AiTryOnPanel
+                  status="success"
+                  resultUrl={realResultUrl}
+                  onReset={realReset}
+                />
               )}
             </motion.div>
           )}
+
         </AnimatePresence>
       </div>
 
-      {/* ── Real Photo CTA ───────────────────────────────────────────────────── */}
-      <AnimatePresence>
-        {mode === "real" && aiSupported && (
+      {/* ── CTA area ─────────────────────────────────────────────────────────── */}
+      <AnimatePresence mode="wait">
+
+        {/* Avatar CTA */}
+        {mode === "avatar" && (
           <motion.div
-            key="ai-cta"
+            key="avatar-cta"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: motionTokens.duration.standard, ease: motionTokens.easing.decelerate }}
             style={{ marginTop: "var(--space-4)" }}
           >
-            {hasSelfie ? (
-              <>
+            {/* Case A: no avatar built at all */}
+            {!avatar && (
+              <Link
+                href="/avatar-builder"
+                style={{
+                  display:        "flex",
+                  alignItems:     "center",
+                  justifyContent: "center",
+                  gap:            "var(--space-2)",
+                  width:          "100%",
+                  height:         "52px",
+                  borderRadius:   "var(--shape-full)",
+                  border:         "1.5px dashed var(--color-outline-variant)",
+                  background:     "var(--color-surface-variant)",
+                  color:          "var(--color-on-surface-variant)",
+                  textDecoration: "none",
+                  fontFamily:     "var(--type-label-large-family)",
+                  fontSize:       "var(--type-label-large-size)",
+                  fontWeight:     "var(--type-label-large-weight)",
+                }}
+              >
+                <User size={18} strokeWidth={1.8} />
+                Set up your avatar first
+              </Link>
+            )}
+
+            {/* Case B: avatar built, but no photo generated yet */}
+            {avatar && !hasAvatarPhoto && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
                 <motion.button
-                  onClick={handleGenerate}
-                  disabled={aiStatus === "loading"}
-                  whileTap={aiStatus !== "loading" ? { scale: 0.97 } : {}}
+                  onClick={generateAvatarPhoto}
+                  disabled={generatingPhoto}
+                  whileTap={!generatingPhoto ? { scale: 0.97 } : {}}
                   transition={{ duration: motionTokens.duration.fast }}
                   style={{
                     width:          "100%",
@@ -294,30 +340,184 @@ export function TryOnView({ initialItem, initialColour }: Props) {
                     gap:            "var(--space-2)",
                     borderRadius:   "var(--shape-full)",
                     border:         "none",
-                    background:     aiStatus === "success"
+                    background:     "var(--color-primary)",
+                    color:          "var(--color-on-primary)",
+                    fontFamily:     "var(--type-label-large-family)",
+                    fontSize:       "var(--type-label-large-size)",
+                    fontWeight:     "var(--type-label-large-weight)",
+                    cursor:         generatingPhoto ? "not-allowed" : "pointer",
+                    opacity:        generatingPhoto ? 0.7 : 1,
+                    boxShadow:      "var(--elevation-2)",
+                  }}
+                >
+                  <Sparkles size={18} strokeWidth={1.8} />
+                  {generatingPhoto ? "Generating your avatar…" : "Generate avatar photo"}
+                </motion.button>
+
+                {photoGenError && (
+                  <p style={{
+                    fontFamily: "var(--type-body-small-family)",
+                    fontSize:   "var(--type-body-small-size)",
+                    color:      "var(--color-error)",
+                    textAlign:  "center",
+                  }}>
+                    {photoGenError}
+                  </p>
+                )}
+
+                <p style={{
+                  fontFamily: "var(--type-body-small-family)",
+                  fontSize:   "var(--type-body-small-size)",
+                  color:      "var(--color-on-surface-variant)",
+                  textAlign:  "center",
+                }}>
+                  Creates a realistic photo based on your body profile. Takes ~10 seconds.
+                </p>
+              </div>
+            )}
+
+            {/* Case C: has avatar photo — show try-on CTA */}
+            {avatar && hasAvatarPhoto && aiSupported && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
+                <motion.button
+                  onClick={() => avatarGenerate(garmentUrl, initialItem.category)}
+                  disabled={avatarStatus === "loading"}
+                  whileTap={avatarStatus !== "loading" ? { scale: 0.97 } : {}}
+                  transition={{ duration: motionTokens.duration.fast }}
+                  style={{
+                    width:          "100%",
+                    height:         "52px",
+                    display:        "flex",
+                    alignItems:     "center",
+                    justifyContent: "center",
+                    gap:            "var(--space-2)",
+                    borderRadius:   "var(--shape-full)",
+                    border:         "none",
+                    background:     avatarStatus === "success"
                       ? "var(--color-primary-container)"
                       : "var(--color-primary)",
-                    color:          aiStatus === "success"
+                    color:          avatarStatus === "success"
                       ? "var(--color-on-primary-container)"
                       : "var(--color-on-primary)",
                     fontFamily:     "var(--type-label-large-family)",
                     fontSize:       "var(--type-label-large-size)",
                     fontWeight:     "var(--type-label-large-weight)",
-                    cursor:         aiStatus === "loading" ? "not-allowed" : "pointer",
-                    opacity:        aiStatus === "loading" ? 0.7 : 1,
-                    boxShadow:      aiStatus === "success" ? "none" : "var(--elevation-2)",
+                    cursor:         avatarStatus === "loading" ? "not-allowed" : "pointer",
+                    opacity:        avatarStatus === "loading" ? 0.7 : 1,
+                    boxShadow:      avatarStatus === "success" ? "none" : "var(--elevation-2)",
                     transition:     `background var(--duration-standard) var(--easing-standard),
                                      color var(--duration-standard) var(--easing-standard)`,
                   }}
                 >
                   <Sparkles size={18} strokeWidth={1.8} />
-                  {aiStatus === "idle"    && "See it on you"}
-                  {aiStatus === "loading" && "Generating…"}
-                  {aiStatus === "success" && "Try another look"}
-                  {aiStatus === "error"   && "Try again"}
+                  {avatarStatus === "idle"    && "See it on your avatar"}
+                  {avatarStatus === "loading" && "Generating…"}
+                  {avatarStatus === "success" && "Try another look"}
+                  {avatarStatus === "error"   && "Try again"}
                 </motion.button>
 
-                {aiStatus === "error" && aiError && (
+                {/* Regenerate avatar photo option */}
+                <button
+                  onClick={generateAvatarPhoto}
+                  disabled={generatingPhoto}
+                  style={{
+                    background:     "transparent",
+                    border:         "none",
+                    cursor:         generatingPhoto ? "not-allowed" : "pointer",
+                    display:        "flex",
+                    alignItems:     "center",
+                    justifyContent: "center",
+                    gap:            "var(--space-1)",
+                    color:          "var(--color-on-surface-variant)",
+                    fontFamily:     "var(--type-label-small-family)",
+                    fontSize:       "var(--type-label-small-size)",
+                    fontWeight:     "var(--type-label-small-weight)",
+                    opacity:        generatingPhoto ? 0.5 : 1,
+                    padding:        "var(--space-1) 0",
+                  }}
+                >
+                  <RefreshCw size={12} strokeWidth={2} />
+                  {generatingPhoto ? "Regenerating…" : "Regenerate avatar photo"}
+                </button>
+
+                {(avatarStatus === "error" && avatarError) && (
+                  <p style={{
+                    fontFamily: "var(--type-body-small-family)",
+                    fontSize:   "var(--type-body-small-size)",
+                    color:      "var(--color-error)",
+                    textAlign:  "center",
+                  }}>
+                    {avatarError}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Unsupported category in avatar mode */}
+            {avatar && hasAvatarPhoto && !aiSupported && (
+              <p style={{
+                fontFamily: "var(--type-body-small-family)",
+                fontSize:   "var(--type-body-small-size)",
+                color:      "var(--color-on-surface-variant)",
+                textAlign:  "center",
+                padding:    "var(--space-3) 0",
+              }}>
+                Avatar try-on is available for tops, dresses, and outerwear.
+              </p>
+            )}
+          </motion.div>
+        )}
+
+        {/* Real Photo CTA */}
+        {mode === "real" && aiSupported && (
+          <motion.div
+            key="real-cta"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: motionTokens.duration.standard, ease: motionTokens.easing.decelerate }}
+            style={{ marginTop: "var(--space-4)" }}
+          >
+            {hasSelfie ? (
+              <>
+                <motion.button
+                  onClick={() => realGenerate(garmentUrl, initialItem.category)}
+                  disabled={realStatus === "loading"}
+                  whileTap={realStatus !== "loading" ? { scale: 0.97 } : {}}
+                  transition={{ duration: motionTokens.duration.fast }}
+                  style={{
+                    width:          "100%",
+                    height:         "52px",
+                    display:        "flex",
+                    alignItems:     "center",
+                    justifyContent: "center",
+                    gap:            "var(--space-2)",
+                    borderRadius:   "var(--shape-full)",
+                    border:         "none",
+                    background:     realStatus === "success"
+                      ? "var(--color-primary-container)"
+                      : "var(--color-primary)",
+                    color:          realStatus === "success"
+                      ? "var(--color-on-primary-container)"
+                      : "var(--color-on-primary)",
+                    fontFamily:     "var(--type-label-large-family)",
+                    fontSize:       "var(--type-label-large-size)",
+                    fontWeight:     "var(--type-label-large-weight)",
+                    cursor:         realStatus === "loading" ? "not-allowed" : "pointer",
+                    opacity:        realStatus === "loading" ? 0.7 : 1,
+                    boxShadow:      realStatus === "success" ? "none" : "var(--elevation-2)",
+                    transition:     `background var(--duration-standard) var(--easing-standard),
+                                     color var(--duration-standard) var(--easing-standard)`,
+                  }}
+                >
+                  <Sparkles size={18} strokeWidth={1.8} />
+                  {realStatus === "idle"    && "See it on you"}
+                  {realStatus === "loading" && "Generating…"}
+                  {realStatus === "success" && "Try another look"}
+                  {realStatus === "error"   && "Try again"}
+                </motion.button>
+
+                {realStatus === "error" && realError && (
                   <p style={{
                     fontFamily: "var(--type-body-small-family)",
                     fontSize:   "var(--type-body-small-size)",
@@ -325,12 +525,11 @@ export function TryOnView({ initialItem, initialColour }: Props) {
                     textAlign:  "center",
                     marginTop:  "var(--space-2)",
                   }}>
-                    {aiError}
+                    {realError}
                   </p>
                 )}
               </>
             ) : (
-              /* No selfie — invite them to upload */
               <Link
                 href="/profile"
                 style={{
@@ -356,6 +555,7 @@ export function TryOnView({ initialItem, initialColour }: Props) {
             )}
           </motion.div>
         )}
+
       </AnimatePresence>
 
       {/* ── Colour + Actions ─────────────────────────────────────────────────── */}
