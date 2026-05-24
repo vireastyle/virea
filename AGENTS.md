@@ -70,7 +70,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | Store | Persist key | Contents |
 |-------|-------------|----------|
 | `auth.store.ts` | `virea:session` | user session |
-| `avatar.store.ts` | `virea:avatar` | avatar layers |
+| `avatar.store.ts` | `virea:avatar` | avatar params (gender, body shape, skin tone, hair, size) |
 | `wishlist.store.ts` | `virea:wishlist` | saved items |
 | `cart.store.ts` | `virea:cart` | cart items + count |
 | `ui.store.ts` | `virea:theme` | theme + `addToast()` |
@@ -80,11 +80,32 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 > **Toast**: always use `useUIStore(s => s.addToast)(message, type)` — there is NO separate `useToastStore`
 
+## localStorage Keys (outside Zustand)
+| Key | Value | Set by |
+|-----|-------|--------|
+| `virea_user_selfie` | base64 data URI (JPEG, compressed to 768px) | Profile selfie upload |
+| `virea_avatar_photo` | URL string (Replicate CDN webp) | Avatar builder + inline generation on try-on page |
+
+## AI Try-On Architecture
+Two modes on `/try-on`, both powered by **Replicate IDM-VTON** (`cuuupid/idm-vton`):
+
+| Mode | Person image source | Input type |
+|------|---------------------|------------|
+| **Avatar** | FLUX.1-generated photo stored as `virea_avatar_photo` | `personImageUrl` (URL) |
+| **Real Photo** | User's selfie stored as `virea_user_selfie` | `personImageB64` (base64) |
+
+**`/api/tryon`** accepts either `personImageUrl` OR `personImageB64` — URL takes precedence.
+
+**`/api/generate-avatar`** calls `black-forest-labs/flux-schnell` to generate a photorealistic full-body person photo from avatar params (gender, body shape, skin tone, height). Prompt is engineered for IDM-VTON compatibility (arms away from body, white seamless bodysuit, white studio background).
+
+**`src/lib/replicate.ts`** — shared DNS resolution + IPv4 fetch utility used by both API routes. On Windows local dev, `REPLICATE_HOST_IP` env var bypasses broken DNS. Leave it unset on Vercel (Linux DNS works fine).
+
 ## Key Files
 | Path | Purpose |
 |------|---------|
 | `src/styles/tokens.css` | All CSS custom property design tokens |
 | `src/app/globals.css` | Tailwind + token imports, typography classes, responsive layout classes (shopper + vendor shells) |
+| `src/lib/replicate.ts` | Shared Replicate fetch utility — IPv4 DNS workaround + `replicateFetch()` + `sleep()` |
 | `src/lib/mock/clothing.ts` | 20 mock ClothingItem objects (brands, ₦ prices, Unsplash images) |
 | `src/lib/mock/feed.ts` | heroBanners (2 slides, uppercase headlines for stacked display), getHomeFeed(), categories array |
 | `src/lib/mock/orders.ts` | 3 mock orders (vendor-001, vendor-002, vendor-003) |
@@ -94,22 +115,35 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | `src/store/*.store.ts` | Zustand stores (see table above) |
 | `src/types/vendor.ts` | `Vendor`, `VendorProduct`, `VendorProductCategory`, `StylingRequest`, `EventType` |
 | `src/types/order.ts` | `Order`, `OrderStatus`, `PreOrder`, `PreOrderStatus`, `OrderItem` |
+| `src/types/avatar.ts` | `Avatar`, `AvatarGender`, `BodyShape`, `SkinTone`, `HairStyle`, `HairColour`, `HeightRange`, `SizeRange` |
 | `src/components/ui/` | Button, BottomSheet, BackLink, EmptyState, SizeChip, ColourSwatch, Badge, Toast, SkeletonCard, **FadeIn** (whileInView scroll-reveal wrapper) |
 | `src/components/catalogue/` | ProductCard (white bg, objectFit:contain, brand label, Cormorant name, colour dots), CategoryIconChip |
-| `src/components/layout/` | TopBar, BottomNav, Sidebar (unused), AppShell, PageShell, ThemeProvider, ServiceWorkerRegistrar, **Footer** (dark footer — marquee + brand col + 4 link cols + email subscribe) |
-| `src/components/home/` | **HeroSlider** (client carousel — announcement bar, stacked bold DM Sans 800 headline, crossfade slides, prev/next arrows, dot indicators), **MarqueeStrip** (CSS marquee — dark strip, brand values), **PromoSection** (editorial dark banner + staggered feature strip), **VendorsOfTheWeek** (3-card editorial spotlight) |
+| `src/components/layout/` | TopBar, BottomNav, AppShell, PageShell, ThemeProvider, ServiceWorkerRegistrar, **Footer** |
+| `src/components/home/` | HeroSlider, MarqueeStrip, PromoSection, VendorsOfTheWeek |
 | `src/app/(main)/product/[id]/ProductGallery.tsx` | Client image carousel — prev/next arrows + thumbnail strip from colour variants |
 | `src/components/vendor/` | VendorShell, VendorSidebar, VendorTopBar, VendorDrawerNav, DashboardStats, VendorProductCard, ProductUploadForm, OrderInboxItem, PreOrderInboxItem, StylingRequestItem |
 | `src/components/orders/` | CheckoutModal, OrderStatusTracker, OrderCard |
 | `src/components/pre-orders/` | PreOrderForm, QuoteReviewModal |
-| `src/components/try-on/` | TryOnView, LayerStack, TryOnActionBar, ColourSwitcher |
+| `src/components/try-on/` | **TryOnView** (Avatar\|Real Photo toggle), LayerStack, TryOnActionBar, ColourSwitcher, **AiTryOnPanel** (loading overlay + result display) |
 | `src/components/avatar-studio/` | AvatarStudio, LayerPanel, ItemLayerCard, SendToVendorModal |
+| `src/hooks/useFashnTryOn.ts` | Real-photo try-on hook — reads `virea_user_selfie`, compresses, calls `/api/tryon` with `personImageB64` |
+| `src/hooks/useAvatarTryOn.ts` | Avatar try-on hook — reads `virea_avatar_photo`, calls `/api/tryon` with `personImageUrl`; `saveAvatarPhoto(url)` persists new photos |
+| `src/hooks/useTryOn.ts` | Avatar Studio canvas layer management (addLayer, removeLayer, swapColour, exportSnapshot) |
+| `src/app/api/tryon/route.ts` | IDM-VTON virtual try-on — accepts `personImageUrl` OR `personImageB64`; polls until result; `maxDuration=60` |
+| `src/app/api/generate-avatar/route.ts` | FLUX.1-schnell avatar photo generation from body params; `maxDuration=60` |
 | `public/sw.js` | Service worker — network-first pages, cache-first static assets, offline fallback |
 | `public/manifest.json` | PWA manifest with shortcuts and maskable icon |
 | `src/app/offline/page.tsx` | Offline fallback page served by SW when navigation fails |
 
+## Deployment
+- **Live at:** `https://virea-seven.vercel.app`
+- **GitHub:** `https://github.com/vireastyle/virea` (branch: `master`)
+- **Vercel plan:** Pro required — IDM-VTON takes 15–30s per generation; Hobby plan hard-caps Node.js functions at 10s
+- **Root directory:** `virea` (set in Vercel project settings — the repo root has design docs, not the Next.js app)
+- **Env vars on Vercel:** `REPLICATE_API_TOKEN` only — do NOT set `REPLICATE_HOST_IP` (Linux DNS works fine on Vercel)
+
 ## Build Status
-- **Build passes cleanly** (`npm run build`) — 27 routes, no type errors
+- **Build passes cleanly** (`npm run build`) — 29 routes, no type errors
 - All server/client boundary issues resolved
 - Google Fonts loaded via CSS `@import` in `globals.css` (runtime, not build-time) — build environment cannot reach Google CDN
 
@@ -139,7 +173,6 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - `vendor.store.ts` persisted as `virea:vendor`; `buildMockVendor()` helper
 - [x] Phase 11 — Vendor Portal
   - `(vendor)/layout.tsx` with `VendorShell` (sidebar desktop / drawer mobile)
-  - `VendorShell`, `VendorSidebar`, `VendorTopBar`, `VendorDrawerNav` in `src/components/vendor/`
   - `/vendor/dashboard` — live stats, quick actions, recent orders snippet
   - `/vendor/products` + `/new` + `/[id]/edit` — full CRUD via `ProductUploadForm`
   - `/vendor/orders` + `/[id]` — order inbox, advance status flow (PLACED → DELIVERED)
@@ -147,78 +180,71 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - `/vendor/styling-requests` + `/[id]` — respond or decline
   - `/vendor/payouts` — settled/pending summary + mock payout history
   - `/vendor/profile` — edit business name, bio, categories
-
 - [x] Phase 12 — Animations & Motion
   - `src/lib/motionTokens.ts` — JS constants mirroring CSS `--duration-*` / `--easing-*` tokens for Framer Motion
-  - `src/app/(main)/template.tsx` — fade+slide-up page transition on every shopper navigation (Next.js template re-mounts per route); `(vendor)/template.tsx` intentionally absent — vendor nav is instant SPA-style
-  - `CheckoutModal`, `QuoteReviewModal`, `SendToVendorModal` — `AnimatePresence` with backdrop fade + bottom sheet slide-up/down; internal `visible` state for coordinated exit before unmount
+  - `src/app/(main)/template.tsx` — fade+slide-up page transition on every shopper navigation
+  - `CheckoutModal`, `QuoteReviewModal`, `SendToVendorModal` — `AnimatePresence` with backdrop fade + bottom sheet slide-up/down
   - `ToastContainer` — `AnimatePresence` replaces CSS keyframe; scale+y slide in/out per toast
   - `BottomNav` — `motion.span layoutId="nav-pill"` slides the active pill between nav items
-  - `AvatarBuilderPage` + `VendorRegisterPage` — `AnimatePresence mode="wait"` + directional x slide between steps; `motion.div` animated progress bar width
+  - `AvatarBuilderPage` + `VendorRegisterPage` — `AnimatePresence mode="wait"` + directional x slide between steps
   - `LayerStack` — `AnimatePresence` with height+x+opacity for try-on layer enter/exit
-
 - [x] Phase 13 — Polish & Accessibility
-  - `ThemeProvider` now wraps with `<MotionConfig reducedMotion="user">` — Framer Motion auto-disables all animations when OS reduces motion
-  - `globals.css` — `:focus-visible` uses `!important` to override inline `outline:none`; separate `input/textarea/select:focus-visible` rule uses `border-color + box-shadow` ring (no outline box conflict with custom borders)
-  - `VendorDrawerNav` — `aria-label="Close menu"` on close button; `role="dialog" aria-modal aria-hidden` on panel; `aria-hidden` on backdrop overlay
-  - `wishlist/page.tsx` — "Add to Bag" button gets `aria-label={`Add ${item.name} to bag`}`
-  - Vendor empty states upgraded: `/vendor/orders`, `/vendor/pre-orders`, `/vendor/styling-requests` — icon + headline + descriptive copy, matching shopper-side quality
-  - `(main)/shop/[category]/loading.tsx` + `(main)/loading.tsx` — `SkeletonCard` grids for instant perceived performance when backend is wired
-
+  - `ThemeProvider` wraps with `<MotionConfig reducedMotion="user">` — auto-disables animations when OS reduces motion
+  - `:focus-visible` ring uses `!important` to override inline `outline:none`
+  - Vendor empty states upgraded with icon + headline + descriptive copy
+  - `(main)/shop/[category]/loading.tsx` + `(main)/loading.tsx` — `SkeletonCard` grids for perceived performance
 - [x] Phase 14 — Code Audit & Cleanup
-  - **Shared form field CSS classes** — removed all inline `inputStyle`/`labelStyle`/`errorStyle` constant objects across `BodyProfileStep`, `VendorCategoryStep`, `PreOrderForm`, `RegisterPage`, `VendorProfilePage`, `VendorPreOrderDetailPage`, `VendorStylingRequestDetailPage`; replaced with `.field`, `.field--textarea`, `.field--select`, `.field-label`, `.field-error` CSS classes from `globals.css`
-  - **Modal refactor** — `CheckoutModal`, `QuoteReviewModal`, `SendToVendorModal` rewritten to use the shared `BottomSheet` wrapper; `BottomSheet` extended to accept `children: ReactNode | ((close: () => void) => ReactNode)` render prop so action buttons inside can trigger animated close
-  - **BackLink applied** — vendor detail pages (`/vendor/pre-orders/[id]`, `/vendor/styling-requests/[id]`) now use `<BackLink>` component instead of inline back-navigation markup
-  - **Store ID safety** — `orders.store.ts` + `vendor.store.ts` switched from `Date.now()` suffix IDs to `crypto.randomUUID()` (ORM-ready, collision-safe)
-  - **Dead code removed** — `src/components/ui/CategoryChip.tsx` (zero imports), `src/app/(vendor)/template.tsx` (caused unwanted page transitions in vendor portal)
-  - **Type cleanup** — `style_preferences: StyleTag[]` removed from `User` type and `mockUser` (was legacy, unused field)
-  - **Hover states** — `Button` component handles `onMouseEnter`/`onMouseLeave` internally per variant (filled: boxShadow + translateY; outlined: primary-container bg; text: surface-container bg); profile menu rows, sidebar nav links, stat cards, and CTAs all wire `onMouseEnter`/`onMouseLeave` directly on elements
-  - **Vendor portal entry** — authenticated profile: "Sell on Virea" card (`/vendor/login`); unauthenticated profile: "Are you a vendor? Go to your store →" link; profile page Sign In button changed to `variant="outlined"` to match Create Account
-  - **Auth form brand links** — "virea" heading in `LoginForm`, `RegisterPage`, `VendorRegisterPage` changed from static text to `<Link href="/">` routing home
-
+  - Shared form field CSS classes (`.field`, `.field--textarea`, `.field--select`, `.field-label`, `.field-error`)
+  - Modal refactor — all modals use shared `BottomSheet` wrapper with render prop
+  - Store IDs switched from `Date.now()` to `crypto.randomUUID()`
+  - Dead code removed; type cleanup; hover states unified
 - [x] Phase 15 — World-Standard UI Overhaul
-  - **Top header replaces desktop sidebar** — `AppShell` no longer renders `<Sidebar>`; `TopBar` is now always visible at all breakpoints; desktop shows full nav (logo left · Shop/Try On/Studio center · Search/Wishlist/Cart/Profile right); mobile keeps compact layout (search left · centered logo · wishlist+cart right)
-  - **TopBar responsive slots** — `.topbar-logo-mobile/desktop`, `.topbar-nav-links`, `.topbar-search-mobile`, `.topbar-profile-link` CSS classes handle slot switching at 900px breakpoint
-  - **`--topbar-height` CSS variable** — `64px` mobile / `68px` desktop; always use `top: var(--topbar-height)` for any `position: sticky` element in the main shell (e.g. shop category strip)
-  - **`content-inner` max-width** bumped from 1100px → 1280px (page breathes now that 260px sidebar is gone)
-  - **ProductCard redesign** — white (`#FFFFFF`) image background, `objectFit: contain` with 12px padding (clothing centred, no cropping), brand name as uppercase label above product name (Cormorant 15px), colour dot indicators next to price
-  - **ProductGallery** — new client component at `src/app/(main)/product/[id]/ProductGallery.tsx`; image carousel (prev/next arrows) + thumbnail strip from all colour variant images
-  - **Product detail page** — full redesign: `product-detail-layout` CSS (55/45 grid on desktop), gallery left + details right, brand label, star rating summary, price, ProductActions, description, meta info, share button; Ratings & Reviews section (score block + bar breakdown + featured review card); Related Products row at bottom
-  - **Shop page sidebar** — `.shop-sidebar` CSS (hidden mobile, 200px desktop); categories list with active highlight + availability checkboxes sit to the left of the product grid on desktop
-  - **Clothing image URLs** — all DRESS/TOP/OUTERWEAR mock images replaced with product-photography-style Unsplash shots (ghost mannequin / flat-lay, no people); BAG/SHOES already were product shots
-
+  - Top header replaces desktop sidebar; `TopBar` visible at all breakpoints
+  - `ProductCard` redesign — white bg, `objectFit:contain`, brand label, colour dots
+  - `ProductGallery` — image carousel + thumbnail strip on product detail page
+  - Product detail full redesign with `product-detail-layout` grid
+  - Shop page sidebar (categories + filters) on desktop
 - [x] Phase 16 — Home Page Elevation & Footer
-  - **`HeroSlider`** (`src/components/home/HeroSlider.tsx`) — full client carousel replacing the static hero; dismissible announcement bar, crossfade background image transition, per-word stacked `AnimatePresence` text entry, DM Sans 800 headline at `clamp(72px, 14vw, 190px)`, dual CTAs (white pill + underlined text link), prev/next arrow buttons, animated dot indicators
-  - **`FadeIn`** (`src/components/ui/FadeIn.tsx`) — reusable Framer Motion `whileInView` scroll-reveal wrapper (opacity 0→1, y 28→0, `once: true`); used on every home page section
-  - **`MarqueeStrip`** (`src/components/home/MarqueeStrip.tsx`) — full-bleed dark strip scrolling brand values (CURATED · TIMELESS · QUALITY · FOR YOU · MADE IN AFRICA · DRESS BOLD · TRY ON FREE · NEW SEASON); uses `@keyframes marquee` with duplicate content for seamless loop
-  - **`PromoSection`** (`src/components/home/PromoSection.tsx`) — replaces the old editorial promo + boring 2×2 feature grid; deep viridian gradient banner (`#0A1F1E → #174542`), stacked bold display headline, fashion photo with left-edge gradient fade, gold circle badge, gold CTA button, staggered 4-card feature strip below
-  - **`VendorsOfTheWeek`** (`src/components/home/VendorsOfTheWeek.tsx`) — editorial 3-card vendor spotlight between Trending Now and the marquee; portrait `2/3` aspect ratio images with scale-on-hover, no card border (Fashion Insider–style), staggered entrance animation, "Shop Store →" link with letter-spacing hover
-  - **`Footer`** (`src/components/layout/Footer.tsx`) — dark `#111310` footer; ghost-opacity marquee watermark ("FAVOURITE STYLES AT UNMISSABLE PRICES"), brand col + email subscribe form, 4 link columns (Quick Links / Collections / Legal / Follow Us), copyright bar + "Sell on Virea →" link; all hover states in gold `#C7A760`
-  - **`mockVendors`** updated — all 4 vendors now have `cover_image_url` (Unsplash editorial/lifestyle shots)
-  - **Hero banner copy** updated — uppercase 2–3 word headlines ("TIMELESS ELEGANCE", "BOLD AND PROUD") designed for per-word stacked display
-  - **Section spacing** bumped — `--space-10` (40px) → `--space-16` (64px) between all home page sections (New In, Trending Now, Vendors of the Week, Marquee)
+  - `HeroSlider` — full client carousel with per-word stacked headline animation
+  - `FadeIn` — reusable `whileInView` scroll-reveal wrapper
+  - `MarqueeStrip`, `PromoSection`, `VendorsOfTheWeek`
+  - `Footer` — dark footer with marquee watermark, 4 link columns, email subscribe
+- [x] Phase 17 — AI Try-On & Photorealistic Avatar
+  - **Replicate IDM-VTON integration** — `src/app/api/tryon/route.ts`; accepts garment URL + person image (base64 or URL); polls until result; deployed and live
+  - **FLUX.1-schnell avatar generation** — `src/app/api/generate-avatar/route.ts`; builds prompt from gender/body shape/skin tone/height; stores result as `virea_avatar_photo` in localStorage
+  - **Shared Replicate util** — `src/lib/replicate.ts`; IPv4 DNS workaround used by both routes
+  - **Try-on mode toggle** — pill toggle on `/try-on`: **Avatar** (FLUX photo + IDM-VTON) | **Real Photo** (selfie + IDM-VTON)
+  - **Avatar mode 3 states**: no avatar built → prompt to `/avatar-builder`; avatar built, no photo → inline generation (~10s); photo ready → show avatar + "See it on your avatar" CTA
+  - **Regenerate button** — lets user refresh their avatar photo from the try-on page
+  - **Avatar builder updated** — SVG cartoon preview removed; "Save & Generate Avatar" auto-generates FLUX photo as final step; shows result with option to regenerate or skip
+  - **`AiTryOnPanel`** — shared loading overlay (spinner + pulsing dots) and result display (AI badge + back button) used by both modes
+  - **`useFashnTryOn`** — real-photo hook (compresses selfie to 768px JPEG before sending)
+  - **`useAvatarTryOn`** — avatar hook (`saveAvatarPhoto(url)` persists generated photos)
+  - **`next.config.ts`** — `*.replicate.delivery` + `pbxt.replicate.delivery` added to `remotePatterns`
 
 ## Up Next
-- [ ] **Phase 17** — Backend Core (Express + Prisma + JWT auth)
-
-## Backend (after all frontend phases are complete)
-- [ ] Phase 17 — Backend Core (Express + Prisma + JWT auth)
-- [ ] Phase 18 — Orders, Pre-Orders, Styling Requests + Flutterwave split payments
-- [ ] Phase 19 — Background Jobs (BullMQ + Redis — notifications, payment verify fallback)
-- [ ] Phase 20 — Frontend-Backend Wiring (swap mock data for React Query hooks)
+- [ ] **Phase 18** — Backend Core (Express + Prisma + JWT auth)
+- [ ] Phase 19 — Orders, Pre-Orders, Styling Requests + Flutterwave split payments
+- [ ] Phase 20 — Background Jobs (BullMQ + Redis — notifications, payment verify fallback)
+- [ ] Phase 21 — Frontend-Backend Wiring (swap mock data for React Query hooks)
 
 ## Gotchas
-- `next/image` requires `images.remotePatterns` in `next.config.ts` for Unsplash — already configured
+- `next/image` requires `images.remotePatterns` in `next.config.ts` — Unsplash + Replicate CDN (`*.replicate.delivery`) already configured
 - Zustand `persist` uses named keys: `virea:session`, `virea:avatar`, `virea:wishlist`, `virea:cart`, `virea:theme`, `virea:outfits`, `virea:orders`, `virea:vendor`
 - `localStorage` is only available in client components; stores hydrate on mount
 - All prices are in Nigerian Naira (₦); format with `.toLocaleString("en-NG")`
 - Toast: `useUIStore(s => s.addToast)` — NOT a separate store
 - Vendor portal auth guard: `useEffect(() => { if (!isAuthenticated) router.replace("/vendor/login"); }, [isAuthenticated, router])` pattern used in every vendor page
 - Dynamic route params: `const { id } = use(params)` (Next.js 16 — params is a Promise)
-- **Sticky elements must use `top: var(--topbar-height)`** — the fixed TopBar is 64px mobile / 68px desktop; any `position: sticky` element must offset by this amount or it will slide behind the header
-- **Hover states use JS, not CSS** — all components use inline styles, so CSS `:hover` rules cannot reliably override them. Always wire `onMouseEnter`/`onMouseLeave` directly on elements and mutate `e.currentTarget.style.*`. Never rely on CSS class hover rules for interactive feedback on inline-styled elements.
-- **`BottomSheet` render prop** — accepts `children: ReactNode | ((close: () => void) => ReactNode)`. Pass a function child when action buttons inside the sheet need to trigger the animated close sequence (e.g. `CheckoutModal`, `QuoteReviewModal`).
-- **`Button` filled variant mouseLeave** — never clear `el.style.background` on leave for `filled` buttons. Only `boxShadow` and `transform` are set on enter; clearing background removes React's inline primary color and makes the button transparent until next render.
-- **`next/image fill` inside `AnimatePresence`** — `motion.div` with `position: absolute` is NOT a valid fill parent. Always wrap the `<Image fill>` in an inner `<div style={{ position: "relative", width: "100%", height: "100%" }}>` inside the motion wrapper. Skipping this causes the image to render only as broken alt text.
-- **Marquee seamless loop** — render the content twice side-by-side (not via CSS `content`) then animate `translateX(0) → translateX(-50%)`. Single-copy marquee will jump at the end of each cycle.
-- **DM Sans 800** — loaded in the Google Fonts `@import` (`0,9..40,800`). Use `fontFamily: "var(--font-sans)", fontWeight: 800` for hero-scale impact headlines. Cormorant tops out at 600; use DM Sans for maximum visual weight.
+- **Sticky elements must use `top: var(--topbar-height)`** — the fixed TopBar is 64px mobile / 68px desktop
+- **Hover states use JS, not CSS** — all components use inline styles; always wire `onMouseEnter`/`onMouseLeave` directly on elements. Never rely on CSS class hover rules.
+- **`BottomSheet` render prop** — accepts `children: ReactNode | ((close: () => void) => ReactNode)`. Pass a function child when buttons inside need to trigger animated close.
+- **`Button` filled variant mouseLeave** — never clear `el.style.background` on leave. Only `boxShadow` and `transform` are set on enter; clearing background makes the button transparent.
+- **`next/image fill` inside `AnimatePresence`** — always wrap `<Image fill>` in an inner `<div style={{ position: "relative", width: "100%", height: "100%" }}>` inside the motion wrapper.
+- **Marquee seamless loop** — render content twice side-by-side, animate `translateX(0) → translateX(-50%)`. Single-copy marquee jumps at end of cycle.
+- **DM Sans 800** — loaded in Google Fonts `@import`. Use `fontFamily: "var(--font-sans)", fontWeight: 800` for hero headlines. Cormorant tops out at 600.
+- **`virea_avatar_photo` vs `virea_user_selfie`** — two separate localStorage keys. Avatar photo is a Replicate CDN URL (string). Selfie is a base64 data URI (string). Never mix them: `useAvatarTryOn` reads `virea_avatar_photo` and passes it as `personImageUrl`; `useFashnTryOn` reads `virea_user_selfie` and passes it as `personImageB64`.
+- **`/api/tryon` person image** — accepts `personImageUrl` (URL string, e.g. Replicate CDN) OR `personImageB64` (base64 data URI). URL takes precedence. IDM-VTON accepts both natively.
+- **FLUX prompt engineering** — always include "arms slightly away from body" and "white seamless bodysuit" in the avatar generation prompt. IDM-VTON needs clear arm separation for garment segmentation and a light undergarment for clean replacement.
+- **Vercel Pro required** — API routes use `maxDuration = 60`. IDM-VTON takes 15–30s, FLUX takes 5–10s. Hobby plan caps Node.js functions at 10s and will always timeout.
+- **`REPLICATE_HOST_IP` env var** — local Windows dev only; bypasses broken DNS. Refresh with `Resolve-DnsName api.replicate.com -Type A`. Never set this on Vercel.
