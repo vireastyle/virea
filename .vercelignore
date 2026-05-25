@@ -1,0 +1,3 @@
+# The Express API server lives here but is NOT deployed by Vercel.
+# It is deployed separately (Railway, Render, Fly.io, etc.) in Phase 19+.
+server/

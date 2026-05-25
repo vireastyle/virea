@@ -1,0 +1,288 @@
+// Virea — Prisma Schema
+// Run: npx prisma migrate dev --name init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────
+
+enum Tier {
+  FREE
+  PRO
+}
+
+enum Category {
+  DRESS
+  TOP
+  OUTERWEAR
+  BAG
+  SHOES
+}
+
+enum OrderStatus {
+  PLACED
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PreOrderStatus {
+  PENDING
+  QUOTE_SENT
+  QUOTE_ACCEPTED
+  QUOTE_DECLINED
+  IN_PRODUCTION
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum StylingRequestStatus {
+  OPEN
+  RESPONDED
+  DECLINED
+}
+
+// ─── User ─────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  tier      Tier     @default(FREE)
+
+  avatar         Avatar?
+  wishlist       WishlistItem[]
+  bag            BagItem[]
+  orders         Order[]
+  preOrders      PreOrder[]
+  stylingRequests StylingRequest[]
+  outfits        SavedOutfit[]
+  refreshTokens  RefreshToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Vendor ───────────────────────────────────────────────
+
+model Vendor {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  password      String
+  businessName  String
+  bio           String?
+  categories    Category[]
+  bankName      String
+  accountNumber String
+  accountName   String
+  tier          Tier       @default(FREE)
+
+  products        Product[]
+  orders          Order[]         @relation("VendorOrders")
+  preOrders       PreOrder[]      @relation("VendorPreOrders")
+  stylingRequests StylingRequest[] @relation("VendorStylingRequests")
+  payouts         PayoutRecord[]
+  refreshTokens   RefreshToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Avatar ───────────────────────────────────────────────
+
+model Avatar {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  gender     String
+  bodyShape  String
+  skinTone   String
+  hairStyle  String
+  hairColour String
+  height     String
+  size       String
+  photoUrl   String?
+
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Product ──────────────────────────────────────────────
+
+model Product {
+  id          String   @id @default(cuid())
+  vendorId    String
+  vendor      Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  name        String
+  brand       String
+  description String
+  price       Float
+  category    Category
+  images      String[]
+  sizes       String[]
+  colours     String[]
+  stock       Int      @default(0)
+
+  wishlistedBy WishlistItem[]
+  bagItems     BagItem[]
+  orderItems   OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Wishlist ─────────────────────────────────────────────
+
+model WishlistItem {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+// ─── Bag (Cart) ───────────────────────────────────────────
+
+model BagItem {
+  id        String  @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  quantity  Int    @default(1)
+  size      String
+  colour    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Orders ───────────────────────────────────────────────
+
+model Order {
+  id       String      @id @default(cuid())
+  userId   String
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vendorId String
+  vendor   Vendor      @relation("VendorOrders", fields: [vendorId], references: [id])
+
+  items    OrderItem[]
+  total    Float
+  status   OrderStatus @default(PLACED)
+  address  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  quantity  Int
+  size      String
+  colour    String
+  price     Float
+}
+
+// ─── Pre-Orders ───────────────────────────────────────────
+
+model PreOrder {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vendorId    String
+  vendor      Vendor         @relation("VendorPreOrders", fields: [vendorId], references: [id])
+
+  description String
+  eventType   String
+  eventDate   DateTime?
+  budget      Float?
+  status      PreOrderStatus @default(PENDING)
+
+  // Vendor quote
+  quotedPrice   Float?
+  quotedMessage String?
+  estimatedDays Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Styling Requests ─────────────────────────────────────
+
+model StylingRequest {
+  id       String               @id @default(cuid())
+  userId   String
+  user     User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vendorId String
+  vendor   Vendor               @relation("VendorStylingRequests", fields: [vendorId], references: [id])
+
+  message  String
+  outfitId String?
+  status   StylingRequestStatus @default(OPEN)
+  response String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Saved Outfits ────────────────────────────────────────
+
+model SavedOutfit {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name     String
+  imageUrl String
+  items    String[] // product IDs composited in the try-on
+
+  createdAt DateTime @default(now())
+}
+
+// ─── Payout Records ───────────────────────────────────────
+
+model PayoutRecord {
+  id        String  @id @default(cuid())
+  vendorId  String
+  vendor    Vendor  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  amount    Float
+  status    String  // settled | pending | failed
+  reference String  @unique
+
+  createdAt DateTime @default(now())
+}
+
+// ─── Refresh Tokens ───────────────────────────────────────
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vendorId  String?
+  vendor    Vendor?   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+}
