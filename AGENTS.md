@@ -222,11 +222,25 @@ Two modes on `/try-on`, both powered by **Replicate IDM-VTON** (`cuuupid/idm-vto
   - **`useAvatarTryOn`** — avatar hook (`saveAvatarPhoto(url)` persists generated photos)
   - **`next.config.ts`** — `*.replicate.delivery` + `pbxt.replicate.delivery` added to `remotePatterns`
 
+- [x] Phase 18 — Backend Core
+  - Express API server at `../server/` (separate project, runs on port 4000)
+  - **Prisma 7** + **Neon PostgreSQL** — 12 models: User, Vendor, Avatar, Product, WishlistItem, BagItem, Order, OrderItem, PreOrder, StylingRequest, SavedOutfit, PayoutRecord, RefreshToken
+  - **JWT dual-token auth** — access token (15 min, in memory), refresh token (7 days, httpOnly cookie at `/api/v1/auth`)
+  - **bcrypt** (12 rounds) for password hashing; **Zod** for all request validation
+  - **express-rate-limit** — 200 req/15 min general, 10 req/15 min on auth routes
+  - Middleware chain: `cors → helmet → rateLimit → morgan → authGuard → validate → controller → errorHandler`
+  - Routes: `/auth` (register/login/refresh/logout for user + vendor), `/users`, `/avatars`, `/catalogue`, `/wishlist`, `/bag`, `/outfits`
+  - `authGuard("user")` = userGuard · `authGuard("vendor")` = vendorGuard · `authGuard()` = anyAuthGuard
+  - **Next.js proxy** — `src/app/api/[[...slug]]/route.ts` forwards all `/api/*` to Express; existing `/api/tryon` and `/api/generate-avatar` routes take precedence (Next.js resolves more-specific routes first)
+  - `NEXT_PUBLIC_API_URL=http://localhost:4000` in `.env.local`
+  - **Neon WebSocket adapter** — `@prisma/adapter-neon` + `@neondatabase/serverless` + `ws`; connects over port 443 (not 5432) so blocked networks work. `PrismaNeon` in v7 takes `{ connectionString }` config directly, not a `Pool` instance
+  - **`prisma.config.ts`** at server root — Prisma 7 moved `url`/`directUrl` out of `schema.prisma`; migration adapter uses `DIRECT_URL` (non-pooled), runtime uses `DATABASE_URL` (pooled)
+  - **`@types/express` v5** — `req.params` values type as `string | string[]`; always extract as `req.params["key"] as string`
+
 ## Up Next
-- [ ] **Phase 18** — Backend Core (Express + Prisma + JWT auth)
-- [ ] Phase 19 — Orders, Pre-Orders, Styling Requests + Flutterwave split payments
-- [ ] Phase 20 — Background Jobs (BullMQ + Redis — notifications, payment verify fallback)
-- [ ] Phase 21 — Frontend-Backend Wiring (swap mock data for React Query hooks)
+- [ ] **Phase 19** — Vendor product routes (+ Cloudinary uploads), Orders/Pre-Orders/Styling Requests lifecycle, Flutterwave split payments
+- [ ] Phase 20 — Background Jobs (BullMQ + Redis — price-drop/new-arrival notifications, payment verify fallback)
+- [ ] Phase 21 — Frontend-Backend Wiring (swap mock data for React Query hooks, api.ts fetch client, silent JWT refresh)
 
 ## Gotchas
 - `next/image` requires `images.remotePatterns` in `next.config.ts` — Unsplash + Replicate CDN (`*.replicate.delivery`) already configured
