@@ -1,6 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // These packages use Node.js native modules and must run in the Node.js
+  // runtime, not bundled by webpack. Required for Prisma + Neon + bcrypt + jwt.
+  serverExternalPackages: [
+    "@prisma/client",
+    "@prisma/adapter-neon",
+    "@neondatabase/serverless",
+    "bcryptjs",
+    "jsonwebtoken",
+    "cloudinary",
+    "ws",
+  ],
   images: {
     remotePatterns: [
       {

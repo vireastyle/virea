@@ -3,8 +3,38 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Vendor, VendorProduct, StylingRequest } from "@/types/vendor";
-import { mockVendors } from "@/lib/mock/vendors";
 import { mockStylingRequests } from "@/lib/mock/styling-requests";
+import { apiToken } from "@/lib/api-token";
+
+// Shape the API returns for a vendor record (no password)
+type ApiVendor = {
+  id: string;
+  email: string;
+  businessName: string;
+  bio: string | null;
+  categories: string[];
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  tier: "FREE" | "PRO";
+  createdAt: string;
+};
+
+function mapApiVendor(v: ApiVendor): Vendor {
+  return {
+    id: v.id,
+    email: v.email,
+    business_name: v.businessName,
+    owner_name: v.accountName,
+    category_tags: v.categories,
+    bio: v.bio ?? "",
+    bank_account_number: v.accountNumber,
+    bank_name: v.bankName,
+    // Fields not in DB yet — kept for type compatibility
+    bvn: "",
+    flutterwave_subaccount_id: "",
+  };
+}
 
 const seedProducts: VendorProduct[] = [
   {
@@ -69,12 +99,28 @@ const seedProducts: VendorProduct[] = [
   },
 ];
 
+type VendorRegisterData = {
+  businessName: string;
+  ownerName: string;
+  email: string;
+  password: string;
+  categoryTags: string[];
+  bankName: string;
+  accountNumber: string;
+};
+
 type VendorState = {
   vendor: Vendor | null;
   isAuthenticated: boolean;
   products: VendorProduct[];
   stylingRequests: StylingRequest[];
-  signIn: (vendor?: Vendor) => void;
+
+  // ── Real API actions ──────────────────────────────────────
+  login: (email: string, password: string) => Promise<void>;
+  register: (data: VendorRegisterData) => Promise<void>;
+
+  // ── Legacy / local helpers ────────────────────────────────
+  signIn: (vendor: Vendor) => void;
   signOut: () => void;
   updateVendor: (partial: Partial<Vendor>) => void;
   addProduct: (data: Omit<VendorProduct, "id" | "vendor_id" | "created_at">) => string;
@@ -92,11 +138,55 @@ export const useVendorStore = create<VendorState>()(
       products: seedProducts,
       stylingRequests: mockStylingRequests,
 
-      signIn: (vendor = mockVendors[0]) =>
-        set({ vendor, isAuthenticated: true }),
+      // ── Login ───────────────────────────────────────────────
+      login: async (email, password) => {
+        const res = await fetch("/api/v1/auth/vendor/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+          credentials: "include",
+        });
+        const body = await res.json();
+        if (!body.success) throw new Error(body.error?.message ?? "Login failed");
+        const { vendor, accessToken } = body.data as { vendor: ApiVendor; accessToken: string };
+        apiToken.set(accessToken);
+        set({ vendor: mapApiVendor(vendor), isAuthenticated: true });
+      },
 
-      signOut: () =>
-        set({ vendor: null, isAuthenticated: false }),
+      // ── Register ────────────────────────────────────────────
+      register: async ({ businessName, ownerName, email, password, categoryTags, bankName, accountNumber }) => {
+        const res = await fetch("/api/v1/auth/vendor/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            password,
+            businessName,
+            bankName,
+            accountNumber,
+            accountName: ownerName,   // owner name doubles as bank account name
+            categories: categoryTags.length > 0 ? categoryTags : ["DRESS"],
+          }),
+          credentials: "include",
+        });
+        const body = await res.json();
+        if (!body.success) throw new Error(body.error?.message ?? "Registration failed");
+        const { vendor, accessToken } = body.data as { vendor: ApiVendor; accessToken: string };
+        apiToken.set(accessToken);
+        set({ vendor: mapApiVendor(vendor), isAuthenticated: true });
+      },
+
+      // ── Legacy helpers ──────────────────────────────────────
+      signIn: (vendor) => set({ vendor, isAuthenticated: true }),
+
+      signOut: () => {
+        fetch("/api/v1/auth/logout", {
+          method: "POST",
+          credentials: "include",
+        }).catch(() => null);
+        apiToken.set(null);
+        set({ vendor: null, isAuthenticated: false });
+      },
 
       updateVendor: (partial) =>
         set((s) => ({ vendor: s.vendor ? { ...s.vendor, ...partial } : s.vendor })),
@@ -114,7 +204,7 @@ export const useVendorStore = create<VendorState>()(
       },
 
       updateProduct: (id, partial) =>
-        set({ products: get().products.map((p) => p.id === id ? { ...p, ...partial } : p) }),
+        set({ products: get().products.map((p) => (p.id === id ? { ...p, ...partial } : p)) }),
 
       removeProduct: (id) =>
         set({ products: get().products.filter((p) => p.id !== id) }),
@@ -136,21 +226,3 @@ export const useVendorStore = create<VendorState>()(
     { name: "virea:vendor" }
   )
 );
-
-export function buildMockVendor(data: {
-  business_name: string;
-  owner_name: string;
-  email: string;
-  category_tags: string[];
-  bio: string;
-  cover_image_url?: string;
-  bank_account_number: string;
-  bank_name: string;
-  bvn: string;
-}): Vendor {
-  return {
-    id: `vendor-${crypto.randomUUID()}`,
-    flutterwave_subaccount_id: `sub_mock_${crypto.randomUUID()}`,
-    ...data,
-  };
-}

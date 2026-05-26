@@ -12,7 +12,7 @@ import { useWishlistStore } from "@/store/wishlist.store";
 import { useOutfitsStore } from "@/store/outfits.store";
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, signIn, signOut } = useAuthStore();
+  const { user, isAuthenticated, signInAsGuest, signOut } = useAuthStore();
   const { theme, toggleTheme } = useUIStore();
   const wishlistCount = useWishlistStore((s) => s.itemIds.length);
   const outfitCount = useOutfitsStore((s) => s.outfits.length);
@@ -45,7 +45,7 @@ export default function ProfilePage() {
             <Link href="/register">
               <Button variant="outlined" fullWidth>Create Account</Button>
             </Link>
-            <Button variant="text" fullWidth onClick={() => signIn()}>
+            <Button variant="text" fullWidth onClick={() => signInAsGuest()}>
               Continue as Guest (Demo)
             </Button>
           </div>

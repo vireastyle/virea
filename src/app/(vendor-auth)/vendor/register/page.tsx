@@ -9,7 +9,7 @@ import { OnboardingProgress } from "@/components/auth/OnboardingProgress";
 import { VendorAccountStep } from "@/components/vendor-auth/VendorAccountStep";
 import { VendorCategoryStep } from "@/components/vendor-auth/VendorCategoryStep";
 import { VendorBankStep } from "@/components/vendor-auth/VendorBankStep";
-import { useVendorStore, buildMockVendor } from "@/store/vendor.store";
+import { useVendorStore } from "@/store/vendor.store";
 import { motionTokens } from "@/lib/motionTokens";
 
 const STEPS = ["Account", "Your Brand", "Bank Details"];
@@ -25,10 +25,12 @@ const stepVariants = {
 
 export default function VendorRegisterPage() {
   const router = useRouter();
-  const { signIn } = useVendorStore();
+  const { register } = useVendorStore();
 
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   // Step 0 — Account
   const [businessName, setBusinessName] = useState("");
@@ -80,21 +82,26 @@ export default function VendorRegisterPage() {
     setStep((s) => s - 1);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateBank()) return;
-    const vendor = buildMockVendor({
-      business_name: businessName,
-      owner_name: ownerName,
-      email,
-      category_tags: categoryTags,
-      bio,
-      cover_image_url: coverImage,
-      bank_account_number: accountNumber,
-      bank_name: bankName,
-      bvn,
-    });
-    signIn(vendor);
-    router.push("/vendor/dashboard");
+    setApiError("");
+    setLoading(true);
+    try {
+      await register({
+        businessName: businessName.trim(),
+        ownerName: ownerName.trim(),
+        email: email.trim(),
+        password,
+        categoryTags,
+        bankName,
+        accountNumber,
+      });
+      router.push("/vendor/dashboard");
+    } catch (err) {
+      setApiError(err instanceof Error ? err.message : "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCategoryToggle = (cat: string) => {
@@ -103,12 +110,23 @@ export default function VendorRegisterPage() {
     );
   };
 
-  const handleAccountChange = (field: "businessName" | "ownerName" | "email" | "password", value: string) => {
-    const setters = { businessName: setBusinessName, ownerName: setOwnerName, email: setEmail, password: setPassword };
+  const handleAccountChange = (
+    field: "businessName" | "ownerName" | "email" | "password",
+    value: string
+  ) => {
+    const setters = {
+      businessName: setBusinessName,
+      ownerName: setOwnerName,
+      email: setEmail,
+      password: setPassword,
+    };
     setters[field](value);
   };
 
-  const handleBankChange = (field: "accountNumber" | "bankName" | "bvn", value: string) => {
+  const handleBankChange = (
+    field: "accountNumber" | "bankName" | "bvn",
+    value: string
+  ) => {
     const setters = { accountNumber: setAccountNumber, bankName: setBankName, bvn: setBvn };
     setters[field](value);
   };
@@ -137,10 +155,22 @@ export default function VendorRegisterPage() {
       >
         {/* Brand */}
         <div style={{ marginBottom: "var(--space-6)" }}>
-          <Link href="/" className="display-small" style={{ color: "var(--color-primary)", letterSpacing: "0.06em", textDecoration: "none", display: "block" }}>
+          <Link
+            href="/"
+            className="display-small"
+            style={{
+              color: "var(--color-primary)",
+              letterSpacing: "0.06em",
+              textDecoration: "none",
+              display: "block",
+            }}
+          >
             virea
           </Link>
-          <p className="label-large" style={{ color: "var(--color-on-surface-variant)", letterSpacing: "0.08em" }}>
+          <p
+            className="label-large"
+            style={{ color: "var(--color-on-surface-variant)", letterSpacing: "0.08em" }}
+          >
             VENDOR PORTAL
           </p>
         </div>
@@ -157,7 +187,10 @@ export default function VendorRegisterPage() {
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: motionTokens.duration.emphasis, ease: motionTokens.easing.standard }}
+              transition={{
+                duration: motionTokens.duration.emphasis,
+                ease: motionTokens.easing.standard,
+              }}
             >
               {step === 0 && (
                 <VendorAccountStep
@@ -192,22 +225,59 @@ export default function VendorRegisterPage() {
           </AnimatePresence>
         </div>
 
+        {/* API error */}
+        {apiError && (
+          <p
+            className="body-small"
+            style={{
+              color: "var(--color-error, #B00020)",
+              padding: "var(--space-3)",
+              background: "rgba(176,0,32,0.06)",
+              borderRadius: "var(--radius-sm)",
+              marginBottom: "var(--space-3)",
+            }}
+          >
+            {apiError}
+          </p>
+        )}
+
         {/* Navigation */}
         <div style={{ display: "flex", gap: "var(--space-3)", marginTop: "var(--space-10)" }}>
           {step > 0 && (
-            <Button variant="outlined" onClick={handleBack}>Back</Button>
+            <Button variant="outlined" onClick={handleBack} disabled={loading}>
+              Back
+            </Button>
           )}
           <div style={{ flex: 1 }}>
-            <Button variant="filled" fullWidth onClick={isLastStep ? handleSubmit : handleContinue}>
-              {isLastStep ? "Create vendor account" : "Continue"}
+            <Button
+              variant="filled"
+              fullWidth
+              onClick={isLastStep ? handleSubmit : handleContinue}
+              disabled={loading}
+            >
+              {loading
+                ? "Creating account…"
+                : isLastStep
+                ? "Create vendor account"
+                : "Continue"}
             </Button>
           </div>
         </div>
 
         {step === 0 && (
-          <p className="body-medium" style={{ textAlign: "center", marginTop: "var(--space-6)", color: "var(--color-on-surface-variant)" }}>
+          <p
+            className="body-medium"
+            style={{
+              textAlign: "center",
+              marginTop: "var(--space-6)",
+              color: "var(--color-on-surface-variant)",
+            }}
+          >
             Already have a vendor account?{" "}
-            <Link href="/vendor/login" style={{ color: "var(--color-primary)", textDecoration: "none" }}>
+            <Link
+              href="/vendor/login"
+              style={{ color: "var(--color-primary)", textDecoration: "none" }}
+            >
               Sign in
             </Link>
           </p>
