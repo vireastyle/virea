@@ -13,6 +13,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - **Zustand v5** with `persist` middleware (localStorage)
 - **Framer Motion v12**, **Lucide React v1**
 - **Google Fonts** — loaded via CSS `@import` in `globals.css` (runtime); Cormorant Garamond (`--font-display`) + DM Sans (`--font-sans`, weights 300–800) defined in `tokens.css`
+- **Prisma 7** + **Neon PostgreSQL** — serverless adapter via `@prisma/adapter-neon` + `ws` (tunnels over port 443)
+- **JWT dual-token auth** — access token (15 min, in memory via `apiToken` registry), refresh token (7 days, httpOnly cookie at `/api/v1/auth`)
+- **Cloudinary v2** — image uploads for vendor products
+- **bcryptjs** (12 rounds) — password hashing
+- **Zod v4** — all API request validation
 
 ## Design System
 - All tokens in `src/styles/tokens.css` (colors, spacing, shape, elevation, motion)
@@ -69,16 +74,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Stores
 | Store | Persist key | Contents |
 |-------|-------------|----------|
-| `auth.store.ts` | `virea:session` | user session |
+| `auth.store.ts` | `virea:session` | `user`, `isAuthenticated`, `isGuest`; async `login(email,pw)`, `register(name,email,pw)`, `signOut()`; `signIn(user)` for local updates; `updateProfile(partial)` |
 | `avatar.store.ts` | `virea:avatar` | avatar params (gender, body shape, skin tone, hair, size) |
 | `wishlist.store.ts` | `virea:wishlist` | saved items |
 | `cart.store.ts` | `virea:cart` | cart items + count |
 | `ui.store.ts` | `virea:theme` | theme + `addToast()` |
 | `outfits.store.ts` | `virea:outfits` | saved outfits |
-| `orders.store.ts` | `virea:orders` | orders + pre-orders; `createOrder`, `createPreOrder`, `updatePreOrderStatus`, `updateOrderStatus`, `addVendorQuote` |
-| `vendor.store.ts` | `virea:vendor` | vendor profile + `products[]` + `stylingRequests[]`; `signIn`, `signOut`, `updateVendor`, `addProduct`, `updateProduct`, `removeProduct`, `respondToStylingRequest`, `declineStylingRequest` |
+| `orders.store.ts` | `virea:orders` | orders + pre-orders (mock); `createOrder`, `createPreOrder`, `updatePreOrderStatus`, `updateOrderStatus`, `addVendorQuote` |
+| `vendor.store.ts` | `virea:vendor` | vendor profile + `products[]` + `stylingRequests[]`; async `login(email,pw)`, `register(data)`, `signOut()`; local CRUD: `addProduct`, `updateProduct`, `removeProduct`, `respondToStylingRequest`, `declineStylingRequest` |
 
 > **Toast**: always use `useUIStore(s => s.addToast)(message, type)` — there is NO separate `useToastStore`
+
+> **Access token**: stored only in memory via `src/lib/api-token.ts` — never in localStorage. Set by `login`/`register` actions; read by `apiFetch`. On page reload the token is gone but `isAuthenticated` persists; the first protected API call triggers silent refresh automatically.
 
 ## localStorage Keys (outside Zustand)
 | Key | Value | Set by |
@@ -86,66 +93,132 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | `virea_user_selfie` | base64 data URI (JPEG, compressed to 768px) | Profile selfie upload |
 | `virea_avatar_photo` | URL string (Replicate CDN webp) | Avatar builder + inline generation on try-on page |
 
-## AI Try-On Architecture
-Two modes on `/try-on`, both powered by **Replicate IDM-VTON** (`cuuupid/idm-vton`):
+## Backend Architecture
+All API logic lives in **Next.js Route Handlers** — no separate server. Deployed on Vercel alongside the frontend.
 
-| Mode | Person image source | Input type |
-|------|---------------------|------------|
-| **Avatar** | FLUX.1-generated photo stored as `virea_avatar_photo` | `personImageUrl` (URL) |
-| **Real Photo** | User's selfie stored as `virea_user_selfie` | `personImageB64` (base64) |
+```
+src/app/api/
+├── tryon/route.ts                   ← Replicate IDM-VTON (Phase 17)
+├── generate-avatar/route.ts         ← FLUX.1-schnell (Phase 17)
+└── v1/                              ← All REST API routes (Phase 18-19)
+    ├── auth/{login,register,refresh,logout}/
+    ├── auth/vendor/{login,register}/
+    ├── users/me/
+    ├── avatars/
+    ├── catalogue/ + [id]/
+    ├── wishlist/ + [productId]/
+    ├── bag/ + [itemId]/ + clear/
+    ├── outfits/ + [id]/
+    ├── orders/ + [orderId]/{cancel}/
+    ├── pre-orders/ + [preOrderId]/{accept-quote,decline-quote,cancel}/
+    ├── styling-requests/ + [requestId]/
+    ├── vendor/products/ + [productId]/ + upload-image/
+    ├── vendor/orders/ + [orderId]/advance/
+    ├── vendor/pre-orders/ + [preOrderId]/{quote,advance}/
+    └── vendor/styling-requests/ + [requestId]/{respond,decline}/
+```
 
-**`/api/tryon`** accepts either `personImageUrl` OR `personImageB64` — URL takes precedence.
+### Route handler pattern
+```typescript
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const auth = getAuth(req, "user");   // throws AppError on failure
+    const data = await someService(auth.id, id);
+    return NextResponse.json({ success: true, data });
+  } catch (err) {
+    return handleError(err);  // returns { success: false, error: { code, message } }
+  }
+}
+```
 
-**`/api/generate-avatar`** calls `black-forest-labs/flux-schnell` to generate a photorealistic full-body person photo from avatar params (gender, body shape, skin tone, height). Prompt is engineered for IDM-VTON compatibility (arms away from body, white seamless bodysuit, white studio background).
-
-**`src/lib/replicate.ts`** — shared DNS resolution + IPv4 fetch utility used by both API routes. On Windows local dev, `REPLICATE_HOST_IP` env var bypasses broken DNS. Leave it unset on Vercel (Linux DNS works fine).
+### Services (`src/lib/services/`)
+Business logic lives here — route handlers are thin wrappers.
+| File | Responsibility |
+|------|---------------|
+| `auth.service.ts` | register/login/refresh/logout for user + vendor; `issueTokens()` persists refresh token to DB |
+| `users.service.ts` | getMe, updateMe |
+| `avatars.service.ts` | upsert avatar profile |
+| `catalogue.service.ts` | list + get products (DB) |
+| `wishlist.service.ts` | add/remove/list wishlist items |
+| `bag.service.ts` | add/update/remove/clear bag items |
+| `outfits.service.ts` | save/list/delete outfits |
+| `orders.service.ts` | create order (validates vendor ownership, uses `$transaction`), advance status, cancel |
+| `pre-orders.service.ts` | create, send quote, accept/decline quote, advance status, cancel |
+| `styling-requests.service.ts` | create, respond, decline |
+| `vendor-products.service.ts` | CRUD + Cloudinary upload; `assertOwnership()` guard |
 
 ## Key Files
 | Path | Purpose |
 |------|---------|
 | `src/styles/tokens.css` | All CSS custom property design tokens |
-| `src/app/globals.css` | Tailwind + token imports, typography classes, responsive layout classes (shopper + vendor shells) |
+| `src/app/globals.css` | Tailwind + token imports, typography classes, responsive layout classes |
+| `src/lib/api-token.ts` | In-memory access token registry — `apiToken.get()` / `apiToken.set()` |
+| `src/lib/api.ts` | `apiFetch<T>(path, options)` — authenticated fetch with silent JWT refresh on 401 |
+| `src/lib/prisma.ts` | Prisma singleton with Neon WebSocket adapter; uses `DATABASE_URL ?? ""` (no throw at build time) |
+| `src/lib/jwt.ts` | `signAccessToken`, `verifyAccessToken`, `signRefreshToken`, `verifyRefreshToken`, `refreshCookieOptions()` |
+| `src/lib/cloudinary.ts` | Lazy `getCloudinary()`; `uploadImage(buffer, {folder?, publicId?})` → secure URL |
+| `src/lib/api-error.ts` | `AppError(statusCode, message, code?)` + `handleError(err): NextResponse` |
+| `src/lib/auth-guard.ts` | `getAuth(req, role?)` — reads Bearer token, verifies JWT, throws AppError on failure |
+| `prisma/schema.prisma` | 13 models: User, Vendor, Avatar, Product, WishlistItem, BagItem, Order, OrderItem, PreOrder, StylingRequest, SavedOutfit, PayoutRecord, RefreshToken |
+| `prisma.config.ts` | Migration config (excluded from tsconfig); loads `.env.local` manually; uses `DIRECT_URL` (non-pooled) for DDL |
 | `src/lib/replicate.ts` | Shared Replicate fetch utility — IPv4 DNS workaround + `replicateFetch()` + `sleep()` |
 | `src/lib/mock/clothing.ts` | 20 mock ClothingItem objects (brands, ₦ prices, Unsplash images) |
-| `src/lib/mock/feed.ts` | heroBanners (2 slides, uppercase headlines for stacked display), getHomeFeed(), categories array |
-| `src/lib/mock/orders.ts` | 3 mock orders (vendor-001, vendor-002, vendor-003) |
+| `src/lib/mock/feed.ts` | heroBanners, `getHomeFeed()`, categories array |
+| `src/lib/mock/orders.ts` | 3 mock orders |
 | `src/lib/mock/pre-orders.ts` | 2 mock pre-orders |
-| `src/lib/mock/styling-requests.ts` | 3 mock styling requests (all for vendor-001) |
-| `src/lib/mock/vendors.ts` | 4 mock vendors (vendor-001 = Adire Studio = default sign-in) |
-| `src/store/*.store.ts` | Zustand stores (see table above) |
+| `src/lib/mock/styling-requests.ts` | 3 mock styling requests |
+| `src/lib/mock/vendors.ts` | 4 mock vendors |
 | `src/types/vendor.ts` | `Vendor`, `VendorProduct`, `VendorProductCategory`, `StylingRequest`, `EventType` |
 | `src/types/order.ts` | `Order`, `OrderStatus`, `PreOrder`, `PreOrderStatus`, `OrderItem` |
 | `src/types/avatar.ts` | `Avatar`, `AvatarGender`, `BodyShape`, `SkinTone`, `HairStyle`, `HairColour`, `HeightRange`, `SizeRange` |
-| `src/components/ui/` | Button, BottomSheet, BackLink, EmptyState, SizeChip, ColourSwatch, Badge, Toast, SkeletonCard, **FadeIn** (whileInView scroll-reveal wrapper) |
-| `src/components/catalogue/` | ProductCard (white bg, objectFit:contain, brand label, Cormorant name, colour dots), CategoryIconChip |
-| `src/components/layout/` | TopBar, BottomNav, AppShell, PageShell, ThemeProvider, ServiceWorkerRegistrar, **Footer** |
+| `src/components/ui/` | Button, BottomSheet, BackLink, EmptyState, SizeChip, ColourSwatch, Badge, Toast, SkeletonCard, **FadeIn** |
+| `src/components/catalogue/` | ProductCard, CategoryIconChip |
+| `src/components/layout/` | TopBar, BottomNav, AppShell, PageShell, ThemeProvider, ServiceWorkerRegistrar, Footer |
 | `src/components/home/` | HeroSlider, MarqueeStrip, PromoSection, VendorsOfTheWeek |
-| `src/app/(main)/product/[id]/ProductGallery.tsx` | Client image carousel — prev/next arrows + thumbnail strip from colour variants |
 | `src/components/vendor/` | VendorShell, VendorSidebar, VendorTopBar, VendorDrawerNav, DashboardStats, VendorProductCard, ProductUploadForm, OrderInboxItem, PreOrderInboxItem, StylingRequestItem |
 | `src/components/orders/` | CheckoutModal, OrderStatusTracker, OrderCard |
 | `src/components/pre-orders/` | PreOrderForm, QuoteReviewModal |
-| `src/components/try-on/` | **TryOnView** (Avatar\|Real Photo toggle), LayerStack, TryOnActionBar, ColourSwitcher, **AiTryOnPanel** (loading overlay + result display) |
+| `src/components/try-on/` | TryOnView, LayerStack, TryOnActionBar, ColourSwitcher, AiTryOnPanel |
 | `src/components/avatar-studio/` | AvatarStudio, LayerPanel, ItemLayerCard, SendToVendorModal |
-| `src/hooks/useFashnTryOn.ts` | Real-photo try-on hook — reads `virea_user_selfie`, compresses, calls `/api/tryon` with `personImageB64` |
-| `src/hooks/useAvatarTryOn.ts` | Avatar try-on hook — reads `virea_avatar_photo`, calls `/api/tryon` with `personImageUrl`; `saveAvatarPhoto(url)` persists new photos |
-| `src/hooks/useTryOn.ts` | Avatar Studio canvas layer management (addLayer, removeLayer, swapColour, exportSnapshot) |
-| `src/app/api/tryon/route.ts` | IDM-VTON virtual try-on — accepts `personImageUrl` OR `personImageB64`; polls until result; `maxDuration=60` |
-| `src/app/api/generate-avatar/route.ts` | FLUX.1-schnell avatar photo generation from body params; `maxDuration=60` |
-| `public/sw.js` | Service worker — network-first pages, cache-first static assets, offline fallback |
-| `public/manifest.json` | PWA manifest with shortcuts and maskable icon |
-| `src/app/offline/page.tsx` | Offline fallback page served by SW when navigation fails |
+| `src/hooks/useFashnTryOn.ts` | Real-photo try-on hook |
+| `src/hooks/useAvatarTryOn.ts` | Avatar try-on hook |
+| `src/hooks/useTryOn.ts` | Avatar Studio canvas layer management |
+| `src/app/api/tryon/route.ts` | IDM-VTON virtual try-on; `maxDuration=60` |
+| `src/app/api/generate-avatar/route.ts` | FLUX.1-schnell avatar generation; `maxDuration=60` |
+| `public/sw.js` | Service worker — network-first pages, cache-first static assets |
+| `public/manifest.json` | PWA manifest |
 
 ## Deployment
 - **Live at:** `https://virea-seven.vercel.app`
 - **GitHub:** `https://github.com/vireastyle/virea` (branch: `master`)
-- **Vercel plan:** Pro required — IDM-VTON takes 15–30s per generation; Hobby plan hard-caps Node.js functions at 10s
-- **Root directory:** `virea` (set in Vercel project settings — the repo root has design docs, not the Next.js app)
-- **Env vars on Vercel:** `REPLICATE_API_TOKEN` only — do NOT set `REPLICATE_HOST_IP` (Linux DNS works fine on Vercel)
+- **Vercel plan:** Pro required — IDM-VTON takes 15–30s; Hobby plan caps at 10s
+- **Root directory:** `virea` (set in Vercel project settings)
+- **No separate server** — everything runs as Vercel serverless functions
+- **Env vars required on Vercel:**
+  | Variable | Source |
+  |----------|--------|
+  | `DATABASE_URL` | Neon dashboard → pooled connection string |
+  | `DIRECT_URL` | Neon dashboard → non-pooled (toggle off Connection Pooling) |
+  | `JWT_SECRET` | `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"` |
+  | `JWT_REFRESH_SECRET` | Same command, run again |
+  | `CLOUDINARY_CLOUD_NAME` | Cloudinary dashboard |
+  | `CLOUDINARY_API_KEY` | Cloudinary → API Keys |
+  | `CLOUDINARY_API_SECRET` | Cloudinary → API Keys |
+  | `REPLICATE_API_TOKEN` | replicate.com/account/api-tokens |
+  > Do NOT set `REPLICATE_HOST_IP` on Vercel (Linux DNS works fine there)
+
+## Database
+- **Run migrations locally:** `npm run db:migrate` (uses `DIRECT_URL` from `.env.local`)
+- **Deploy migrations to prod:** `npm run db:deploy` (CI/CD — uses `DIRECT_URL` env var)
+- **`prisma.config.ts`** loads `.env.local` manually (Prisma CLI only reads `.env`)
+- **Schema** at `prisma/schema.prisma` — no `url` in datasource block (Prisma 7 uses config file instead)
+- **Neon connection:** pooled (`DATABASE_URL`) for runtime, direct (`DIRECT_URL`) for migrations
 
 ## Build Status
-- **Build passes cleanly** (`npm run build`) — 29 routes, no type errors
-- All server/client boundary issues resolved
-- Google Fonts loaded via CSS `@import` in `globals.css` (runtime, not build-time) — build environment cannot reach Google CDN
+- **Build passes cleanly** (`npm run build`) — **51 routes**, zero type errors
+- `serverExternalPackages` in `next.config.ts` — required for `@prisma/client`, `@prisma/adapter-neon`, `@neondatabase/serverless`, `bcryptjs`, `jsonwebtoken`, `cloudinary`, `ws`
+- Google Fonts loaded via CSS `@import` at runtime (not build time)
 
 ## Completed Phases
 - [x] Phase 1 — Scaffold (types, tokens, mock data, stores, PWA manifest)
@@ -153,112 +226,70 @@ Two modes on `/try-on`, both powered by **Replicate IDM-VTON** (`cuuupid/idm-vto
 - [x] Phase 3 — Catalogue pages (Home, Shop, Product Detail)
 - [x] Phase 4 — User pages (Wishlist, Saved Looks, Profile, Avatar Builder, Login/Register)
 - [x] Phase 5 — Desktop layout (Sidebar, AppShell, responsive shell CSS)
-- [x] Phase 6 — Try-On Canvas Engine (`/try-on` with `TryOnView`, `LayerStack`, `TryOnActionBar`, `ColourSwitcher`)
-- [x] Phase 7 — Avatar Studio (`/avatar-studio` with `AvatarStudio`, `LayerPanel`, `ItemLayerCard`, `SendToVendorModal`)
+- [x] Phase 6 — Try-On Canvas Engine (`/try-on`)
+- [x] Phase 7 — Avatar Studio (`/avatar-studio`)
 - [x] Phase 8 — PWA & offline shell
-  - `public/sw.js` — manual service worker (network-first navigation, cache-first static assets)
-  - `public/icons/icon.svg` + `icon-maskable.svg` — SVG icons (any size, maskable)
-  - `public/manifest.json` — full manifest with shortcuts, categories
-  - `src/components/layout/ServiceWorkerRegistrar.tsx` — client component, registers SW on mount
-  - `src/app/offline/page.tsx` — offline fallback page
-  - `src/app/(main)/try-on/TryOnContent.tsx` — Suspense boundary fix for `useSearchParams`
 - [x] Phase 9 — Orders & Pre-Orders (user side)
-  - `/bag`, `/orders`, `/orders/[id]`, `/pre-orders`, `/pre-orders/new`, `/pre-orders/[id]`
-  - `CheckoutModal` (1s mock delay → createOrder → clear cart → toast → redirect)
-  - `OrderStatusTracker`, `OrderCard`, `PreOrderForm`, `QuoteReviewModal`
-  - `orders.store.ts` persisted as `virea:orders`
 - [x] Phase 10 — Vendor Auth & Onboarding
-  - `/vendor/login` (signs in as mockVendors[0]), `/vendor/register` (3-step wizard)
-  - `VendorAccountStep`, `VendorCategoryStep`, `VendorBankStep`
-  - `vendor.store.ts` persisted as `virea:vendor`; `buildMockVendor()` helper
-- [x] Phase 11 — Vendor Portal
-  - `(vendor)/layout.tsx` with `VendorShell` (sidebar desktop / drawer mobile)
-  - `/vendor/dashboard` — live stats, quick actions, recent orders snippet
-  - `/vendor/products` + `/new` + `/[id]/edit` — full CRUD via `ProductUploadForm`
-  - `/vendor/orders` + `/[id]` — order inbox, advance status flow (PLACED → DELIVERED)
-  - `/vendor/pre-orders` + `/[id]` — inbox + send-quote form + status progression
-  - `/vendor/styling-requests` + `/[id]` — respond or decline
-  - `/vendor/payouts` — settled/pending summary + mock payout history
-  - `/vendor/profile` — edit business name, bio, categories
-- [x] Phase 12 — Animations & Motion
-  - `src/lib/motionTokens.ts` — JS constants mirroring CSS `--duration-*` / `--easing-*` tokens for Framer Motion
-  - `src/app/(main)/template.tsx` — fade+slide-up page transition on every shopper navigation
-  - `CheckoutModal`, `QuoteReviewModal`, `SendToVendorModal` — `AnimatePresence` with backdrop fade + bottom sheet slide-up/down
-  - `ToastContainer` — `AnimatePresence` replaces CSS keyframe; scale+y slide in/out per toast
-  - `BottomNav` — `motion.span layoutId="nav-pill"` slides the active pill between nav items
-  - `AvatarBuilderPage` + `VendorRegisterPage` — `AnimatePresence mode="wait"` + directional x slide between steps
-  - `LayerStack` — `AnimatePresence` with height+x+opacity for try-on layer enter/exit
+- [x] Phase 11 — Vendor Portal (full CRUD)
+- [x] Phase 12 — Animations & Motion (Framer Motion throughout)
 - [x] Phase 13 — Polish & Accessibility
-  - `ThemeProvider` wraps with `<MotionConfig reducedMotion="user">` — auto-disables animations when OS reduces motion
-  - `:focus-visible` ring uses `!important` to override inline `outline:none`
-  - Vendor empty states upgraded with icon + headline + descriptive copy
-  - `(main)/shop/[category]/loading.tsx` + `(main)/loading.tsx` — `SkeletonCard` grids for perceived performance
 - [x] Phase 14 — Code Audit & Cleanup
-  - Shared form field CSS classes (`.field`, `.field--textarea`, `.field--select`, `.field-label`, `.field-error`)
-  - Modal refactor — all modals use shared `BottomSheet` wrapper with render prop
-  - Store IDs switched from `Date.now()` to `crypto.randomUUID()`
-  - Dead code removed; type cleanup; hover states unified
 - [x] Phase 15 — World-Standard UI Overhaul
-  - Top header replaces desktop sidebar; `TopBar` visible at all breakpoints
-  - `ProductCard` redesign — white bg, `objectFit:contain`, brand label, colour dots
-  - `ProductGallery` — image carousel + thumbnail strip on product detail page
-  - Product detail full redesign with `product-detail-layout` grid
-  - Shop page sidebar (categories + filters) on desktop
 - [x] Phase 16 — Home Page Elevation & Footer
-  - `HeroSlider` — full client carousel with per-word stacked headline animation
-  - `FadeIn` — reusable `whileInView` scroll-reveal wrapper
-  - `MarqueeStrip`, `PromoSection`, `VendorsOfTheWeek`
-  - `Footer` — dark footer with marquee watermark, 4 link columns, email subscribe
-- [x] Phase 17 — AI Try-On & Photorealistic Avatar
-  - **Replicate IDM-VTON integration** — `src/app/api/tryon/route.ts`; accepts garment URL + person image (base64 or URL); polls until result; deployed and live
-  - **FLUX.1-schnell avatar generation** — `src/app/api/generate-avatar/route.ts`; builds prompt from gender/body shape/skin tone/height; stores result as `virea_avatar_photo` in localStorage
-  - **Shared Replicate util** — `src/lib/replicate.ts`; IPv4 DNS workaround used by both routes
-  - **Try-on mode toggle** — pill toggle on `/try-on`: **Avatar** (FLUX photo + IDM-VTON) | **Real Photo** (selfie + IDM-VTON)
-  - **Avatar mode 3 states**: no avatar built → prompt to `/avatar-builder`; avatar built, no photo → inline generation (~10s); photo ready → show avatar + "See it on your avatar" CTA
-  - **Regenerate button** — lets user refresh their avatar photo from the try-on page
-  - **Avatar builder updated** — SVG cartoon preview removed; "Save & Generate Avatar" auto-generates FLUX photo as final step; shows result with option to regenerate or skip
-  - **`AiTryOnPanel`** — shared loading overlay (spinner + pulsing dots) and result display (AI badge + back button) used by both modes
-  - **`useFashnTryOn`** — real-photo hook (compresses selfie to 768px JPEG before sending)
-  - **`useAvatarTryOn`** — avatar hook (`saveAvatarPhoto(url)` persists generated photos)
-  - **`next.config.ts`** — `*.replicate.delivery` + `pbxt.replicate.delivery` added to `remotePatterns`
-
-- [x] Phase 18 — Backend Core
-  - Express API server at `../server/` (separate project, runs on port 4000)
-  - **Prisma 7** + **Neon PostgreSQL** — 12 models: User, Vendor, Avatar, Product, WishlistItem, BagItem, Order, OrderItem, PreOrder, StylingRequest, SavedOutfit, PayoutRecord, RefreshToken
-  - **JWT dual-token auth** — access token (15 min, in memory), refresh token (7 days, httpOnly cookie at `/api/v1/auth`)
-  - **bcrypt** (12 rounds) for password hashing; **Zod** for all request validation
-  - **express-rate-limit** — 200 req/15 min general, 10 req/15 min on auth routes
-  - Middleware chain: `cors → helmet → rateLimit → morgan → authGuard → validate → controller → errorHandler`
-  - Routes: `/auth` (register/login/refresh/logout for user + vendor), `/users`, `/avatars`, `/catalogue`, `/wishlist`, `/bag`, `/outfits`
-  - `authGuard("user")` = userGuard · `authGuard("vendor")` = vendorGuard · `authGuard()` = anyAuthGuard
-  - **Next.js proxy** — `src/app/api/[[...slug]]/route.ts` forwards all `/api/*` to Express; existing `/api/tryon` and `/api/generate-avatar` routes take precedence (Next.js resolves more-specific routes first)
-  - `NEXT_PUBLIC_API_URL=http://localhost:4000` in `.env.local`
-  - **Neon WebSocket adapter** — `@prisma/adapter-neon` + `@neondatabase/serverless` + `ws`; connects over port 443 (not 5432) so blocked networks work. `PrismaNeon` in v7 takes `{ connectionString }` config directly, not a `Pool` instance
-  - **`prisma.config.ts`** at server root — Prisma 7 moved `url`/`directUrl` out of `schema.prisma`; migration adapter uses `DIRECT_URL` (non-pooled), runtime uses `DATABASE_URL` (pooled)
-  - **`@types/express` v5** — `req.params` values type as `string | string[]`; always extract as `req.params["key"] as string`
+- [x] Phase 17 — AI Try-On & Photorealistic Avatar (Replicate IDM-VTON + FLUX.1-schnell)
+- [x] Phase 18 — Backend Core → **refactored to Next.js Route Handlers** (originally Express, migrated for Vercel simplicity)
+  - **Prisma 7** + **Neon PostgreSQL** — 13 models
+  - **JWT dual-token auth**, **bcrypt**, **Zod** validation on all routes
+  - `src/lib/` — `prisma.ts`, `jwt.ts`, `cloudinary.ts`, `api-error.ts`, `auth-guard.ts`
+  - `src/lib/services/` — 11 service files
+  - `src/app/api/v1/` — 44 route handler files
+  - `next.config.ts` updated: `serverExternalPackages` for native Node modules
+  - `prisma.config.ts` at root (excluded from tsconfig) — migration adapter using `DIRECT_URL`
+- [x] Phase 19 — Vendor Products CRUD + Cloudinary uploads + Orders/Pre-Orders/Styling Requests lifecycle
+  - Vendor products: list, get, create, update, delete + `upload-image` → Cloudinary
+  - User orders: create (validates vendor ownership, `$transaction`), list, get, cancel
+  - Vendor orders: list, get, advance status (PLACED→CONFIRMED→PROCESSING→SHIPPED→DELIVERED)
+  - User pre-orders: create, list, get, accept/decline quote, cancel
+  - Vendor pre-orders: list, get, send quote, advance (QUOTE_ACCEPTED→IN_PRODUCTION→READY→DELIVERED)
+  - User styling requests: create, list, get
+  - Vendor styling requests: list, get, respond (OPEN→RESPONDED), decline (OPEN→DECLINED)
+  - Flutterwave payments intentionally deferred — will be added after full product is complete
+- [x] Phase 20 — Auth Wiring (Option C — real auth, mock content)
+  - `src/lib/api-token.ts` — in-memory access token registry (never persisted to localStorage)
+  - `src/lib/api.ts` — `apiFetch<T>()` with silent JWT refresh on 401; dynamic store sign-out on refresh failure
+  - `auth.store.ts` — `login()`, `register()`, `signOut()` all hit real API; `accessToken` excluded from Zustand persist
+  - `vendor.store.ts` — `login()`, `register()`, `signOut()` all hit real API
+  - `LoginForm.tsx` — async with loading state + error display
+  - `register/page.tsx` — calls real register API at step 0; body/style/selfie steps remain local (Phase 21 will wire them)
+  - `vendor/register/page.tsx` — calls real register API on final submit
 
 ## Up Next
-- [ ] **Phase 19** — Vendor product routes (+ Cloudinary uploads), Orders/Pre-Orders/Styling Requests lifecycle, Flutterwave split payments
-- [ ] Phase 20 — Background Jobs (BullMQ + Redis — price-drop/new-arrival notifications, payment verify fallback)
-- [ ] Phase 21 — Frontend-Backend Wiring (swap mock data for React Query hooks, api.ts fetch client, silent JWT refresh)
+- [ ] **Phase 21** — Full Frontend-Backend Wiring (swap all mock data for `apiFetch` + React Query hooks; wire avatar profile, wishlist, bag, orders, pre-orders, styling requests to real API)
+- [ ] **Phase 22** — Flutterwave Split Payments (deferred by choice — add after full product is complete)
 
 ## Gotchas
-- `next/image` requires `images.remotePatterns` in `next.config.ts` — Unsplash + Replicate CDN (`*.replicate.delivery`) already configured
+- `next/image` requires `images.remotePatterns` in `next.config.ts` — Unsplash + Replicate CDN already configured
 - Zustand `persist` uses named keys: `virea:session`, `virea:avatar`, `virea:wishlist`, `virea:cart`, `virea:theme`, `virea:outfits`, `virea:orders`, `virea:vendor`
 - `localStorage` is only available in client components; stores hydrate on mount
 - All prices are in Nigerian Naira (₦); format with `.toLocaleString("en-NG")`
 - Toast: `useUIStore(s => s.addToast)` — NOT a separate store
-- Vendor portal auth guard: `useEffect(() => { if (!isAuthenticated) router.replace("/vendor/login"); }, [isAuthenticated, router])` pattern used in every vendor page
-- Dynamic route params: `const { id } = use(params)` (Next.js 16 — params is a Promise)
-- **Sticky elements must use `top: var(--topbar-height)`** — the fixed TopBar is 64px mobile / 68px desktop
-- **Hover states use JS, not CSS** — all components use inline styles; always wire `onMouseEnter`/`onMouseLeave` directly on elements. Never rely on CSS class hover rules.
-- **`BottomSheet` render prop** — accepts `children: ReactNode | ((close: () => void) => ReactNode)`. Pass a function child when buttons inside need to trigger animated close.
-- **`Button` filled variant mouseLeave** — never clear `el.style.background` on leave. Only `boxShadow` and `transform` are set on enter; clearing background makes the button transparent.
-- **`next/image fill` inside `AnimatePresence`** — always wrap `<Image fill>` in an inner `<div style={{ position: "relative", width: "100%", height: "100%" }}>` inside the motion wrapper.
-- **Marquee seamless loop** — render content twice side-by-side, animate `translateX(0) → translateX(-50%)`. Single-copy marquee jumps at end of cycle.
-- **DM Sans 800** — loaded in Google Fonts `@import`. Use `fontFamily: "var(--font-sans)", fontWeight: 800` for hero headlines. Cormorant tops out at 600.
-- **`virea_avatar_photo` vs `virea_user_selfie`** — two separate localStorage keys. Avatar photo is a Replicate CDN URL (string). Selfie is a base64 data URI (string). Never mix them: `useAvatarTryOn` reads `virea_avatar_photo` and passes it as `personImageUrl`; `useFashnTryOn` reads `virea_user_selfie` and passes it as `personImageB64`.
-- **`/api/tryon` person image** — accepts `personImageUrl` (URL string, e.g. Replicate CDN) OR `personImageB64` (base64 data URI). URL takes precedence. IDM-VTON accepts both natively.
-- **FLUX prompt engineering** — always include "arms slightly away from body" and "white seamless bodysuit" in the avatar generation prompt. IDM-VTON needs clear arm separation for garment segmentation and a light undergarment for clean replacement.
-- **Vercel Pro required** — API routes use `maxDuration = 60`. IDM-VTON takes 15–30s, FLUX takes 5–10s. Hobby plan caps Node.js functions at 10s and will always timeout.
-- **`REPLICATE_HOST_IP` env var** — local Windows dev only; bypasses broken DNS. Refresh with `Resolve-DnsName api.replicate.com -Type A`. Never set this on Vercel.
+- Vendor portal auth guard: `useEffect(() => { if (!isAuthenticated) router.replace("/vendor/login"); }, [isAuthenticated, router])` in every vendor page
+- Dynamic route params: `const { id } = use(params)` — NOT `await params` (Next.js 16, client components); route handlers use `const { id } = await params` (server-side)
+- **Sticky elements must use `top: var(--topbar-height)`** — TopBar is 64px mobile / 68px desktop
+- **Hover states use JS, not CSS** — always wire `onMouseEnter`/`onMouseLeave` on elements; never use CSS `:hover` on inline-styled components
+- **`BottomSheet` render prop** — `children: ReactNode | ((close: () => void) => ReactNode)`
+- **`Button` filled variant mouseLeave** — never clear `el.style.background`; only `boxShadow`/`transform` are set on enter
+- **`next/image fill` inside `AnimatePresence`** — always wrap in inner `<div style={{ position: "relative", width: "100%", height: "100%" }}>`
+- **Marquee seamless loop** — render content twice side-by-side, animate `translateX(0) → translateX(-50%)`
+- **DM Sans 800** — use `fontFamily: "var(--font-sans)", fontWeight: 800`; Cormorant tops out at 600
+- **`virea_avatar_photo` vs `virea_user_selfie`** — two separate localStorage keys; never mix them
+- **FLUX prompt engineering** — always include "arms slightly away from body" + "white seamless bodysuit"
+- **Vercel Pro required** — `maxDuration = 60` on AI routes; Hobby caps at 10s
+- **`REPLICATE_HOST_IP`** — local Windows dev only; never set on Vercel
+- **`prisma.config.ts` excluded from tsconfig** — Prisma 7 `defineConfig` types conflict with tsconfig strict mode; excluded via `"exclude": [..., "prisma.config.ts"]`
+- **Prisma 7 schema has no `url` in datasource** — URL comes from `prisma.config.ts` `datasource.url` field, not `schema.prisma`
+- **`DATABASE_URL ?? ""`** in `prisma.ts` — never throw at module load time; Next.js imports modules at build time before env vars exist; real error surfaces at query time
+- **`apiFetch` silent refresh** — on page reload `accessToken` is null but `isAuthenticated` is true (from localStorage); first 401 triggers `/api/v1/auth/refresh` automatically; no manual `initSession` needed
+- **Vendor `accountName`** — the register form doesn't have a separate account name field; `ownerName` is sent as `accountName` to the API
+- **Zod v4** — import from `"zod"` not `"zod/v4"`; API is slightly different from v3 (e.g. `.min()` error messages)
