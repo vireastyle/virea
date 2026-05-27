@@ -206,7 +206,11 @@ Business logic lives here — route handlers are thin wrappers.
   | `CLOUDINARY_API_KEY` | Cloudinary → API Keys |
   | `CLOUDINARY_API_SECRET` | Cloudinary → API Keys |
   | `REPLICATE_API_TOKEN` | replicate.com/account/api-tokens |
+  | `FLUTTERWAVE_SECRET_KEY` | Flutterwave dashboard → Settings → API Keys → Secret key |
+  | `FLUTTERWAVE_SECRET_HASH` | A long random string **you choose** — paste it into both Vercel and the FLW dashboard Webhooks → Secret hash field |
   > Do NOT set `REPLICATE_HOST_IP` on Vercel (Linux DNS works fine there)
+  > Flutterwave webhook URL on Vercel: `https://virea-seven.vercel.app/api/v1/webhooks/flutterwave`
+  > Enable v3 webhooks + webhook retries in the FLW dashboard
 
 ## Database
 - **Run migrations locally:** `npm run db:migrate` (uses `DIRECT_URL` from `.env.local`)
@@ -216,7 +220,7 @@ Business logic lives here — route handlers are thin wrappers.
 - **Neon connection:** pooled (`DATABASE_URL`) for runtime, direct (`DIRECT_URL`) for migrations
 
 ## Build Status
-- **Build passes cleanly** (`npm run build`) — **51 routes**, zero type errors
+- **Build passes cleanly** (`npm run build`) — **54 routes**, zero type errors
 - `serverExternalPackages` in `next.config.ts` — required for `@prisma/client`, `@prisma/adapter-neon`, `@neondatabase/serverless`, `bcryptjs`, `jsonwebtoken`, `cloudinary`, `ws`
 - Google Fonts loaded via CSS `@import` at runtime (not build time)
 
@@ -264,15 +268,27 @@ Business logic lives here — route handlers are thin wrappers.
   - `register/page.tsx` — calls real register API at step 0; body/style/selfie steps remain local (Phase 21 will wire them)
   - `vendor/register/page.tsx` — calls real register API on final submit
 
+- [x] Phase 22 — Kobo price migration + Flutterwave Split Payments
+  - **All monetary values stored as `Int` (kobo)** — never Float. Use `formatNaira(kobo)` to display, `nairaToKobo()` on form submit, `koboToNaira()` to prefill edit forms. All helpers in `src/lib/format.ts`.
+  - DB migration `20260527170906_kobo_prices_and_flw` — run `npm run db:deploy` on prod
+  - New schema fields: `Vendor.flwSubaccountId`, `Order.txRef` (@unique), `Order.paidAt`
+  - `src/lib/services/flutterwave.service.ts` — all FLW API calls
+  - `POST /api/v1/vendor/subaccount` — register vendor as FLW subaccount (90/10 split; idempotent)
+  - `POST /api/v1/payments/initiate` — save txRef to Order BEFORE calling FLW; returns paymentUrl
+  - `POST /api/v1/webhooks/flutterwave` — verify sig → verify tx → 4 checks → confirm Order + PayoutRecord; P2002 = idempotent 200; always return 200
+  - `CheckoutModal` — real apiFetch (POST /orders → POST /payments/initiate → window.location.href)
+  - `/orders` page — "verifying payment" banner when `?ref=` in URL (display-only; webhook is the truth)
+  - Skill: `skills/flutterwave-integration/SKILL.md` — load for any FLW task
+
 ## Up Next
-- [ ] **Phase 21** — Full Frontend-Backend Wiring (swap all mock data for `apiFetch` + React Query hooks; wire avatar profile, wishlist, bag, orders, pre-orders, styling requests to real API)
-- [ ] **Phase 22** — Flutterwave Split Payments (deferred by choice — add after full product is complete)
+- [ ] **Phase 21** — Full Frontend-Backend Wiring (swap all mock data for `apiFetch` + React Query hooks; needed for checkout to work end-to-end — cart items need real DB product IDs)
+- [ ] **Run prod migration** — `npm run db:deploy` to apply the kobo migration on the production DB
 
 ## Gotchas
 - `next/image` requires `images.remotePatterns` in `next.config.ts` — Unsplash + Replicate CDN already configured
 - Zustand `persist` uses named keys: `virea:session`, `virea:avatar`, `virea:wishlist`, `virea:cart`, `virea:theme`, `virea:outfits`, `virea:orders`, `virea:vendor`
 - `localStorage` is only available in client components; stores hydrate on mount
-- All prices are in Nigerian Naira (₦); format with `.toLocaleString("en-NG")`
+- **All prices in kobo (Int).** Display with `formatNaira(kobo)` from `src/lib/format.ts`. Never use `.toLocaleString("en-NG")` directly on a price value.
 - Toast: `useUIStore(s => s.addToast)` — NOT a separate store
 - Vendor portal auth guard: `useEffect(() => { if (!isAuthenticated) router.replace("/vendor/login"); }, [isAuthenticated, router])` in every vendor page
 - Dynamic route params: `const { id } = use(params)` — NOT `await params` (Next.js 16, client components); route handlers use `const { id } = await params` (server-side)
@@ -287,6 +303,11 @@ Business logic lives here — route handlers are thin wrappers.
 - **FLUX prompt engineering** — always include "arms slightly away from body" + "white seamless bodysuit"
 - **Vercel Pro required** — `maxDuration = 60` on AI routes; Hobby caps at 10s
 - **`REPLICATE_HOST_IP`** — local Windows dev only; never set on Vercel
+- **Flutterwave amounts** — FLW API sends/receives naira (major unit). DB stores kobo. Always divide by 100 before sending to FLW, multiply by 100 when reading back. The verify endpoint also returns naira.
+- **`FLUTTERWAVE_SECRET_HASH`** — you set this string yourself in the FLW dashboard (Webhooks → Secret hash). Must exactly match the env var. Without it the webhook handler rejects all incoming webhooks with 401.
+- **Save `txRef` to Order before calling FLW** — generate it, persist to DB, then call `createPaymentLink()`. If the FLW call fails and is retried, the txRef is already there and won't duplicate.
+- **Webhook always returns 200** — even on failed checks or DB errors. Returning non-200 causes FLW to retry indefinitely. Log errors; never let them bubble to a 500.
+- **Vendor must have `flwSubaccountId`** — `POST /api/v1/payments/initiate` throws `VENDOR_NO_SUBACCOUNT` if not set. Vendor must call `POST /api/v1/vendor/subaccount` first (once, during onboarding).
 - **`prisma.config.ts` excluded from tsconfig** — Prisma 7 `defineConfig` types conflict with tsconfig strict mode; excluded via `"exclude": [..., "prisma.config.ts"]`
 - **Prisma 7 schema has no `url` in datasource** — URL comes from `prisma.config.ts` `datasource.url` field, not `schema.prisma`
 - **`DATABASE_URL ?? ""`** in `prisma.ts` — never throw at module load time; Next.js imports modules at build time before env vars exist; real error surfaces at query time
