@@ -270,7 +270,7 @@ Business logic lives here — route handlers are thin wrappers.
 
 - [x] Phase 22 — Kobo price migration + Flutterwave Split Payments
   - **All monetary values stored as `Int` (kobo)** — never Float. Use `formatNaira(kobo)` to display, `nairaToKobo()` on form submit, `koboToNaira()` to prefill edit forms. All helpers in `src/lib/format.ts`.
-  - DB migration `20260527170906_kobo_prices_and_flw` — run `npm run db:deploy` on prod
+  - DB migration `20260527170906_kobo_prices_and_flw` — ✅ applied to production 2026-05-27
   - New schema fields: `Vendor.flwSubaccountId`, `Order.txRef` (@unique), `Order.paidAt`
   - `src/lib/services/flutterwave.service.ts` — all FLW API calls
   - `POST /api/v1/vendor/subaccount` — register vendor as FLW subaccount (90/10 split; idempotent)
@@ -282,7 +282,6 @@ Business logic lives here — route handlers are thin wrappers.
 
 ## Up Next
 - [ ] **Phase 21** — Full Frontend-Backend Wiring (swap all mock data for `apiFetch` + React Query hooks; needed for checkout to work end-to-end — cart items need real DB product IDs)
-- [ ] **Run prod migration** — `npm run db:deploy` to apply the kobo migration on the production DB
 
 ## Gotchas
 - `next/image` requires `images.remotePatterns` in `next.config.ts` — Unsplash + Replicate CDN already configured
