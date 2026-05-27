@@ -15,7 +15,7 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["XS", "S", "M", "L", "XL"],
     image_urls: {
-      Midnight: "https://images.unsplash.com/photo-1583496661160-fb5218f3b77b?w=400&q=80",
+      Midnight: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400&q=80",
       Champagne: "https://images.unsplash.com/photo-1585487000160-6ebf0b355a02?w=400&q=80",
       Forest: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80",
     },

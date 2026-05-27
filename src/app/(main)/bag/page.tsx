@@ -17,12 +17,12 @@ export default function BagPage() {
 
   return (
     <PageShell>
-      <h1 className="headline-medium" style={{ marginBottom: "var(--space-6)" }}>My Bag</h1>
+      <h1 className="headline-medium" style={{ marginBottom: "var(--space-6)" }}>My Cart</h1>
 
       {items.length === 0 ? (
         <div style={{ textAlign: "center", paddingTop: "var(--space-16)" }}>
           <ShoppingBag size={64} strokeWidth={1} style={{ color: "var(--color-outline-variant)", marginBottom: "var(--space-4)" }} />
-          <p className="headline-small" style={{ marginBottom: "var(--space-2)" }}>Your bag is empty</p>
+          <p className="headline-small" style={{ marginBottom: "var(--space-2)" }}>Your cart is empty</p>
           <p className="body-medium" style={{ color: "var(--color-on-surface-variant)", marginBottom: "var(--space-8)" }}>
             Browse the catalogue and add items to get started.
           </p>

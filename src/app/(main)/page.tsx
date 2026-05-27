@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { ProductCard } from "@/components/catalogue/ProductCard";
 import { CategoryIconChip } from "@/components/catalogue/CategoryIconChip";
 import { FadeIn } from "@/components/ui/FadeIn";
+import { ScrollRow } from "@/components/ui/ScrollRow";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import { MarqueeStrip } from "@/components/home/MarqueeStrip";
 import { PromoSection } from "@/components/home/PromoSection";
@@ -112,23 +113,13 @@ export default function HomePage() {
             <h2 className="headline-large" style={{ marginBottom: "var(--space-6)" }}>
               Trending Now
             </h2>
-            <div
-              className="scrollbar-hide"
-              style={{
-                display: "flex",
-                gap: "var(--space-3)",
-                overflowX: "auto",
-                paddingBottom: "var(--space-2)",
-                marginInline: "calc(-1 * var(--space-4))",
-                paddingInline: "var(--space-4)",
-              }}
-            >
+            <ScrollRow>
               {trending.map((item) => (
                 <div key={item.id} className="trending-card">
                   <ProductCard item={item} />
                 </div>
               ))}
-            </div>
+            </ScrollRow>
           </section>
         </FadeIn>
 

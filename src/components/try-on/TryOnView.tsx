@@ -114,7 +114,7 @@ export function TryOnView({ initialItem, initialColour }: Props) {
 
   const handleAddToBag = () => {
     addToCart(initialItem, selectedColour, initialItem.available_sizes[0]);
-    addToast(`${initialItem.name} added to bag`);
+    addToast(`${initialItem.name} added to cart`);
   };
 
   const handleSaveLook = () => {
@@ -141,15 +141,12 @@ export function TryOnView({ initialItem, initialColour }: Props) {
 
   return (
     <div>
-      {/* ── Mode toggle ──────────────────────────────────────────────────────── */}
+      {/* ── Mode toggle — underline tabs ─────────────────────────────────────── */}
       <div
         style={{
           display:      "flex",
-          background:   "var(--color-surface-variant)",
-          borderRadius: "var(--shape-full)",
-          padding:      "4px",
-          marginBottom: "var(--space-4)",
-          gap:          "4px",
+          borderBottom: "1px solid var(--color-outline-variant)",
+          marginBottom: "var(--space-5)",
         }}
       >
         {(["avatar", "real"] as TryOnMode[]).map((m) => (
@@ -158,21 +155,27 @@ export function TryOnView({ initialItem, initialColour }: Props) {
             onClick={() => handleModeSwitch(m)}
             style={{
               flex:           1,
-              height:         "40px",
+              height:         "44px",
               border:         "none",
-              borderRadius:   "var(--shape-full)",
-              background:     mode === m ? "var(--color-primary)" : "transparent",
-              color:          mode === m ? "var(--color-on-primary)" : "var(--color-on-surface-variant)",
+              borderBottom:   mode === m
+                ? "2px solid var(--color-primary)"
+                : "2px solid transparent",
+              background:     "transparent",
+              color:          mode === m
+                ? "var(--color-primary)"
+                : "var(--color-on-surface-variant)",
               fontFamily:     "var(--type-label-large-family)",
               fontSize:       "var(--type-label-large-size)",
-              fontWeight:     "var(--type-label-large-weight)",
+              fontWeight:     mode === m ? 600 : 400,
               cursor:         "pointer",
               display:        "flex",
               alignItems:     "center",
               justifyContent: "center",
               gap:            "var(--space-2)",
-              transition:     `background var(--duration-standard) var(--easing-standard),
-                               color var(--duration-standard) var(--easing-standard)`,
+              letterSpacing:  "0.03em",
+              marginBottom:   "-1px",
+              transition:     `color var(--duration-standard) var(--easing-standard),
+                               border-color var(--duration-standard) var(--easing-standard)`,
             }}
           >
             {m === "avatar"

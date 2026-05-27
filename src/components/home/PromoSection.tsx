@@ -2,13 +2,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { Sparkles, Gem, Infinity, Heart } from "lucide-react";
 import { motionTokens } from "@/lib/motionTokens";
 
 const FEATURES = [
-  { label: "Curated", sub: "Handpicked styles just for you" },
-  { label: "Timeless", sub: "Pieces that never go out of style" },
-  { label: "Quality", sub: "Premium materials, made to last" },
-  { label: "For You", sub: "Designed to fit your lifestyle" },
+  { label: "Curated",  sub: "Handpicked styles just for you",       Icon: Sparkles, accent: "var(--color-primary)",  bg: "linear-gradient(135deg, var(--color-surface) 0%, rgba(59,111,104,0.06) 100%)" },
+  { label: "Timeless", sub: "Pieces that never go out of style",     Icon: Infinity, accent: "#C7A760",              bg: "linear-gradient(135deg, var(--color-surface) 0%, rgba(199,167,96,0.06) 100%)" },
+  { label: "Quality",  sub: "Premium materials, made to last",       Icon: Gem,      accent: "var(--color-primary)",  bg: "linear-gradient(135deg, var(--color-surface) 0%, rgba(59,111,104,0.06) 100%)" },
+  { label: "For You",  sub: "Designed to fit your lifestyle",        Icon: Heart,    accent: "#C7A760",              bg: "linear-gradient(135deg, var(--color-surface) 0%, rgba(199,167,96,0.06) 100%)" },
 ];
 
 export function PromoSection() {
@@ -89,7 +90,7 @@ export function PromoSection() {
               <Link href="/avatar-builder">
                 <button
                   style={{
-                    padding: "var(--space-3) var(--space-7)",
+                    padding: "var(--space-4) var(--space-10)",
                     borderRadius: "var(--shape-xl)",
                     background: "#C7A760",
                     color: "#0A1F1E",
@@ -196,11 +197,12 @@ export function PromoSection() {
           paddingBottom: "var(--space-10)",
         }}
       >
-        {FEATURES.map(({ label, sub }, i) => (
+        {FEATURES.map(({ label, sub, Icon, accent, bg }, i) => (
           <motion.div
             key={label}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -3, boxShadow: "0 8px 32px rgba(0,0,0,0.10)" }}
             viewport={{ once: true, margin: "-40px" }}
             transition={{
               duration: motionTokens.duration.standard,
@@ -208,25 +210,51 @@ export function PromoSection() {
               ease: motionTokens.easing.decelerate,
             }}
             style={{
-              padding: "var(--space-5) var(--space-4)",
-              background: "var(--color-surface)",
+              padding: "var(--space-5) var(--space-5)",
+              background: bg,
               borderRadius: "var(--shape-md)",
               boxShadow: "var(--elevation-1)",
-              borderLeft: "3px solid var(--color-primary)",
+              borderLeft: `4px solid ${accent}`,
+              position: "relative",
+              overflow: "hidden",
+              cursor: "default",
             }}
           >
-            <p
-              className="title-medium"
+            {/* Icon — decorative top-right */}
+            <div
+              aria-hidden
               style={{
-                color: "var(--color-primary)",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                marginBottom: "var(--space-1)",
+                position: "absolute",
+                top: "var(--space-4)",
+                right: "var(--space-4)",
+                color: accent,
+                opacity: 0.18,
               }}
             >
-              {label}
-            </p>
-            <p className="body-small" style={{ color: "var(--color-on-surface-variant)" }}>
+              <Icon size={38} strokeWidth={1.2} />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "var(--space-2)",
+                marginBottom: "var(--space-2)",
+              }}
+            >
+              <Icon size={16} strokeWidth={2} style={{ color: accent, flexShrink: 0 }} />
+              <p
+                className="title-medium"
+                style={{
+                  color: accent,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                }}
+              >
+                {label}
+              </p>
+            </div>
+            <p className="body-small" style={{ color: "var(--color-on-surface-variant)", lineHeight: 1.6 }}>
               {sub}
             </p>
           </motion.div>

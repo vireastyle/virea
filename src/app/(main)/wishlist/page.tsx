@@ -163,9 +163,9 @@ export default function WishlistPage() {
                       <button
                         onClick={() => {
                           addToCart(item, colour, (item.available_sizes[0] ?? "M") as Size);
-                          addToast(`${item.name} added to bag`);
+                          addToast(`${item.name} added to cart`);
                         }}
-                        aria-label={`Add ${item.name} to bag`}
+                        aria-label={`Add ${item.name} to cart`}
                         style={{
                           flex: 1,
                           height: "36px",
@@ -183,7 +183,7 @@ export default function WishlistPage() {
                           gap: "var(--space-1)",
                         }}
                       >
-                        <ShoppingBag size={14} strokeWidth={1.5} /> Add to Bag
+                        <ShoppingBag size={14} strokeWidth={1.5} /> Add to Cart
                       </button>
                       <button
                         onClick={() => remove(id)}

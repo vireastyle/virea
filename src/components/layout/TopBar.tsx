@@ -8,9 +8,21 @@ import { useCartStore } from "@/store/cart.store";
 import { useWishlistStore } from "@/store/wishlist.store";
 
 const navLinks = [
-  { href: "/shop/DRESS",    label: "Shop" },
-  { href: "/try-on",        label: "Try On" },
-  { href: "/avatar-studio", label: "Studio" },
+  {
+    href: "/shop/DRESS",
+    label: "Shop",
+    match: (p: string) => p.startsWith("/shop/") || p.startsWith("/product/") || p === "/new-in",
+  },
+  {
+    href: "/try-on",
+    label: "Try On",
+    match: (p: string) => p === "/try-on",
+  },
+  {
+    href: "/avatar-studio",
+    label: "Studio",
+    match: (p: string) => p.startsWith("/avatar"),
+  },
 ];
 
 const iconBtn: React.CSSProperties = {
@@ -115,8 +127,8 @@ export function TopBar() {
           className="topbar-nav-links"
           style={{ gap: "var(--space-2)", alignItems: "center" }}
         >
-          {navLinks.map(({ href, label }) => {
-            const isActive = pathname.startsWith(href) && href !== "/";
+          {navLinks.map(({ href, label, match }) => {
+            const isActive = match(pathname);
             return (
               <Link
                 key={href}
@@ -131,6 +143,7 @@ export function TopBar() {
                   padding: "var(--space-2) var(--space-3)",
                   borderRadius: "var(--shape-sm)",
                   whiteSpace: "nowrap",
+                  background: "transparent",
                   transition: `color var(--duration-standard) var(--easing-standard), background var(--duration-standard) var(--easing-standard)`,
                 }}
                 onMouseEnter={(e) => {
@@ -142,10 +155,8 @@ export function TopBar() {
                 }}
                 onMouseLeave={(e) => {
                   const el = e.currentTarget as HTMLElement;
-                  if (!isActive) {
-                    el.style.color = "var(--color-on-surface-variant)";
-                    el.style.background = "transparent";
-                  }
+                  el.style.color = isActive ? "var(--color-primary)" : "var(--color-on-surface-variant)";
+                  el.style.background = "transparent";
                 }}
               >
                 {label}

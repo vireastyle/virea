@@ -65,7 +65,7 @@ export function AvatarStudio() {
       return;
     }
     layers.forEach((l) => addToCart(l.item, l.selectedColour, l.item.available_sizes[0]));
-    addToast(`${layers.length} item${layers.length > 1 ? "s" : ""} added to bag`);
+    addToast(`${layers.length} item${layers.length > 1 ? "s" : ""} added to cart`);
   };
 
   const handleSendToVendor = (
@@ -222,11 +222,11 @@ export function AvatarStudio() {
           <Send size={20} strokeWidth={1.5} />
         </button>
 
-        {/* Add to Bag */}
+        {/* Add to Cart */}
         <div style={{ flex: 1 }}>
           <Button variant="filled" fullWidth onClick={handleAddAllToBag}>
             <ShoppingBag size={18} strokeWidth={1.5} />
-            Add to Bag
+            Add to Cart
           </Button>
         </div>
       </div>

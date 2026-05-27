@@ -6,7 +6,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import type { HeroBanner } from "@/lib/mock/feed";
 import { motionTokens } from "@/lib/motionTokens";
 
-const ANNOUNCEMENT = "New Season Drop · Free Delivery on Orders Over ₦30,000 · Shop Now →";
 const SLIDE_INTERVAL = 6000;
 
 interface Props {
@@ -15,7 +14,6 @@ interface Props {
 
 export function HeroSlider({ banners }: Props) {
   const [active, setActive] = useState(0);
-  const [dismissed, setDismissed] = useState(false);
 
   const next = useCallback(() => setActive((i) => (i + 1) % banners.length), [banners.length]);
   const prev = useCallback(() => setActive((i) => (i - 1 + banners.length) % banners.length), [banners.length]);
@@ -30,53 +28,12 @@ export function HeroSlider({ banners }: Props) {
   return (
     <div style={{ position: "relative" }}>
 
-      {/* ── Announcement bar ── */}
-      {!dismissed && (
-        <div
-          style={{
-            background: "#1A1A18",
-            padding: "10px var(--space-6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "var(--space-4)",
-          }}
-        >
-          <p
-            style={{
-              fontFamily: "var(--type-label-medium-family)",
-              fontSize: "var(--type-label-medium-size)",
-              color: "rgba(246,241,235,0.85)",
-              letterSpacing: "0.04em",
-              textAlign: "center",
-            }}
-          >
-            {ANNOUNCEMENT}
-          </p>
-          <button
-            onClick={() => setDismissed(true)}
-            aria-label="Dismiss announcement"
-            style={{
-              background: "none",
-              border: "none",
-              color: "rgba(246,241,235,0.5)",
-              cursor: "pointer",
-              fontSize: 20,
-              lineHeight: 1,
-              padding: "2px 4px",
-              flexShrink: 0,
-            }}
-          >
-            ×
-          </button>
-        </div>
-      )}
 
       {/* ── Hero ── */}
       <section
         style={{
           position: "relative",
-          height: "clamp(480px, 80vw, 760px)",
+          height: "calc(100vh - var(--topbar-height))",
           overflow: "hidden",
         }}
       >
@@ -155,7 +112,7 @@ export function HeroSlider({ banners }: Props) {
                 style={{
                   fontFamily: "var(--font-sans)",
                   fontWeight: 800,
-                  fontSize: "clamp(72px, 14vw, 190px)",
+                  fontSize: "clamp(52px, 9vw, 130px)",
                   lineHeight: 0.85,
                   letterSpacing: "-0.03em",
                   color: "#FDFCF8",

@@ -68,11 +68,11 @@ export function TryOnActionBar({ onAddToBag, onSaveLook, onWishlist, isWished, h
         <BookmarkPlus size={20} strokeWidth={1.5} />
       </button>
 
-      {/* Add to Bag — primary CTA */}
+      {/* Add to Cart — primary CTA */}
       <div style={{ flex: 1 }}>
         <Button variant="filled" fullWidth onClick={onAddToBag}>
           <ShoppingBag size={18} strokeWidth={1.5} />
-          Add to Bag
+          Add to Cart
         </Button>
       </div>
     </div>

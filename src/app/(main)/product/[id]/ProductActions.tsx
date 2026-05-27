@@ -26,7 +26,7 @@ export function ProductActions({ item }: { item: ClothingItem }) {
       return;
     }
     addToCart(item, selectedColour, selectedSize);
-    addToast(`${item.name} added to bag`);
+    addToast(`${item.name} added to cart`);
   };
 
   return (
@@ -63,11 +63,11 @@ export function ProductActions({ item }: { item: ClothingItem }) {
         </div>
       </div>
 
-      {/* Add to Bag + Wishlist */}
+      {/* Add to Cart + Wishlist */}
       <div style={{ display: "flex", gap: "var(--space-3)" }}>
         <div style={{ flex: 1 }}>
           <Button variant="filled" fullWidth onClick={handleAddToBag}>
-            Add to Bag
+            Add to Cart
           </Button>
         </div>
         <button
