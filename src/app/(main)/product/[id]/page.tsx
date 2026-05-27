@@ -6,10 +6,11 @@ import { ProductCard } from "@/components/catalogue/ProductCard";
 import { BackLink } from "@/components/ui/BackLink";
 import { ProductActions } from "./ProductActions";
 import { ProductGallery } from "./ProductGallery";
+import { formatNaira } from "@/lib/format";
 
 type Props = { params: Promise<{ id: string }> };
 
-const formatPrice = (n: number) => `₦${n.toLocaleString("en-NG")}`;
+const formatPrice = formatNaira;
 
 const MOCK_REVIEWS = {
   average: 4.5,

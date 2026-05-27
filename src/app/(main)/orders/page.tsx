@@ -1,18 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { Package } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Package, Clock } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { OrderCard } from "@/components/orders/OrderCard";
 import { useOrdersStore } from "@/store/orders.store";
 
 export default function OrdersPage() {
-  const orders = useOrdersStore((s) => s.orders);
+  const orders        = useOrdersStore((s) => s.orders);
+  const searchParams  = useSearchParams();
+  // Flutterwave redirects back with ?ref=<txRef> — show a "verifying" banner.
+  // The actual confirmation happens via webhook; this is display-only.
+  const pendingRef    = searchParams.get("ref");
 
   return (
     <PageShell>
       <h1 className="headline-medium" style={{ marginBottom: "var(--space-6)" }}>My Orders</h1>
+
+      {/* Payment verifying banner */}
+      {pendingRef && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "var(--space-3)",
+            padding: "var(--space-4)",
+            background: "var(--color-primary-container)",
+            borderRadius: "var(--shape-md)",
+            marginBottom: "var(--space-5)",
+          }}
+        >
+          <Clock size={20} style={{ color: "var(--color-on-primary-container)", flexShrink: 0 }} />
+          <div>
+            <p className="title-small" style={{ color: "var(--color-on-primary-container)" }}>
+              Verifying your payment…
+            </p>
+            <p className="body-small" style={{ color: "var(--color-on-primary-container)", opacity: 0.8, marginTop: 2 }}>
+              This usually takes a few seconds. Your order will update automatically once confirmed.
+            </p>
+          </div>
+        </div>
+      )}
 
       {orders.length === 0 ? (
         <div style={{ textAlign: "center", paddingTop: "var(--space-16)" }}>

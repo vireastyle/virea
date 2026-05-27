@@ -1,13 +1,13 @@
-import type { ClothingItem } from "@/types/clothing";
+﻿import type { ClothingItem } from "@/types/clothing";
 
 export const mockClothing: ClothingItem[] = [
-  // ── DRESSES ──
+  // â”€â”€ DRESSES â”€â”€
   {
     id: "item-001",
     name: "Satin Flow Dress",
     brand: "Adire Studio",
     category: "DRESS",
-    price: 42000,
+    price: 4200000,
     available_colours: [
       { name: "Midnight", hex: "#1A1A2E" },
       { name: "Champagne", hex: "#F7E7CE" },
@@ -33,7 +33,7 @@ export const mockClothing: ClothingItem[] = [
     name: "Lagos Wrap Dress",
     brand: "House of Aya",
     category: "DRESS",
-    price: 35000,
+    price: 3500000,
     available_colours: [
       { name: "Terracotta", hex: "#C07652" },
       { name: "Ivory", hex: "#FFFFF0" },
@@ -54,9 +54,9 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-003",
     name: "Linen Slip Dress",
-    brand: "Rubē",
+    brand: "RubÄ“",
     category: "DRESS",
-    price: 28500,
+    price: 2850000,
     available_colours: [
       { name: "Sand", hex: "#C2B280" },
       { name: "Blush", hex: "#F4A7A3" },
@@ -79,7 +79,7 @@ export const mockClothing: ClothingItem[] = [
     name: "Ankara Print Midi",
     brand: "Nkem Collective",
     category: "DRESS",
-    price: 38000,
+    price: 3800000,
     available_colours: [
       { name: "Gold Print", hex: "#D4AF37" },
       { name: "Blue Print", hex: "#2B4F8E" },
@@ -102,7 +102,7 @@ export const mockClothing: ClothingItem[] = [
     name: "Pleated Maxi Dress",
     brand: "Adire Studio",
     category: "DRESS",
-    price: 55000,
+    price: 5500000,
     available_colours: [
       { name: "Onyx", hex: "#353935" },
       { name: "Dusty Rose", hex: "#C4A0A0" },
@@ -124,13 +124,13 @@ export const mockClothing: ClothingItem[] = [
     created_at: "2026-05-10T10:00:00Z",
   },
 
-  // ── TOPS ──
+  // â”€â”€ TOPS â”€â”€
   {
     id: "item-006",
     name: "Draped Shoulder Top",
-    brand: "Rubē",
+    brand: "RubÄ“",
     category: "TOP",
-    price: 18000,
+    price: 1800000,
     available_colours: [
       { name: "Cream", hex: "#FFFDD0" },
       { name: "Chocolate", hex: "#4B2C20" },
@@ -151,9 +151,9 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-007",
     name: "Structured Blazer",
-    brand: "Tóbi Adekoya",
+    brand: "TÃ³bi Adekoya",
     category: "TOP",
-    price: 62000,
+    price: 6200000,
     available_colours: [
       { name: "Caramel", hex: "#C68642" },
       { name: "Black", hex: "#1A1A1A" },
@@ -179,7 +179,7 @@ export const mockClothing: ClothingItem[] = [
     name: "Lace Trim Camisole",
     brand: "House of Aya",
     category: "TOP",
-    price: 14500,
+    price: 1450000,
     available_colours: [
       { name: "Ivory", hex: "#FFFFF0" },
       { name: "Blush", hex: "#F4A7A3" },
@@ -203,9 +203,9 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-009",
     name: "Knitwear Crop Top",
-    brand: "Rubē",
+    brand: "RubÄ“",
     category: "TOP",
-    price: 22000,
+    price: 2200000,
     available_colours: [
       { name: "Camel", hex: "#C19A6B" },
       { name: "Ecru", hex: "#F0EAD6" },
@@ -224,13 +224,13 @@ export const mockClothing: ClothingItem[] = [
     created_at: "2026-05-08T10:00:00Z",
   },
 
-  // ── OUTERWEAR ──
+  // â”€â”€ OUTERWEAR â”€â”€
   {
     id: "item-010",
     name: "Trench Coat",
-    brand: "Tóbi Adekoya",
+    brand: "TÃ³bi Adekoya",
     category: "OUTERWEAR",
-    price: 95000,
+    price: 9500000,
     available_colours: [
       { name: "Classic Tan", hex: "#C8A96E" },
       { name: "Black", hex: "#1A1A1A" },
@@ -253,7 +253,7 @@ export const mockClothing: ClothingItem[] = [
     name: "Longline Cardigan",
     brand: "Nkem Collective",
     category: "OUTERWEAR",
-    price: 32000,
+    price: 3200000,
     available_colours: [
       { name: "Oatmeal", hex: "#D4C5A9" },
       { name: "Forest", hex: "#2D4A47" },
@@ -279,7 +279,7 @@ export const mockClothing: ClothingItem[] = [
     name: "Denim Jacket",
     brand: "Adire Studio",
     category: "OUTERWEAR",
-    price: 48000,
+    price: 4800000,
     available_colours: [
       { name: "Light Wash", hex: "#A8C4D0" },
       { name: "Dark Wash", hex: "#2B3A4A" },
@@ -298,13 +298,13 @@ export const mockClothing: ClothingItem[] = [
     created_at: "2026-04-05T10:00:00Z",
   },
 
-  // ── BAGS ──
+  // â”€â”€ BAGS â”€â”€
   {
     id: "item-013",
     name: "Mini Bucket Bag",
     brand: "House of Aya",
     category: "BAG",
-    price: 52000,
+    price: 5200000,
     available_colours: [
       { name: "Cognac", hex: "#9A4722" },
       { name: "Black", hex: "#1A1A1A" },
@@ -330,7 +330,7 @@ export const mockClothing: ClothingItem[] = [
     name: "Woven Tote",
     brand: "Nkem Collective",
     category: "BAG",
-    price: 29000,
+    price: 2900000,
     available_colours: [
       { name: "Natural", hex: "#D4C5A9" },
       { name: "Terracotta", hex: "#C07652" },
@@ -351,9 +351,9 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-015",
     name: "Structured Clutch",
-    brand: "Tóbi Adekoya",
+    brand: "TÃ³bi Adekoya",
     category: "BAG",
-    price: 41000,
+    price: 4100000,
     available_colours: [
       { name: "Gold", hex: "#D4AF37" },
       { name: "Black", hex: "#1A1A1A" },
@@ -372,13 +372,13 @@ export const mockClothing: ClothingItem[] = [
     created_at: "2026-05-09T10:00:00Z",
   },
 
-  // ── SHOES ──
+  // â”€â”€ SHOES â”€â”€
   {
     id: "item-016",
     name: "Block Heel Mule",
     brand: "Adire Studio",
     category: "SHOES",
-    price: 38000,
+    price: 3800000,
     available_colours: [
       { name: "Nude", hex: "#E5C9A0" },
       { name: "Black", hex: "#1A1A1A" },
@@ -401,7 +401,7 @@ export const mockClothing: ClothingItem[] = [
     name: "Strappy Sandal",
     brand: "House of Aya",
     category: "SHOES",
-    price: 25000,
+    price: 2500000,
     available_colours: [
       { name: "Gold", hex: "#D4AF37" },
       { name: "Silver", hex: "#C0C0C0" },
@@ -425,9 +425,9 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-018",
     name: "Pointed Kitten Heel",
-    brand: "Tóbi Adekoya",
+    brand: "TÃ³bi Adekoya",
     category: "SHOES",
-    price: 44000,
+    price: 4400000,
     available_colours: [
       { name: "Blush", hex: "#F4A7A3" },
       { name: "Black", hex: "#1A1A1A" },
@@ -450,7 +450,7 @@ export const mockClothing: ClothingItem[] = [
     name: "Platform Sneaker",
     brand: "Nkem Collective",
     category: "SHOES",
-    price: 31000,
+    price: 3100000,
     available_colours: [
       { name: "White", hex: "#FFFFFF" },
       { name: "Sage", hex: "#8FAF8F" },
@@ -471,9 +471,9 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-020",
     name: "Leather Loafer",
-    brand: "Rubē",
+    brand: "RubÄ“",
     category: "SHOES",
-    price: 48500,
+    price: 4850000,
     available_colours: [
       { name: "Cognac", hex: "#9A4722" },
       { name: "Black", hex: "#1A1A1A" },
@@ -508,3 +508,4 @@ export const getNewArrivals = () =>
   mockClothing.filter((item) => item.is_new_arrival && item.is_active);
 
 export const getTrending = () => mockClothing.filter((item) => item.is_active).slice(0, 8);
+

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Order } from "@/types/order";
+import { formatNaira } from "@/lib/format";
 
 const STATUS_COLOURS: Record<string, string> = {
   PLACED: "var(--color-info)",
@@ -65,7 +66,7 @@ export function OrderInboxItem({ order }: { order: Order }) {
           {order.items.length === 1 ? first.item_name : `${first.item_name} +${order.items.length - 1}`}
         </p>
         <p className="body-small" style={{ color: "var(--color-on-surface-variant)" }}>
-          ₦{order.subtotal.toLocaleString("en-NG")} · {new Date(order.placed_at).toLocaleDateString("en-NG", { day: "numeric", month: "short" })}
+          {formatNaira(order.subtotal)} · {new Date(order.placed_at).toLocaleDateString("en-NG", { day: "numeric", month: "short" })}
         </p>
       </div>
 

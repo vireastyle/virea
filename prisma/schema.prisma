@@ -75,16 +75,17 @@ model User {
 // ─── Vendor ───────────────────────────────────────────────
 
 model Vendor {
-  id            String     @id @default(cuid())
-  email         String     @unique
-  password      String
-  businessName  String
-  bio           String?
-  categories    Category[]
-  bankName      String
-  accountNumber String
-  accountName   String
-  tier          Tier       @default(FREE)
+  id                String     @id @default(cuid())
+  email             String     @unique
+  password          String
+  businessName      String
+  bio               String?
+  categories        Category[]
+  bankName          String
+  accountNumber     String
+  accountName       String
+  tier              Tier       @default(FREE)
+  flwSubaccountId   String?    // set after Flutterwave subaccount is created
 
   products        Product[]
   orders          Order[]         @relation("VendorOrders")
@@ -126,7 +127,7 @@ model Product {
   name        String
   brand       String
   description String
-  price       Float
+  price       Int      // stored in kobo (integer), display as price/100 naira
   category    Category
   images      String[]
   sizes       String[]
@@ -182,9 +183,11 @@ model Order {
   vendor   Vendor      @relation("VendorOrders", fields: [vendorId], references: [id])
 
   items    OrderItem[]
-  total    Float
+  total    Int         // stored in kobo (integer)
   status   OrderStatus @default(PLACED)
   address  String
+  txRef    String?     @unique  // Flutterwave tx_ref, set when payment is initiated
+  paidAt   DateTime?            // set when webhook confirms payment
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -200,7 +203,7 @@ model OrderItem {
   quantity  Int
   size      String
   colour    String
-  price     Float
+  price     Int      // snapshot of product price in kobo at time of order
 }
 
 // ─── Pre-Orders ───────────────────────────────────────────
@@ -215,11 +218,11 @@ model PreOrder {
   description String
   eventType   String
   eventDate   DateTime?
-  budget      Float?
+  budget      Int?     // stored in kobo (integer)
   status      PreOrderStatus @default(PENDING)
 
   // Vendor quote
-  quotedPrice   Float?
+  quotedPrice   Int?   // stored in kobo (integer)
   quotedMessage String?
   estimatedDays Int?
 
@@ -266,7 +269,7 @@ model PayoutRecord {
   vendorId  String
   vendor    Vendor  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
-  amount    Float
+  amount    Int     // stored in kobo (integer)
   status    String  // settled | pending | failed
   reference String  @unique
 

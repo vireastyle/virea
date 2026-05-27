@@ -6,13 +6,13 @@ import { Heart } from "lucide-react";
 import type { ClothingItem } from "@/types/clothing";
 import { useWishlistStore } from "@/store/wishlist.store";
 import { useUIStore } from "@/store/ui.store";
+import { formatNaira } from "@/lib/format";
 
 type ProductCardProps = {
   item: ClothingItem;
 };
 
-const formatPrice = (n: number) =>
-  `₦${n.toLocaleString("en-NG")}`;
+const formatPrice = formatNaira;
 
 export function ProductCard({ item }: ProductCardProps) {
   const { toggle, has } = useWishlistStore();

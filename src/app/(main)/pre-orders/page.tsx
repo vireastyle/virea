@@ -6,6 +6,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { useOrdersStore } from "@/store/orders.store";
 import type { PreOrderStatus } from "@/types/order";
+import { formatNaira } from "@/lib/format";
 
 const STATUS_LABEL: Record<PreOrderStatus, string> = {
   SUBMITTED: "Submitted",
@@ -114,7 +115,7 @@ export default function PreOrdersPage() {
               )}
               {po.quoted_price && (
                 <p className="title-small" style={{ color: "var(--color-primary)", marginTop: "var(--space-1)" }}>
-                  Quoted: ₦{po.quoted_price.toLocaleString("en-NG")}
+                  Quoted: {formatNaira(po.quoted_price)}
                 </p>
               )}
             </Link>

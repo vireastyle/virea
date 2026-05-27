@@ -8,6 +8,7 @@ import { useVendorStore } from "@/store/vendor.store";
 import { useOrdersStore } from "@/store/orders.store";
 import { useUIStore } from "@/store/ui.store";
 import { Button } from "@/components/ui/Button";
+import { formatNaira, nairaToKobo } from "@/lib/format";
 import { BackLink } from "@/components/ui/BackLink";
 
 export default function VendorPreOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -39,9 +40,10 @@ export default function VendorPreOrderDetailPage({ params }: { params: Promise<{
   }
 
   const handleSendQuote = () => {
-    const price = Number(quotePrice);
-    if (!price || price <= 0 || !quoteNote.trim()) return;
-    addVendorQuote(id, price, quoteNote.trim());
+    const naira = Number(quotePrice);
+    if (!naira || naira <= 0 || !quoteNote.trim()) return;
+    // Store quote price in kobo
+    addVendorQuote(id, nairaToKobo(naira), quoteNote.trim());
     addToast("Quote sent to customer", "success");
     setShowQuoteForm(false);
   };
@@ -114,7 +116,7 @@ export default function VendorPreOrderDetailPage({ params }: { params: Promise<{
               YOUR QUOTE
             </p>
             <p className="headline-medium" style={{ color: "var(--color-on-success-container)" }}>
-              ₦{preOrder.quoted_price.toLocaleString("en-NG")}
+              {formatNaira(preOrder.quoted_price)}
             </p>
             {preOrder.vendor_note && (
               <p className="body-medium" style={{ color: "var(--color-on-success-container)", marginTop: "var(--space-2)" }}>

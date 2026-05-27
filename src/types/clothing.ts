@@ -12,7 +12,8 @@ export type ClothingItem = {
   name: string;
   brand: string;
   category: Category;
-  price: number;
+  price: number;          // stored in kobo (integer)
+  vendor_id?: string;     // set when item comes from real DB; undefined on mock items
   available_colours: Colour[];
   available_sizes: Size[];
   image_urls: Record<string, string>;

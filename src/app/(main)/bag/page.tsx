@@ -8,6 +8,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { CheckoutModal } from "@/components/orders/CheckoutModal";
 import { useCartStore } from "@/store/cart.store";
+import { formatNaira } from "@/lib/format";
 
 export default function BagPage() {
   const { items, remove } = useCartStore();
@@ -75,7 +76,7 @@ export default function BagPage() {
                   {ci.selected_colour.name} · Size {ci.selected_size}
                 </p>
                 <p className="title-small" style={{ color: "var(--color-primary)", marginTop: "var(--space-2)" }}>
-                  ₦{ci.item.price.toLocaleString("en-NG")}
+                  {formatNaira(ci.item.price)}
                 </p>
               </div>
 
@@ -111,7 +112,7 @@ export default function BagPage() {
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <p className="title-medium">Subtotal</p>
               <p className="title-large" style={{ color: "var(--color-primary)" }}>
-                ₦{subtotal.toLocaleString("en-NG")}
+                {formatNaira(subtotal)}
               </p>
             </div>
             <Button variant="filled" fullWidth onClick={() => setCheckingOut(true)}>

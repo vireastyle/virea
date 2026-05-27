@@ -5,6 +5,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import type { PreOrder } from "@/types/order";
 import { useOrdersStore } from "@/store/orders.store";
 import { useUIStore } from "@/store/ui.store";
+import { formatNaira } from "@/lib/format";
 
 type Props = { preOrder: PreOrder; onClose: () => void };
 
@@ -35,7 +36,7 @@ export function QuoteReviewModal({ preOrder, onClose }: Props) {
             <div style={{ padding: "var(--space-5)", background: "var(--color-primary-container)", borderRadius: "var(--shape-md)", marginBottom: "var(--space-4)", textAlign: "center" }}>
               <p className="body-small" style={{ color: "var(--color-on-primary-container)", marginBottom: "var(--space-1)" }}>Quoted Price</p>
               <p className="display-small" style={{ color: "var(--color-primary)" }}>
-                ₦{preOrder.quoted_price?.toLocaleString("en-NG")}
+                {preOrder.quoted_price != null ? formatNaira(preOrder.quoted_price) : null}
               </p>
             </div>
 

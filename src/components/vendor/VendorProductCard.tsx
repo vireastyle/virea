@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 import type { VendorProduct } from "@/types/vendor";
+import { formatNaira } from "@/lib/format";
 
 type Props = {
   product: VendorProduct;
@@ -101,7 +102,7 @@ export function VendorProductCard({ product, onDelete, onToggleActive }: Props) 
             {product.name}
           </p>
           <p className="body-small" style={{ color: "var(--color-on-surface-variant)" }}>
-            {product.category} · ₦{product.price.toLocaleString("en-NG")}
+            {product.category} · {formatNaira(product.price)}
           </p>
         </div>
 

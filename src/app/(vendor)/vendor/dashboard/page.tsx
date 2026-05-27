@@ -8,6 +8,7 @@ import { useVendorStore } from "@/store/vendor.store";
 import { useOrdersStore } from "@/store/orders.store";
 import { DashboardStats } from "@/components/vendor/DashboardStats";
 import { Button } from "@/components/ui/Button";
+import { formatNaira } from "@/lib/format";
 
 export default function VendorDashboardPage() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function VendorDashboardPage() {
   const stats = [
     { label: "PRODUCTS", value: products.length.toString(), sub: `${products.filter((p) => p.is_active).length} active` },
     { label: "ORDERS", value: vendorOrders.length.toString(), sub: `${vendorOrders.filter((o) => ["PLACED", "CONFIRMED", "PROCESSING"].includes(o.status)).length} active` },
-    { label: "REVENUE", value: `₦${totalRevenue.toLocaleString("en-NG")}`, sub: "delivered only" },
+    { label: "REVENUE", value: formatNaira(totalRevenue), sub: "delivered only" },
     { label: "REQUESTS", value: pendingStyling.toString(), sub: "styling pending" },
   ];
 
@@ -139,7 +140,7 @@ export default function VendorDashboardPage() {
                     {order.items[0]?.item_name}
                   </p>
                   <p className="body-small" style={{ color: "var(--color-on-surface-variant)" }}>
-                    ₦{order.subtotal.toLocaleString("en-NG")}
+                    {formatNaira(order.subtotal)}
                   </p>
                 </div>
                 <span className="label-small" style={{ color: "var(--color-primary)", flexShrink: 0 }}>

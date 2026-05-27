@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { VENDOR_PRODUCT_CATEGORIES } from "@/types/vendor";
 import type { VendorProduct, VendorProductCategory } from "@/types/vendor";
+import { nairaToKobo, koboToNaira } from "@/lib/format";
 
 const ALL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -30,7 +31,8 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
   const [form, setForm] = useState<FormData>({
     name: initial?.name ?? "",
     category: initial?.category ?? "DRESS",
-    price: initial?.price?.toString() ?? "",
+    // Price input is always in naira; convert from kobo when prefilling an existing product
+    price: initial?.price != null ? koboToNaira(initial.price).toString() : "",
     description: initial?.description ?? "",
     image_url: initial?.image_url ?? "",
     available_sizes: initial?.available_sizes ?? [],
@@ -71,7 +73,7 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
     onSubmit({
       name: form.name.trim(),
       category: form.category,
-      price: Number(form.price),
+      price: nairaToKobo(form.price), // convert naira input → kobo for DB storage
       description: form.description.trim(),
       image_url: form.image_url.trim(),
       available_sizes: form.available_sizes,

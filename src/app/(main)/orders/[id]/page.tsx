@@ -7,6 +7,7 @@ import { ChevronLeft } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { OrderStatusTracker } from "@/components/orders/OrderStatusTracker";
 import { useOrdersStore } from "@/store/orders.store";
+import { formatNaira } from "@/lib/format";
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -97,7 +98,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   {item.selected_colour} · Size {item.selected_size}
                 </p>
               </div>
-              <p className="title-small">₦{item.price.toLocaleString("en-NG")}</p>
+              <p className="title-small">{formatNaira(item.price)}</p>
             </div>
           ))}
         </div>
@@ -117,7 +118,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       >
         <p className="title-medium">Total Paid</p>
         <p className="headline-small" style={{ color: "var(--color-primary)" }}>
-          ₦{order.subtotal.toLocaleString("en-NG")}
+          {formatNaira(order.subtotal)}
         </p>
       </div>
     </PageShell>

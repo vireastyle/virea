@@ -12,6 +12,7 @@ import { useUIStore } from "@/store/ui.store";
 import { ORDER_STATUSES } from "@/types/order";
 import type { OrderStatus } from "@/types/order";
 import { Button } from "@/components/ui/Button";
+import { formatNaira } from "@/lib/format";
 
 const VENDOR_NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   PLACED: "CONFIRMED",
@@ -113,7 +114,7 @@ export default function VendorOrderDetailPage({ params }: { params: Promise<{ id
                 {item.selected_colour} · {item.selected_size}
               </p>
               <p className="body-small" style={{ color: "var(--color-on-surface-variant)" }}>
-                ₦{item.price.toLocaleString("en-NG")}
+                {formatNaira(item.price)}
               </p>
             </div>
           </div>
@@ -122,7 +123,7 @@ export default function VendorOrderDetailPage({ params }: { params: Promise<{ id
         <div style={{ borderTop: "1px solid var(--color-outline-variant)", paddingTop: "var(--space-3)", display: "flex", justifyContent: "space-between" }}>
           <span className="label-medium" style={{ color: "var(--color-on-surface-variant)" }}>Total</span>
           <span style={{ fontFamily: "var(--type-title-medium-family)", fontSize: "var(--type-title-medium-size)", fontWeight: 600, color: "var(--color-on-surface)" }}>
-            ₦{order.subtotal.toLocaleString("en-NG")}
+            {formatNaira(order.subtotal)}
           </span>
         </div>
       </section>

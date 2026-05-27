@@ -10,8 +10,9 @@ import { useCartStore } from "@/store/cart.store";
 import { useUIStore } from "@/store/ui.store";
 import { getItemById } from "@/lib/mock/clothing";
 import type { Size } from "@/types/clothing";
+import { formatNaira } from "@/lib/format";
 
-const formatPrice = (n: number) => `₦${n.toLocaleString("en-NG")}`;
+const formatPrice = formatNaira;
 
 export default function WishlistPage() {
   const { itemIds, remove } = useWishlistStore();

@@ -5,10 +5,11 @@ import { useEffect } from "react";
 import { CreditCard } from "lucide-react";
 import { useVendorStore } from "@/store/vendor.store";
 import { useOrdersStore } from "@/store/orders.store";
+import { formatNaira } from "@/lib/format";
 
 const mockPayouts = [
-  { id: "payout-001", amount: 42000, status: "settled", date: "2026-04-20T00:00:00Z", reference: "FLW-MOCK-001" },
-  { id: "payout-002", amount: 35000, status: "settled", date: "2026-05-03T00:00:00Z", reference: "FLW-MOCK-002" },
+  { id: "payout-001", amount: 4200000, status: "settled", date: "2026-04-20T00:00:00Z", reference: "FLW-MOCK-001" },
+  { id: "payout-002", amount: 3500000, status: "settled", date: "2026-05-03T00:00:00Z", reference: "FLW-MOCK-002" },
 ];
 
 export default function VendorPayoutsPage() {
@@ -44,13 +45,13 @@ export default function VendorPayoutsPage() {
         <div style={{ background: "var(--color-surface)", borderRadius: "var(--shape-lg)", padding: "var(--space-5) var(--space-4)", boxShadow: "var(--elevation-1)" }}>
           <p className="label-medium" style={{ color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)", letterSpacing: "0.06em" }}>TOTAL SETTLED</p>
           <p className="headline-large" style={{ color: "var(--color-success)" }}>
-            ₦{totalSettled.toLocaleString("en-NG")}
+            {formatNaira(totalSettled)}
           </p>
         </div>
         <div style={{ background: "var(--color-surface)", borderRadius: "var(--shape-lg)", padding: "var(--space-5) var(--space-4)", boxShadow: "var(--elevation-1)" }}>
           <p className="label-medium" style={{ color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)", letterSpacing: "0.06em" }}>PENDING</p>
           <p className="headline-large" style={{ color: "var(--color-warning)" }}>
-            ₦{pending.toLocaleString("en-NG")}
+            {formatNaira(pending)}
           </p>
           <p className="body-small" style={{ color: "var(--color-on-surface-variant)" }}>
             awaiting delivery
@@ -127,7 +128,7 @@ export default function VendorPayoutsPage() {
             >
               <div>
                 <p style={{ fontFamily: "var(--type-title-small-family)", fontSize: "var(--type-title-small-size)", fontWeight: 600, color: "var(--color-on-surface)" }}>
-                  ₦{payout.amount.toLocaleString("en-NG")}
+                  {formatNaira(payout.amount)}
                 </p>
                 <p className="body-small" style={{ color: "var(--color-on-surface-variant)" }}>
                   {new Date(payout.date).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })} · {payout.reference}

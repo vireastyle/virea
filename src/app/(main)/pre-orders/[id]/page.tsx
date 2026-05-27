@@ -7,6 +7,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { QuoteReviewModal } from "@/components/pre-orders/QuoteReviewModal";
 import { useOrdersStore } from "@/store/orders.store";
+import { formatNaira } from "@/lib/format";
 
 const STATUS_LABEL: Record<string, string> = {
   SUBMITTED: "Submitted — waiting for vendors",
@@ -78,7 +79,7 @@ export default function PreOrderDetailPage({ params }: { params: Promise<{ id: s
           <div>
             <p className="title-medium">{preOrder.vendor_name}</p>
             <p className="headline-small" style={{ color: "var(--color-primary)" }}>
-              ₦{preOrder.quoted_price?.toLocaleString("en-NG")}
+              {preOrder.quoted_price != null ? formatNaira(preOrder.quoted_price) : null}
             </p>
           </div>
           <Button variant="filled" onClick={() => setReviewingQuote(true)}>Review Quote</Button>

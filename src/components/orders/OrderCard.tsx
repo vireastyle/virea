@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight } from "lucide-react";
 import type { Order, OrderStatus } from "@/types/order";
+import { formatNaira } from "@/lib/format";
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
   PLACED: "Order Placed",
@@ -85,7 +86,7 @@ export function OrderCard({ order }: Props) {
           )}
         </p>
         <p className="body-small" style={{ color: "var(--color-on-surface-variant)", marginTop: "var(--space-1)" }}>
-          {order.vendor_name} · ₦{order.subtotal.toLocaleString("en-NG")}
+          {order.vendor_name} · {formatNaira(order.subtotal)}
         </p>
         <span
           style={{

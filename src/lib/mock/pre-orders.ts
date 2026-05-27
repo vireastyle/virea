@@ -9,7 +9,7 @@ export const mockPreOrders: PreOrder[] = [
     event_type: "Wedding",
     description: "A floor-length Ankara gown in deep burgundy and gold tones, fully fitted, with a modest train. For a Yoruba traditional wedding — bride's sister.",
     target_date: "2026-07-12",
-    quoted_price: 120000,
+    quoted_price: 12000000,
     vendor_note: "I can do this in deep wine and antique gold Ankara. Will need 3 fittings. Ready 2 weeks before the date.",
     status: "QUOTED",
     created_at: "2026-05-05T10:00:00Z",
