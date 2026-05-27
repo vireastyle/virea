@@ -172,7 +172,7 @@ Business logic lives here — route handlers are thin wrappers.
 | `src/types/vendor.ts` | `Vendor`, `VendorProduct`, `VendorProductCategory`, `StylingRequest`, `EventType` |
 | `src/types/order.ts` | `Order`, `OrderStatus`, `PreOrder`, `PreOrderStatus`, `OrderItem` |
 | `src/types/avatar.ts` | `Avatar`, `AvatarGender`, `BodyShape`, `SkinTone`, `HairStyle`, `HairColour`, `HeightRange`, `SizeRange` |
-| `src/components/ui/` | Button, BottomSheet, BackLink, EmptyState, SizeChip, ColourSwatch, Badge, Toast, SkeletonCard, **FadeIn** |
+| `src/components/ui/` | Button, BottomSheet, BackLink, EmptyState, SizeChip, ColourSwatch, Badge, Toast, SkeletonCard, **FadeIn**, **ScrollRow** |
 | `src/components/catalogue/` | ProductCard, CategoryIconChip |
 | `src/components/layout/` | TopBar, BottomNav, AppShell, PageShell, ThemeProvider, ServiceWorkerRegistrar, Footer |
 | `src/components/home/` | HeroSlider, MarqueeStrip, PromoSection, VendorsOfTheWeek |
@@ -299,8 +299,22 @@ Business logic lives here — route handlers are thin wrappers.
   - `src/components/layout/AvatarBootstrap.tsx` (new): invisible client component, calls `loadFromDb()` when `isAuthenticated` — placed in `(main)/layout.tsx` so it runs on every shopper page
   - Avatar now persists across devices and sessions for authenticated users
 
+- [x] UX Polish Batch (2026-05-27)
+  - **Cart rename** — "Bag" → "Cart" across all user-facing text: product detail (`ProductActions.tsx`), wishlist, try-on action bar (`TryOnActionBar.tsx`), try-on view toast, avatar studio, `/bag` page header
+  - **Try-On mode toggle** — pill replaced with minimal underline tab style (Avatar | Real Photo); 44px height, `borderBottom: 2px solid` indicator, framer-standard color transition
+  - **Studio infusion** — `/avatar-studio` converted to `"use client"` page with two top-level tabs:
+    - **Canvas**: existing `AvatarStudio` component (SVG layers, save look, send to vendor)
+    - **Try On**: item picker grid (2-col, 8 items from `mockClothing`) → full `TryOnView` inline (both Avatar AI + Real Photo modes); "← Change item" button to go back
+  - **PromoSection** — Build My Avatar button padding increased (`space-4 × space-10`); feature cards redesigned: lucide icons (Sparkles, Infinity, Gem, Heart), tinted gradient backgrounds, alternating primary/gold accents, `whileHover` lift
+  - **HeroSlider** — announcement bar removed; hero height `calc(100vh - var(--topbar-height))`; headline `clamp(52px, 9vw, 130px)`
+  - **ScrollRow** (`src/components/ui/ScrollRow.tsx`) — reusable horizontal scroll container with fade-edge overlays and arrow buttons; `ResizeObserver` + scroll listener for button visibility; used in Trending Now on home page
+  - **TopBar nav active state** — `navLinks` uses per-route `match()` functions; `background: "transparent"` added to Link style prop (prevents hover ghost on navigation); `onMouseLeave` always resets both color + background
+
 ## Up Next
-- [ ] Nothing — all phases complete. Deploy and test end-to-end.
+- [ ] Testing end-to-end on live Vercel deployment
+- [ ] `/vendors` page — all vendors grid; "Browse all →" in VendorsOfTheWeek routes here
+- [ ] `/new-in` page — new arrivals with day-based filter chips (7 / 14 / 30 days)
+- [ ] Vendor subaccount auto-trigger on first vendor login (deferred)
 
 ## Gotchas
 - `next/image` requires `images.remotePatterns` in `next.config.ts` — Unsplash + Replicate CDN already configured
@@ -332,3 +346,5 @@ Business logic lives here — route handlers are thin wrappers.
 - **`apiFetch` silent refresh** — on page reload `accessToken` is null but `isAuthenticated` is true (from localStorage); first 401 triggers `/api/v1/auth/refresh` automatically; no manual `initSession` needed
 - **Vendor `accountName`** — the register form doesn't have a separate account name field; `ownerName` is sent as `accountName` to the API
 - **Zod v4** — import from `"zod"` not `"zod/v4"`; API is slightly different from v3 (e.g. `.min()` error messages)
+- **Underline tab pattern** — for mode toggles (Try-On, Studio tabs) use `borderBottom: "2px solid var(--color-primary)"` on active, `"2px solid transparent"` on inactive, `marginBottom: "-1px"` so the indicator sits flush with the container's bottom border. Never use filled pill/capsule toggles on new UI.
+- **Bag → Cart** — the word "Cart" is canonical everywhere user-facing. Internal function/prop names (`handleAddToBag`, `onAddToBag`) can stay as-is since they're not visible to users.
