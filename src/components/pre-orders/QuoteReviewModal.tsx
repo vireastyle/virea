@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import type { PreOrder } from "@/types/order";
 import { useOrdersStore } from "@/store/orders.store";
 import { useUIStore } from "@/store/ui.store";
+import { apiFetch } from "@/lib/api";
 import { formatNaira } from "@/lib/format";
 
 type Props = { preOrder: PreOrder; onClose: () => void };
@@ -12,18 +14,34 @@ type Props = { preOrder: PreOrder; onClose: () => void };
 export function QuoteReviewModal({ preOrder, onClose }: Props) {
   const updateStatus = useOrdersStore((s) => s.updatePreOrderStatus);
   const addToast = useUIStore((s) => s.addToast);
+  const [loading, setLoading] = useState(false);
 
   return (
     <BottomSheet title="Vendor Quote" onClose={onClose}>
       {(close) => {
-        const handleAccept = () => {
+        const handleAccept = async () => {
+          setLoading(true);
+          try {
+            await apiFetch(`/pre-orders/${preOrder.id}/accept-quote`, { method: "POST" });
+          } catch {
+            // Optimistic update even if API fails for mock pre-orders
+          }
           updateStatus(preOrder.id, "QUOTE_ACCEPTED");
           addToast("Quote accepted! The vendor will begin work shortly.", "success");
+          setLoading(false);
           close();
         };
-        const handleDecline = () => {
+
+        const handleDecline = async () => {
+          setLoading(true);
+          try {
+            await apiFetch(`/pre-orders/${preOrder.id}/decline-quote`, { method: "POST" });
+          } catch {
+            // Optimistic update
+          }
           updateStatus(preOrder.id, "QUOTE_DECLINED");
           addToast("Quote declined.", "info");
+          setLoading(false);
           close();
         };
 
@@ -48,8 +66,12 @@ export function QuoteReviewModal({ preOrder, onClose }: Props) {
             )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-              <Button variant="filled" fullWidth onClick={handleAccept}>Accept Quote</Button>
-              <Button variant="outlined" fullWidth onClick={handleDecline}>Decline</Button>
+              <Button variant="filled" fullWidth onClick={handleAccept} disabled={loading}>
+                {loading ? "Processing…" : "Accept Quote"}
+              </Button>
+              <Button variant="outlined" fullWidth onClick={handleDecline} disabled={loading}>
+                Decline
+              </Button>
             </div>
           </>
         );

@@ -1,12 +1,16 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { QuoteReviewModal } from "@/components/pre-orders/QuoteReviewModal";
 import { useOrdersStore } from "@/store/orders.store";
+import { useAuthStore } from "@/store/auth.store";
+import { apiFetch } from "@/lib/api";
+import { mapDbPreOrder, type DbPreOrder } from "@/lib/mappers";
+import type { PreOrder } from "@/types/order";
 import { formatNaira } from "@/lib/format";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -21,8 +25,21 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function PreOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const preOrder = useOrdersStore((s) => s.preOrders.find((p) => p.id === id));
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const storePreOrder = useOrdersStore((s) => s.preOrders.find((p) => p.id === id));
+  const [preOrder, setPreOrder] = useState<PreOrder | undefined>(storePreOrder);
   const [reviewingQuote, setReviewingQuote] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    apiFetch<DbPreOrder>(`/pre-orders/${id}`)
+      .then((data) => setPreOrder(mapDbPreOrder(data)))
+      .catch(() => {}); // fall back to mock pre-order from store
+  }, [id, isAuthenticated]);
+
+  useEffect(() => {
+    if (!preOrder && storePreOrder) setPreOrder(storePreOrder);
+  }, [storePreOrder, preOrder]);
 
   if (!preOrder) {
     return (
@@ -93,12 +110,14 @@ export default function PreOrderDetailPage({ params }: { params: Promise<{ id: s
           <p className="body-medium">{preOrder.description}</p>
         </div>
 
-        <div style={{ background: "var(--color-surface)", borderRadius: "var(--shape-md)", boxShadow: "var(--elevation-1)", padding: "var(--space-4)" }}>
-          <p className="label-medium" style={{ color: "var(--color-on-surface-variant)", marginBottom: "var(--space-2)" }}>Target Date</p>
-          <p className="body-medium">
-            {new Date(preOrder.target_date).toLocaleDateString("en-NG", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-          </p>
-        </div>
+        {preOrder.target_date && (
+          <div style={{ background: "var(--color-surface)", borderRadius: "var(--shape-md)", boxShadow: "var(--elevation-1)", padding: "var(--space-4)" }}>
+            <p className="label-medium" style={{ color: "var(--color-on-surface-variant)", marginBottom: "var(--space-2)" }}>Target Date</p>
+            <p className="body-medium">
+              {new Date(preOrder.target_date).toLocaleDateString("en-NG", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            </p>
+          </div>
+        )}
 
         {preOrder.vendor_name && (
           <div style={{ background: "var(--color-surface)", borderRadius: "var(--shape-md)", boxShadow: "var(--elevation-1)", padding: "var(--space-4)" }}>

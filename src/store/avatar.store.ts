@@ -4,11 +4,42 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Avatar, AvatarGender, BodyShape, SkinTone, HairStyle, HairColour, HeightRange, SizeRange } from "@/types/avatar";
 import { mockAvatar } from "@/lib/mock/user";
+import { apiFetch } from "@/lib/api";
+import { skinTones, hairColours } from "@/lib/mock/avatars";
+
+type DbAvatar = {
+  id: string;
+  userId: string;
+  gender: string;
+  bodyShape: string;
+  skinTone: string;
+  hairStyle: string;
+  hairColour: string;
+  height: string;
+  size: string;
+  photoUrl?: string | null;
+};
+
+function mapDbAvatar(db: DbAvatar): Avatar {
+  return {
+    id: db.id,
+    user_id: db.userId,
+    gender: db.gender as AvatarGender,
+    body_shape: db.bodyShape as BodyShape,
+    skin_tone: skinTones.find((s) => s.id === db.skinTone) ?? skinTones[4],
+    hair_style: db.hairStyle as HairStyle,
+    hair_colour: hairColours.find((h) => h.id === db.hairColour) ?? hairColours[0],
+    height_range: db.height as HeightRange,
+    size_range: db.size as SizeRange,
+    updated_at: new Date().toISOString(),
+  };
+}
 
 type AvatarState = {
   avatar: Avatar | null;
   isComplete: boolean;
   setAvatar: (avatar: Avatar) => void;
+  loadFromDb: () => Promise<void>;
   updateGender: (gender: AvatarGender) => void;
   updateBodyShape: (shape: BodyShape) => void;
   updateSkinTone: (tone: SkinTone) => void;
@@ -26,6 +57,20 @@ export const useAvatarStore = create<AvatarState>()(
       isComplete: false,
 
       setAvatar: (avatar) => set({ avatar, isComplete: true }),
+
+      loadFromDb: async () => {
+        try {
+          const db = await apiFetch<DbAvatar>("/avatars");
+          const avatar = mapDbAvatar(db);
+          set({ avatar, isComplete: true });
+          // Restore avatar photo to localStorage so try-on can use it
+          if (db.photoUrl && typeof window !== "undefined") {
+            localStorage.setItem("virea_avatar_photo", db.photoUrl);
+          }
+        } catch {
+          // No avatar in DB yet — keep existing local data
+        }
+      },
 
       updateGender: (gender) => {
         const current = get().avatar ?? { ...mockAvatar, id: "avatar-draft", user_id: "" };

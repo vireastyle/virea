@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Package, Clock } from "lucide-react";
@@ -7,10 +8,17 @@ import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { OrderCard } from "@/components/orders/OrderCard";
 import { useOrdersStore } from "@/store/orders.store";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function OrdersPage() {
   const orders        = useOrdersStore((s) => s.orders);
+  const fetchOrders   = useOrdersStore((s) => s.fetchOrders);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const searchParams  = useSearchParams();
+
+  useEffect(() => {
+    if (isAuthenticated) fetchOrders();
+  }, [isAuthenticated, fetchOrders]);
   // Flutterwave redirects back with ?ref=<txRef> — show a "verifying" banner.
   // The actual confirmation happens via webhook; this is display-only.
   const pendingRef    = searchParams.get("ref");

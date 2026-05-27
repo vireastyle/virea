@@ -1,32 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { useVendorStore } from "@/store/vendor.store";
 import { useOrdersStore } from "@/store/orders.store";
 import { useUIStore } from "@/store/ui.store";
 import { Button } from "@/components/ui/Button";
 import { formatNaira, nairaToKobo } from "@/lib/format";
 import { BackLink } from "@/components/ui/BackLink";
+import { apiFetch } from "@/lib/api";
+import { mapDbPreOrder, type DbPreOrder } from "@/lib/mappers";
+import type { PreOrder } from "@/types/order";
 
 export default function VendorPreOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const { isAuthenticated } = useVendorStore();
-  const { preOrders, addVendorQuote, updatePreOrderStatus } = useOrdersStore();
+  const storePreOrders = useOrdersStore((s) => s.preOrders);
   const addToast = useUIStore((s) => s.addToast);
 
+  const [preOrder, setPreOrder] = useState<PreOrder | undefined>();
   const [quotePrice, setQuotePrice] = useState("");
   const [quoteNote, setQuoteNote] = useState("");
   const [showQuoteForm, setShowQuoteForm] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) router.replace("/vendor/login");
-  }, [isAuthenticated, router]);
-
-  const preOrder = preOrders.find((p) => p.id === id);
+    if (!isAuthenticated) { router.replace("/vendor/login"); return; }
+    apiFetch<DbPreOrder>(`/vendor/pre-orders/${id}`)
+      .then((data) => setPreOrder(mapDbPreOrder(data)))
+      .catch(() => setPreOrder(storePreOrders.find((p) => p.id === id)));
+  }, [id, isAuthenticated, router, storePreOrders]);
 
   if (!isAuthenticated) return null;
 
@@ -39,19 +44,47 @@ export default function VendorPreOrderDetailPage({ params }: { params: Promise<{
     );
   }
 
-  const handleSendQuote = () => {
+  const handleSendQuote = async () => {
     const naira = Number(quotePrice);
     if (!naira || naira <= 0 || !quoteNote.trim()) return;
-    // Store quote price in kobo
-    addVendorQuote(id, nairaToKobo(naira), quoteNote.trim());
+    setLoading(true);
+    try {
+      await apiFetch(`/vendor/pre-orders/${id}/quote`, {
+        method: "POST",
+        body: JSON.stringify({ quotedPrice: nairaToKobo(naira), quotedMessage: quoteNote.trim(), estimatedDays: 14 }),
+      });
+    } catch {
+      // Optimistic for mock pre-orders
+    }
+    setPreOrder((p) => p ? { ...p, quoted_price: nairaToKobo(naira), vendor_note: quoteNote.trim(), status: "QUOTED" } : p);
     addToast("Quote sent to customer", "success");
     setShowQuoteForm(false);
+    setLoading(false);
   };
 
-  const handleDecline = () => {
-    updatePreOrderStatus(id, "CANCELLED");
+  const handleDecline = async () => {
+    setLoading(true);
+    try {
+      await apiFetch(`/vendor/pre-orders/${id}/advance`, { method: "POST" });
+    } catch {
+      // Optimistic
+    }
+    setPreOrder((p) => p ? { ...p, status: "CANCELLED" } : p);
     addToast("Pre-order declined", "error");
+    setLoading(false);
     router.push("/vendor/pre-orders");
+  };
+
+  const handleAdvance = async (nextStatus: PreOrder["status"]) => {
+    setLoading(true);
+    try {
+      await apiFetch(`/vendor/pre-orders/${id}/advance`, { method: "POST" });
+    } catch {
+      // Optimistic
+    }
+    setPreOrder((p) => p ? { ...p, status: nextStatus } : p);
+    addToast(`Marked as ${nextStatus.replace("_", " ").toLowerCase()}`, "success");
+    setLoading(false);
   };
 
   return (
@@ -89,19 +122,22 @@ export default function VendorPreOrderDetailPage({ params }: { params: Promise<{
             {preOrder.description}
           </p>
         </div>
-        <div>
-          <p className="label-medium" style={{ color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)" }}>
-            TARGET DATE
-          </p>
-          <p className="body-medium" style={{ color: "var(--color-on-surface)" }}>
-            {new Date(preOrder.target_date).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })}
-          </p>
-        </div>
+        {preOrder.target_date && (
+          <div>
+            <p className="label-medium" style={{ color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)" }}>
+              TARGET DATE
+            </p>
+            <p className="body-medium" style={{ color: "var(--color-on-surface)" }}>
+              {new Date(preOrder.target_date).toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" })}
+            </p>
+          </div>
+        )}
         {preOrder.reference_photo && (
           <div>
             <p className="label-medium" style={{ color: "var(--color-on-surface-variant)", marginBottom: "var(--space-2)" }}>
               REFERENCE PHOTO
             </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preOrder.reference_photo}
               alt="Reference"
@@ -110,16 +146,16 @@ export default function VendorPreOrderDetailPage({ params }: { params: Promise<{
           </div>
         )}
 
-        {preOrder.quoted_price && (
-          <div style={{ padding: "var(--space-3)", background: "var(--color-success-container)", borderRadius: "var(--shape-md)" }}>
-            <p className="label-medium" style={{ color: "var(--color-on-success-container)", marginBottom: "var(--space-1)" }}>
+        {preOrder.quoted_price != null && (
+          <div style={{ padding: "var(--space-3)", background: "var(--color-primary-container)", borderRadius: "var(--shape-md)" }}>
+            <p className="label-medium" style={{ color: "var(--color-on-primary-container)", marginBottom: "var(--space-1)" }}>
               YOUR QUOTE
             </p>
-            <p className="headline-medium" style={{ color: "var(--color-on-success-container)" }}>
+            <p className="headline-medium" style={{ color: "var(--color-on-primary-container)" }}>
               {formatNaira(preOrder.quoted_price)}
             </p>
             {preOrder.vendor_note && (
-              <p className="body-medium" style={{ color: "var(--color-on-success-container)", marginTop: "var(--space-2)" }}>
+              <p className="body-medium" style={{ color: "var(--color-on-primary-container)", marginTop: "var(--space-2)" }}>
                 {preOrder.vendor_note}
               </p>
             )}
@@ -167,29 +203,26 @@ export default function VendorPreOrderDetailPage({ params }: { params: Promise<{
                 />
               </div>
               <div style={{ display: "flex", gap: "var(--space-3)" }}>
-                <Button variant="filled" onClick={handleSendQuote}>Send quote</Button>
-                <Button variant="outlined" onClick={() => setShowQuoteForm(false)}>Cancel</Button>
+                <Button variant="filled" onClick={handleSendQuote} disabled={loading}>Send quote</Button>
+                <Button variant="outlined" onClick={() => setShowQuoteForm(false)} disabled={loading}>Cancel</Button>
               </div>
             </div>
           ) : (
             <div style={{ display: "flex", gap: "var(--space-3)" }}>
               <Button variant="filled" onClick={() => setShowQuoteForm(true)}>Send a quote</Button>
-              <Button variant="outlined" onClick={handleDecline}>Decline</Button>
+              <Button variant="outlined" onClick={handleDecline} disabled={loading}>Decline</Button>
             </div>
           )}
         </>
       )}
 
       {preOrder.status === "QUOTE_ACCEPTED" && (
-        <div style={{ padding: "var(--space-4)", background: "var(--color-success-container)", borderRadius: "var(--shape-md)" }}>
-          <p className="body-medium" style={{ color: "var(--color-on-success-container)" }}>
+        <div style={{ padding: "var(--space-4)", background: "var(--color-primary-container)", borderRadius: "var(--shape-md)" }}>
+          <p className="body-medium" style={{ color: "var(--color-on-primary-container)" }}>
             Customer accepted your quote. Begin production and update status to In Progress when ready.
           </p>
           <div style={{ marginTop: "var(--space-3)" }}>
-            <Button
-              variant="filled"
-              onClick={() => { updatePreOrderStatus(id, "IN_PROGRESS"); addToast("Marked as in progress", "success"); }}
-            >
+            <Button variant="filled" onClick={() => handleAdvance("IN_PROGRESS")} disabled={loading}>
               Mark as in progress
             </Button>
           </div>
@@ -198,10 +231,7 @@ export default function VendorPreOrderDetailPage({ params }: { params: Promise<{
 
       {preOrder.status === "IN_PROGRESS" && (
         <div style={{ display: "flex", gap: "var(--space-3)" }}>
-          <Button
-            variant="filled"
-            onClick={() => { updatePreOrderStatus(id, "DELIVERED"); addToast("Marked as delivered", "success"); }}
-          >
+          <Button variant="filled" onClick={() => handleAdvance("DELIVERED")} disabled={loading}>
             Mark as delivered
           </Button>
         </div>

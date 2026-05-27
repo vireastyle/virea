@@ -2,8 +2,10 @@ import Link from "next/link";
 import { ProductCard } from "@/components/catalogue/ProductCard";
 import { ExploreCategoryLink } from "./ExploreCategoryLink";
 import { ShopSidebarNav } from "./ShopSidebarNav";
-import { mockClothing } from "@/lib/mock/clothing";
 import { categories } from "@/lib/mock/feed";
+import { mockClothing } from "@/lib/mock/clothing";
+import { listProducts } from "@/lib/services/catalogue.service";
+import { mapDbProduct } from "@/lib/mappers";
 import type { Category } from "@/types/clothing";
 
 type Props = { params: Promise<{ category: string }> };
@@ -20,9 +22,11 @@ export default async function ShopPage({ params }: Props) {
   const { category } = await params;
   const cat = categories.find((c) => c.id === category);
   const editorial = categoryEditorial[category] ?? { headline: cat?.label ?? category, sub: "" };
-  const items = mockClothing.filter(
-    (i) => i.category === (category as Category) && i.is_active
-  );
+  const { products: dbProducts } = await listProducts({ category }).catch(() => ({ products: [] }));
+  const dbItems = dbProducts.map(mapDbProduct);
+  const mockItems = mockClothing.filter((i) => i.category === (category as Category) && i.is_active);
+  // DB products take priority; fall back to mock when DB is empty for this category
+  const items = dbItems.length > 0 ? dbItems : mockItems;
 
   return (
     <main style={{ background: "var(--color-background)", minHeight: "100%" }}>

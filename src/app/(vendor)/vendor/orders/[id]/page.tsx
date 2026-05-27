@@ -2,17 +2,18 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useVendorStore } from "@/store/vendor.store";
 import { useOrdersStore } from "@/store/orders.store";
 import { useUIStore } from "@/store/ui.store";
-import { ORDER_STATUSES } from "@/types/order";
 import type { OrderStatus } from "@/types/order";
+import type { Order } from "@/types/order";
 import { Button } from "@/components/ui/Button";
 import { formatNaira } from "@/lib/format";
+import { apiFetch } from "@/lib/api";
+import { mapDbOrder, type DbOrder } from "@/lib/mappers";
 
 const VENDOR_NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
   PLACED: "CONFIRMED",
@@ -25,14 +26,17 @@ export default function VendorOrderDetailPage({ params }: { params: Promise<{ id
   const { id } = use(params);
   const router = useRouter();
   const { isAuthenticated } = useVendorStore();
-  const { orders, updateOrderStatus } = useOrdersStore();
+  const storeOrders = useOrdersStore((s) => s.orders);
   const addToast = useUIStore((s) => s.addToast);
+  const [order, setOrder] = useState<Order | undefined>();
+  const [advancing, setAdvancing] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) router.replace("/vendor/login");
-  }, [isAuthenticated, router]);
-
-  const order = orders.find((o) => o.id === id);
+    if (!isAuthenticated) { router.replace("/vendor/login"); return; }
+    apiFetch<DbOrder>(`/vendor/orders/${id}`)
+      .then((data) => setOrder(mapDbOrder(data)))
+      .catch(() => setOrder(storeOrders.find((o) => o.id === id)));
+  }, [id, isAuthenticated, router, storeOrders]);
 
   if (!isAuthenticated) return null;
 
@@ -47,15 +51,29 @@ export default function VendorOrderDetailPage({ params }: { params: Promise<{ id
 
   const nextStatus = VENDOR_NEXT_STATUS[order.status];
 
-  const handleAdvance = () => {
+  const handleAdvance = async () => {
     if (!nextStatus) return;
-    updateOrderStatus(id, nextStatus);
+    setAdvancing(true);
+    try {
+      await apiFetch(`/vendor/orders/${id}/advance`, { method: "POST" });
+    } catch {
+      // Optimistic update even if API fails for mock orders
+    }
+    setOrder((o) => o ? { ...o, status: nextStatus } : o);
     addToast(`Order marked as ${nextStatus.toLowerCase()}`, "success");
+    setAdvancing(false);
   };
 
-  const handleCancel = () => {
-    updateOrderStatus(id, "CANCELLED");
+  const handleCancel = async () => {
+    setAdvancing(true);
+    try {
+      await apiFetch(`/orders/${id}/cancel`, { method: "POST" });
+    } catch {
+      // Optimistic for mock orders
+    }
+    setOrder((o) => o ? { ...o, status: "CANCELLED" } : o);
     addToast("Order cancelled", "error");
+    setAdvancing(false);
   };
 
   return (
@@ -106,7 +124,9 @@ export default function VendorOrderDetailPage({ params }: { params: Promise<{ id
         {order.items.map((item) => (
           <div key={item.item_id} style={{ display: "flex", gap: "var(--space-3)", alignItems: "center" }}>
             <div style={{ position: "relative", width: 64, height: 64, borderRadius: "var(--shape-md)", overflow: "hidden", flexShrink: 0, background: "var(--color-surface-variant)" }}>
-              <Image src={item.item_image_url} alt={item.item_name} fill style={{ objectFit: "cover" }} />
+              {item.item_image_url && (
+                <Image src={item.item_image_url} alt={item.item_name} fill style={{ objectFit: "cover" }} />
+              )}
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ fontFamily: "var(--type-title-small-family)", fontSize: "var(--type-title-small-size)", fontWeight: 600, color: "var(--color-on-surface)" }}>{item.item_name}</p>
@@ -132,11 +152,11 @@ export default function VendorOrderDetailPage({ params }: { params: Promise<{ id
       {order.status !== "DELIVERED" && order.status !== "CANCELLED" && (
         <div style={{ display: "flex", gap: "var(--space-3)" }}>
           {nextStatus && (
-            <Button variant="filled" onClick={handleAdvance}>
+            <Button variant="filled" onClick={handleAdvance} disabled={advancing}>
               Mark as {nextStatus.toLowerCase()}
             </Button>
           )}
-          <Button variant="outlined" onClick={handleCancel}>
+          <Button variant="outlined" onClick={handleCancel} disabled={advancing}>
             Cancel order
           </Button>
         </div>

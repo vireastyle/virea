@@ -10,11 +10,12 @@ import { Button } from "@/components/ui/Button";
 
 export default function VendorProductsPage() {
   const router = useRouter();
-  const { isAuthenticated, products, removeProduct, updateProduct } = useVendorStore();
+  const { isAuthenticated, products, removeProduct, updateProduct, fetchProducts } = useVendorStore();
 
   useEffect(() => {
-    if (!isAuthenticated) router.replace("/vendor/login");
-  }, [isAuthenticated, router]);
+    if (!isAuthenticated) { router.replace("/vendor/login"); return; }
+    fetchProducts();
+  }, [isAuthenticated, router, fetchProducts]);
 
   if (!isAuthenticated) return null;
 

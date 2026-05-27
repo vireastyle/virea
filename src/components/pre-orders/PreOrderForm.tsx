@@ -1,20 +1,24 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Upload } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { useOrdersStore } from "@/store/orders.store";
 import { useUIStore } from "@/store/ui.store";
+import { apiFetch } from "@/lib/api";
 import { mockVendors } from "@/lib/mock/vendors";
 import { EVENT_TYPES } from "@/types/vendor";
+
+type VendorOption = { id: string; businessName: string };
 
 export function PreOrderForm() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
-  const createPreOrder = useOrdersStore((s) => s.createPreOrder);
   const addToast = useUIStore((s) => s.addToast);
 
+  const [vendors, setVendors] = useState<VendorOption[]>(
+    mockVendors.map((v) => ({ id: v.id, businessName: v.business_name }))
+  );
   const [form, setForm] = useState({
     event_type: EVENT_TYPES[0],
     description: "",
@@ -24,6 +28,12 @@ export function PreOrderForm() {
   });
   const [photoPreview, setPhotoPreview] = useState<string | undefined>();
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    apiFetch<VendorOption[]>("/vendors")
+      .then((data) => { if (data.length > 0) setVendors(data); })
+      .catch(() => {}); // keep mock vendors on failure
+  }, []);
 
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -37,24 +47,27 @@ export function PreOrderForm() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.description.trim() || !form.target_date) return;
+    if (!form.description.trim() || !form.target_date || !form.vendor_id) return;
 
     setSubmitting(true);
-    const vendor = mockVendors.find((v) => v.id === form.vendor_id);
-
-    const id = createPreOrder({
-      event_type: form.event_type,
-      description: form.description,
-      target_date: form.target_date,
-      reference_photo: form.reference_photo,
-      vendor_id: vendor?.id,
-      vendor_name: vendor?.business_name,
-    });
-
-    addToast("Pre-order submitted! Vendors will get back to you soon.", "success");
-    router.push(`/pre-orders/${id}`);
+    try {
+      const created = await apiFetch<{ id: string }>("/pre-orders", {
+        method: "POST",
+        body: JSON.stringify({
+          vendorId: form.vendor_id,
+          description: form.description,
+          eventType: form.event_type,
+          eventDate: form.target_date,
+        }),
+      });
+      addToast("Pre-order submitted! The vendor will get back to you soon.", "success");
+      router.push(`/pre-orders/${created.id}`);
+    } catch {
+      addToast("Failed to submit pre-order. Please try again.", "error");
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -101,20 +114,19 @@ export function PreOrderForm() {
         />
       </div>
 
-      {/* Preferred vendor (optional) */}
+      {/* Vendor selection */}
       <div>
-        <label htmlFor="po-vendor" className="field-label">
-          Preferred vendor <span style={{ fontWeight: 400, opacity: 0.7 }}>(optional — leave blank to notify all)</span>
-        </label>
+        <label htmlFor="po-vendor" className="field-label">Vendor</label>
         <select
           id="po-vendor"
           value={form.vendor_id}
           onChange={(e) => setForm((f) => ({ ...f, vendor_id: e.target.value }))}
+          required
           className="field field--select"
         >
-          <option value="">Any matching vendor</option>
-          {mockVendors.map((v) => (
-            <option key={v.id} value={v.id}>{v.business_name}</option>
+          <option value="">Select a vendor…</option>
+          {vendors.map((v) => (
+            <option key={v.id} value={v.id}>{v.businessName}</option>
           ))}
         </select>
       </div>

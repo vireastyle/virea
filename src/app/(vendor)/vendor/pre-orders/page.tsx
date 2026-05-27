@@ -1,29 +1,32 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { useVendorStore } from "@/store/vendor.store";
 import { useOrdersStore } from "@/store/orders.store";
 import { PreOrderInboxItem } from "@/components/vendor/PreOrderInboxItem";
+import { apiFetch } from "@/lib/api";
+import { mapDbPreOrder, type DbPreOrder } from "@/lib/mappers";
+import type { PreOrder } from "@/types/order";
 
 export default function VendorPreOrdersPage() {
   const router = useRouter();
   const { isAuthenticated, vendor } = useVendorStore();
-  const { preOrders } = useOrdersStore();
+  const mockPreOrders = useOrdersStore((s) => s.preOrders);
+  const [preOrders, setPreOrders] = useState<PreOrder[]>([]);
 
   useEffect(() => {
-    if (!isAuthenticated) router.replace("/vendor/login");
-  }, [isAuthenticated, router]);
+    if (!isAuthenticated) { router.replace("/vendor/login"); return; }
+    apiFetch<DbPreOrder[]>("/vendor/pre-orders")
+      .then((data) => setPreOrders(data.length > 0 ? data.map(mapDbPreOrder) : mockPreOrders.filter((p) => p.vendor_id === vendor?.id || !p.vendor_id)))
+      .catch(() => setPreOrders(mockPreOrders.filter((p) => p.vendor_id === vendor?.id || !p.vendor_id)));
+  }, [isAuthenticated, router, vendor, mockPreOrders]);
 
   if (!isAuthenticated || !vendor) return null;
 
-  const vendorPreOrders = preOrders.filter(
-    (p) => p.vendor_id === vendor.id || !p.vendor_id
-  );
-
-  const pending = vendorPreOrders.filter((p) => ["SUBMITTED", "QUOTED"].includes(p.status));
-  const others = vendorPreOrders.filter((p) => !["SUBMITTED", "QUOTED"].includes(p.status));
+  const pending = preOrders.filter((p) => ["SUBMITTED", "QUOTED"].includes(p.status));
+  const others = preOrders.filter((p) => !["SUBMITTED", "QUOTED"].includes(p.status));
 
   return (
     <div style={{ padding: "var(--space-6)", maxWidth: "700px" }}>
@@ -37,7 +40,7 @@ export default function VendorPreOrdersPage() {
         </h1>
       </div>
 
-      {vendorPreOrders.length === 0 ? (
+      {preOrders.length === 0 ? (
         <div
           style={{
             display: "flex",

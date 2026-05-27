@@ -280,8 +280,27 @@ Business logic lives here — route handlers are thin wrappers.
   - `/orders` page — "verifying payment" banner when `?ref=` in URL (display-only; webhook is the truth)
   - Skill: `skills/flutterwave-integration/SKILL.md` — load for any FLW task
 
+- [x] Phase 21 — Full Frontend-Backend Wiring (hybrid DB-first + mock fallback throughout)
+  - `src/lib/mappers.ts` — DB→frontend type mappers (mapDbProduct, mapDbProductToVendorProduct, mapDbOrder, mapDbPreOrder)
+  - `GET /api/v1/vendors` — public vendor list for PreOrderForm dropdown
+  - Shop/product pages: Prisma service direct call (server component), mock fallback
+  - Wishlist page: `apiFetch("/wishlist")` when authenticated
+  - Orders store: `fetchOrders()` + `fetchPreOrders()` — DB-first, mock as initial state/fallback
+  - User orders/pre-orders list + detail: `apiFetch` when authenticated, fall back to store
+  - QuoteReviewModal: real `POST /pre-orders/:id/accept-quote` + `decline-quote` (optimistic)
+  - PreOrderForm: real vendors from `GET /api/v1/vendors`, submits `POST /pre-orders`
+  - vendor.store.ts: `fetchProducts()` → `GET /api/v1/vendor/products`
+  - Vendor portal pages: `apiFetch` for orders/pre-orders, mock fallback
+  - Vendor detail pages: fetch + advance/quote via real API (optimistic updates)
+
+- [x] Phase 23 — Avatar DB Persistence
+  - `avatar.store.ts`: added `loadFromDb()` — `GET /api/v1/avatars`, maps DB camelCase to frontend types, reconstructs `SkinTone`/`HairColour` objects from IDs, restores `virea_avatar_photo` to localStorage
+  - `avatar-builder/page.tsx`: `handleSave` fires `POST /api/v1/avatars` with serialized params (skinTone.id, hairColour.id); after generation succeeds, upserts again with `photoUrl`
+  - `src/components/layout/AvatarBootstrap.tsx` (new): invisible client component, calls `loadFromDb()` when `isAuthenticated` — placed in `(main)/layout.tsx` so it runs on every shopper page
+  - Avatar now persists across devices and sessions for authenticated users
+
 ## Up Next
-- [ ] **Phase 21** — Full Frontend-Backend Wiring (swap all mock data for `apiFetch` + React Query hooks; needed for checkout to work end-to-end — cart items need real DB product IDs)
+- [ ] Nothing — all phases complete. Deploy and test end-to-end.
 
 ## Gotchas
 - `next/image` requires `images.remotePatterns` in `next.config.ts` — Unsplash + Replicate CDN already configured

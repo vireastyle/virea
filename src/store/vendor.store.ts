@@ -5,6 +5,8 @@ import { persist } from "zustand/middleware";
 import type { Vendor, VendorProduct, StylingRequest } from "@/types/vendor";
 import { mockStylingRequests } from "@/lib/mock/styling-requests";
 import { apiToken } from "@/lib/api-token";
+import { apiFetch } from "@/lib/api";
+import { mapDbProductToVendorProduct, type DbProduct } from "@/lib/mappers";
 
 // Shape the API returns for a vendor record (no password)
 type ApiVendor = {
@@ -118,6 +120,7 @@ type VendorState = {
   // ── Real API actions ──────────────────────────────────────
   login: (email: string, password: string) => Promise<void>;
   register: (data: VendorRegisterData) => Promise<void>;
+  fetchProducts: () => Promise<void>;
 
   // ── Legacy / local helpers ────────────────────────────────
   signIn: (vendor: Vendor) => void;
@@ -174,6 +177,16 @@ export const useVendorStore = create<VendorState>()(
         const { vendor, accessToken } = body.data as { vendor: ApiVendor; accessToken: string };
         apiToken.set(accessToken);
         set({ vendor: mapApiVendor(vendor), isAuthenticated: true });
+      },
+
+      // ── Fetch products from DB (fallback: keep seed data) ──
+      fetchProducts: async () => {
+        try {
+          const data = await apiFetch<DbProduct[]>("/vendor/products");
+          if (data.length > 0) set({ products: data.map(mapDbProductToVendorProduct) });
+        } catch {
+          // Not authenticated or network error — keep existing data
+        }
       },
 
       // ── Legacy helpers ──────────────────────────────────────

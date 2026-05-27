@@ -1,32 +1,96 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingBag, Shirt } from "lucide-react";
+import { Heart, ShoppingBag } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
-import { useWishlistStore } from "@/store/wishlist.store";
+import { useAuthStore } from "@/store/auth.store";
 import { useCartStore } from "@/store/cart.store";
 import { useUIStore } from "@/store/ui.store";
-import { getItemById } from "@/lib/mock/clothing";
-import type { Size } from "@/types/clothing";
+import { apiFetch } from "@/lib/api";
+import { mapDbProduct, type DbProduct } from "@/lib/mappers";
+import type { ClothingItem, Size } from "@/types/clothing";
 import { formatNaira } from "@/lib/format";
 
-const formatPrice = formatNaira;
+type WishlistEntry = { id: string; productId: string; product: DbProduct };
 
 export default function WishlistPage() {
-  const { itemIds, remove } = useWishlistStore();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const { add: addToCart } = useCartStore();
   const { addToast } = useUIStore();
 
-  const items = itemIds.map((id) => getItemById(id)).filter(Boolean);
+  const [entries, setEntries] = useState<{ id: string; item: ClothingItem }[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    setLoading(true);
+    apiFetch<WishlistEntry[]>("/wishlist")
+      .then((data) => {
+        setEntries(data.map((e) => ({ id: e.productId, item: mapDbProduct(e.product) })));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [isAuthenticated]);
+
+  const remove = (productId: string) => {
+    apiFetch(`/wishlist/${productId}`, { method: "DELETE" }).catch(() => {});
+    setEntries((prev) => prev.filter((e) => e.id !== productId));
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <PageShell>
+        <div style={{ paddingTop: "var(--space-6)" }}>
+          <h1 className="headline-large" style={{ marginBottom: "var(--space-6)" }}>Wishlist</h1>
+          <div
+            style={{
+              textAlign: "center",
+              padding: "var(--space-16) var(--space-4)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "var(--space-4)",
+            }}
+          >
+            <Heart size={48} strokeWidth={1} style={{ color: "var(--color-outline-variant)" }} />
+            <div>
+              <p className="headline-small">Sign in to view your wishlist</p>
+              <p className="body-medium" style={{ color: "var(--color-on-surface-variant)", marginTop: "var(--space-2)" }}>
+                Save items across devices when you have an account.
+              </p>
+            </div>
+            <Link href="/login">
+              <Button variant="filled">Sign In</Button>
+            </Link>
+          </div>
+        </div>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell>
       <div style={{ paddingTop: "var(--space-6)" }}>
         <h1 className="headline-large" style={{ marginBottom: "var(--space-6)" }}>Wishlist</h1>
 
-        {items.length === 0 ? (
+        {loading ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                style={{
+                  height: "112px",
+                  borderRadius: "var(--shape-md)",
+                  background: "var(--color-surface-variant)",
+                  animation: "pulse 1.5s ease-in-out infinite",
+                }}
+              />
+            ))}
+          </div>
+        ) : entries.length === 0 ? (
           <div
             style={{
               textAlign: "center",
@@ -50,12 +114,12 @@ export default function WishlistPage() {
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-            {items.map((item) => {
-              if (!item) return null;
+            {entries.map(({ id, item }) => {
               const colour = item.available_colours[0];
+              if (!colour) return null;
               return (
                 <div
-                  key={item.id}
+                  key={id}
                   style={{
                     display: "flex",
                     gap: "var(--space-3)",
@@ -76,13 +140,15 @@ export default function WishlistPage() {
                         background: "var(--color-surface-variant)",
                       }}
                     >
-                      <Image
-                        src={item.image_urls[colour.name]}
-                        alt={item.name}
-                        fill
-                        style={{ objectFit: "cover" }}
-                        sizes="88px"
-                      />
+                      {item.image_urls[colour.name] && (
+                        <Image
+                          src={item.image_urls[colour.name]}
+                          alt={item.name}
+                          fill
+                          style={{ objectFit: "cover" }}
+                          sizes="88px"
+                        />
+                      )}
                     </div>
                   </Link>
                   <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
@@ -91,12 +157,12 @@ export default function WishlistPage() {
                       <Link href={`/product/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
                         <p className="headline-small" style={{ marginTop: "var(--space-1)" }}>{item.name}</p>
                       </Link>
-                      <p className="price-small" style={{ marginTop: "var(--space-1)" }}>{formatPrice(item.price)}</p>
+                      <p className="price-small" style={{ marginTop: "var(--space-1)" }}>{formatNaira(item.price)}</p>
                     </div>
                     <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
                       <button
                         onClick={() => {
-                          addToCart(item, colour, item.available_sizes[0] as Size);
+                          addToCart(item, colour, (item.available_sizes[0] ?? "M") as Size);
                           addToast(`${item.name} added to bag`);
                         }}
                         aria-label={`Add ${item.name} to bag`}
@@ -120,7 +186,7 @@ export default function WishlistPage() {
                         <ShoppingBag size={14} strokeWidth={1.5} /> Add to Bag
                       </button>
                       <button
-                        onClick={() => remove(item.id)}
+                        onClick={() => remove(id)}
                         aria-label="Remove from wishlist"
                         style={{
                           width: "36px",

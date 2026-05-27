@@ -10,6 +10,7 @@ import { Button }       from "@/components/ui/Button";
 import { ColourSwatch } from "@/components/ui/ColourSwatch";
 import { useAvatarStore } from "@/store/avatar.store";
 import { useUIStore }     from "@/store/ui.store";
+import { apiFetch }       from "@/lib/api";
 import {
   bodyShapes, skinTones, hairStyles, hairColours,
   sizeRanges, defaultAvatar,
@@ -52,11 +53,22 @@ export default function AvatarBuilderPage() {
   const goNext = () => { setDir(1);  setStep(s => s + 1); };
   const goBack = () => { setDir(-1); setStep(s => s - 1); };
 
+  const avatarApiPayload = (photoUrl?: string) => ({
+    gender,
+    bodyShape,
+    skinTone:   skinTone.id,
+    hairStyle,
+    hairColour: hairColour.id,
+    height:     "average",
+    size:       sizeRange,
+    ...(photoUrl ? { photoUrl } : {}),
+  });
+
   const handleSave = async () => {
-    // 1. Persist avatar params to store
+    // 1. Persist avatar params to store immediately
     setAvatar({
       id:           crypto.randomUUID(),
-      user_id:      "user-001",
+      user_id:      "",
       gender,
       body_shape:   bodyShape,
       skin_tone:    skinTone,
@@ -67,7 +79,10 @@ export default function AvatarBuilderPage() {
       updated_at:   new Date().toISOString(),
     });
 
-    // 2. Generate avatar photo
+    // 2. Persist params to DB (fire-and-forget — no photoUrl yet)
+    apiFetch("/avatars", { method: "POST", body: JSON.stringify(avatarApiPayload()) }).catch(() => {});
+
+    // 3. Generate avatar photo
     await runGeneration({ gender, bodyShape, skinTone });
   };
 
@@ -98,6 +113,9 @@ export default function AvatarBuilderPage() {
       localStorage.setItem("virea_avatar_photo", data.avatarUrl);
       setGeneratedUrl(data.avatarUrl);
       setGenState("done");
+
+      // Persist photoUrl to DB (fire-and-forget)
+      apiFetch("/avatars", { method: "POST", body: JSON.stringify(avatarApiPayload(data.avatarUrl)) }).catch(() => {});
     } catch (err) {
       setGenError(err instanceof Error ? err.message : "Something went wrong.");
       setGenState("error");

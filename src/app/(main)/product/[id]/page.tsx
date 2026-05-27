@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Star, Share2, Tag } from "lucide-react";
+import { Star, Share2 } from "lucide-react";
+import { getProduct, listProducts } from "@/lib/services/catalogue.service";
 import { getItemById, mockClothing } from "@/lib/mock/clothing";
+import { mapDbProduct } from "@/lib/mappers";
 import { ProductCard } from "@/components/catalogue/ProductCard";
 import { BackLink } from "@/components/ui/BackLink";
 import { ProductActions } from "./ProductActions";
@@ -48,14 +50,23 @@ const MOCK_DESCRIPTIONS: Record<string, string> = {
 
 export default async function ProductPage({ params }: Props) {
   const { id } = await params;
-  const item = getItemById(id);
+  // Try DB first; fall back to mock item (so mock IDs like "item-001" still work)
+  const dbProduct = await getProduct(id).catch(() => null);
+  const item = dbProduct ? mapDbProduct(dbProduct) : getItemById(id);
   if (!item) notFound();
 
-  const related = mockClothing
-    .filter((i) => i.category === item.category && i.id !== item.id && i.is_active)
-    .slice(0, 4);
+  let related;
+  if (dbProduct) {
+    const { products: relatedDb } = await listProducts({ category: dbProduct.category }).catch(() => ({ products: [] }));
+    related = relatedDb.filter((p) => p.id !== id).slice(0, 4).map(mapDbProduct);
+    if (related.length === 0) {
+      related = mockClothing.filter((i) => i.category === item.category && i.id !== id && i.is_active).slice(0, 4);
+    }
+  } else {
+    related = mockClothing.filter((i) => i.category === item.category && i.id !== id && i.is_active).slice(0, 4);
+  }
 
-  const description = MOCK_DESCRIPTIONS[item.category] ?? MOCK_DESCRIPTIONS.DRESS;
+  const description = dbProduct?.description || (MOCK_DESCRIPTIONS[item.category] ?? MOCK_DESCRIPTIONS.DRESS);
   const categoryLabel = CATEGORY_LABELS[item.category] ?? item.category;
 
   return (

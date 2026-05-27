@@ -4,10 +4,12 @@ import { AppShell } from "@/components/layout/AppShell";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { ToastContainer } from "@/components/ui/Toast";
 import { Footer } from "@/components/layout/Footer";
+import { AvatarBootstrap } from "@/components/layout/AvatarBootstrap";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
+      <AvatarBootstrap />
       <TopBar />
       <AppShell>
         {children}

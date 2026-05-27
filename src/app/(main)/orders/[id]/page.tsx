@@ -1,17 +1,35 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { OrderStatusTracker } from "@/components/orders/OrderStatusTracker";
 import { useOrdersStore } from "@/store/orders.store";
+import { useAuthStore } from "@/store/auth.store";
+import { apiFetch } from "@/lib/api";
+import { mapDbOrder, type DbOrder } from "@/lib/mappers";
+import type { Order } from "@/types/order";
 import { formatNaira } from "@/lib/format";
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const order = useOrdersStore((s) => s.orders.find((o) => o.id === id));
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const storeOrder = useOrdersStore((s) => s.orders.find((o) => o.id === id));
+  const [order, setOrder] = useState<Order | undefined>(storeOrder);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    apiFetch<DbOrder>(`/orders/${id}`)
+      .then((data) => setOrder(mapDbOrder(data)))
+      .catch(() => {}); // fall back to mock order from store
+  }, [id, isAuthenticated]);
+
+  // Sync from store if API hasn't resolved yet
+  useEffect(() => {
+    if (!order && storeOrder) setOrder(storeOrder);
+  }, [storeOrder, order]);
 
   if (!order) {
     return (
@@ -90,7 +108,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                   background: "var(--color-surface-variant)",
                 }}
               >
-                <Image src={item.item_image_url} alt={item.item_name} fill style={{ objectFit: "cover" }} sizes="64px" />
+                {item.item_image_url && (
+                  <Image src={item.item_image_url} alt={item.item_name} fill style={{ objectFit: "cover" }} sizes="64px" />
+                )}
               </div>
               <div style={{ flex: 1 }}>
                 <p className="title-small">{item.item_name}</p>
