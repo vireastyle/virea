@@ -347,6 +347,11 @@ Business logic lives here — route handlers are thin wrappers.
   - **LayerPanel columns** ("Add to look" grid) — `repeat(3, 1fr)` → `repeat(4, 1fr)`
   - **SelfieUploadStep** (`src/components/auth/SelfieUploadStep.tsx`) — removed auto-advance on photo upload; skin tone stored in local state; "Build avatar →" filled CTA appears after processing; "Skip this step" replaces it until a photo is loaded
 
+- [x] Bug Fix (2026-05-28) — Checkout "Vendor not found"
+  - **Root cause** — `ClothingItem.vendor_id` was `undefined` on all mock items; `CheckoutModal` sent `vendorId: ""` → `orders.service.ts` `findUnique({ id: "" })` returned `null` → 404
+  - **`src/lib/mock/clothing.ts`** — added `const MOCK_VENDOR_ID = "vendor-virea-test"` and `vendor_id: MOCK_VENDOR_ID` to all 20 items
+  - **`/api/dev/seed`** — rebuilt: upserts vendor with fixed `id: "vendor-virea-test"` (predictable, not random UUID); detects and deletes any stale test vendor with same email but different id; upserts all 20 mock products by their real item IDs (`item-001`…`item-020`) using `mockClothing` import; safe to run multiple times. After one seed call all mock shop items are checkout-ready.
+
 ## Up Next
 - [ ] Vendor subaccount auto-trigger on first vendor login (deferred)
 - [ ] Remove or gate `/api/dev/seed` before real production launch
@@ -384,3 +389,6 @@ Business logic lives here — route handlers are thin wrappers.
 - **Zod v4** — import from `"zod"` not `"zod/v4"`; API is slightly different from v3 (e.g. `.min()` error messages)
 - **Underline tab pattern** — for mode toggles (Try-On, Studio tabs) use `borderBottom: "2px solid var(--color-primary)"` on active, `"2px solid transparent"` on inactive, `marginBottom: "-1px"` so the indicator sits flush with the container's bottom border. Never use filled pill/capsule toggles on new UI.
 - **Bag → Cart** — the word "Cart" is canonical everywhere user-facing. Internal function/prop names (`handleAddToBag`, `onAddToBag`) can stay as-is since they're not visible to users.
+- **Mock clothing `vendor_id`** — all 20 items in `src/lib/mock/clothing.ts` have `vendor_id: "vendor-virea-test"`. After running `GET /api/dev/seed` once, every mock shop item is a valid DB product and checkout works end-to-end.
+- **`/api/dev/seed` uses fixed vendor ID** — vendor is upserted with `id: "vendor-virea-test"` (not a random cuid). This lets mock data reference it statically. If a stale test vendor exists with same email but different id, seed deletes it first.
+- **Write tool encoding** — on Windows the Write tool can produce UTF-8 BOM + Unicode curly quotes (`"` `"`) instead of straight ASCII `"`. TypeScript reports TS1127 "Invalid character". Fix with: `node -e "const fs=require('fs');let c=fs.readFileSync(p,'utf8');if(c.charCodeAt(0)===0xFEFF)c=c.slice(1);c=c.replace(/“/g,'\"').replace(/”/g,'\"');fs.writeFileSync(p,c,'utf8')"`. Prefer Edit tool for targeted changes to avoid this.
