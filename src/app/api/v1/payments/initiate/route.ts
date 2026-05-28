@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { nanoid } from "nanoid";
-import { handleError, AppError } from "@/lib/api-error";
+import { handleError, AppError } from "@/lib/api-error"; // AppError still used for order checks below
 import { getAuth } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { createPaymentLink } from "@/lib/services/flutterwave.service";
@@ -30,11 +30,6 @@ export async function POST(req: NextRequest) {
     if (order.userId !== userId) throw new AppError(403, "Forbidden", "FORBIDDEN");
     if (order.status !== "PLACED") throw new AppError(400, "Order is not in PLACED state", "INVALID_STATE");
 
-    // Vendor must have a Flutterwave subaccount
-    if (!order.vendor.flwSubaccountId) {
-      throw new AppError(400, "Vendor has not set up their payout account yet", "VENDOR_NO_SUBACCOUNT");
-    }
-
     // Generate a unique tx_ref and persist it BEFORE calling FLW
     // so we can reconcile on the webhook even if the API call is retried.
     const txRef = `virea_${orderId}_${nanoid(8)}`;
@@ -45,7 +40,7 @@ export async function POST(req: NextRequest) {
       amountKobo:          order.total,
       customerEmail:       order.user.email,
       customerName:        order.user.name,
-      vendorSubaccountId:  order.vendor.flwSubaccountId,
+      vendorSubaccountId:  order.vendor.flwSubaccountId,  // null = no split, full amount to main account
       vendorSplitRatio:    90, // vendor gets 90%, Virea keeps 10%
       redirectUrl:         `${APP_URL}/orders?ref=${txRef}`,
       title:               order.vendor.businessName,

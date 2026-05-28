@@ -37,7 +37,7 @@ export interface CreatePaymentLinkInput {
   amountKobo: number;   // price in kobo — we convert to naira for FLW
   customerEmail: string;
   customerName: string;
-  vendorSubaccountId: string;
+  vendorSubaccountId?: string | null;  // optional — omit split for test/unseeded vendors
   vendorSplitRatio: number;    // e.g. 90 → vendor gets 90%
   redirectUrl: string;
   title: string;
@@ -108,12 +108,14 @@ export async function createPaymentLink(input: CreatePaymentLinkInput): Promise<
         description: input.description,
         logo:        "https://virea-seven.vercel.app/icons/icon-192.png",
       },
-      subaccounts: [
-        {
-          id:                       input.vendorSubaccountId,
-          transaction_split_ratio:  input.vendorSplitRatio,
-        },
-      ],
+      ...(input.vendorSubaccountId ? {
+        subaccounts: [
+          {
+            id:                       input.vendorSubaccountId,
+            transaction_split_ratio:  input.vendorSplitRatio,
+          },
+        ],
+      } : {}),
       meta: {
         order_id: input.orderId,
       },
