@@ -79,8 +79,8 @@ export function LayerPanel({ activeItemIds, onAdd, onRemove }: Props) {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(2, 1fr)",
-          gap: "var(--space-3)",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: "var(--space-2)",
         }}
       >
         {filtered.map((item) => {
@@ -102,13 +102,13 @@ export function LayerPanel({ activeItemIds, onAdd, onRemove }: Props) {
               }}
             >
               {/* Image */}
-              <div style={{ aspectRatio: "3 / 4", position: "relative" }}>
+              <div style={{ height: "120px", position: "relative" }}>
                 {imgSrc ? (
                   <Image
                     src={imgSrc}
                     alt={item.name}
                     fill
-                    sizes="(max-width: 900px) 45vw, 200px"
+                    sizes="(max-width: 900px) 33vw, 160px"
                     style={{ objectFit: "cover" }}
                   />
                 ) : (

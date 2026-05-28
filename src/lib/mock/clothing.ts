@@ -86,8 +86,8 @@ export const mockClothing: ClothingItem[] = [
     ],
     available_sizes: ["S", "M", "L", "XL"],
     image_urls: {
-      "Gold Print": "https://images.unsplash.com/photo-1619603364929-c35f5b7a4394?w=400&q=80",
-      "Blue Print": "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&q=80",
+      "Gold Print": "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400&q=80",
+      "Blue Print": "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=400&q=80",
     },
     try_on_asset_urls: {
       "Gold Print": "/try-on/ankara-midi-gold.png",

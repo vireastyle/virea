@@ -321,10 +321,18 @@ Business logic lives here — route handlers are thin wrappers.
   - **ScrollRow arrow fix** — `top: "50%"` → `top: "38%"` so arrow centres in the image area of product cards, not below it
   - **Mock data encoding fix** — `"RubÄ""` → `"Rubē"` and `"TÃ³bi Adekoya"` → `"Tóbi Adekoya"` (Windows-1252 mojibake fixed in `clothing.ts`)
 
+- [x] Polish Batch 3 (2026-05-28)
+  - **`next.config.ts`** — added `res.cloudinary.com` to `images.remotePatterns` so Cloudinary-hosted images (avatar placeholder, vendor uploads) render via `next/image`
+  - **ScrollRow arrows** — moved from absolutely-positioned overlay (overlapped cards) to a row below the scroll container; right-aligned ← → buttons, only visible when content is scrollable in that direction; fades still indicate scroll edges
+  - **LayerPanel (Canvas "Add to look")** — `repeat(2, 1fr)` → `repeat(3, 1fr)`, gap `space-3` → `space-2`, image container changed from `aspectRatio: "3/4"` to fixed `height: 120px`
+  - **Try On picker (avatar-studio/page.tsx)** — image container changed from `aspectRatio: "3/4"` to fixed `height: 120px`; `sizes` updated to `33vw`
+  - **Broken image fix** — Ankara Print Midi (`item-004`) had dead Unsplash URLs; replaced with working ones
+  - **Replicate connected** — Vercel integration active; `REPLICATE_API_TOKEN` auto-injected. Test: `/avatar-builder` (FLUX.1-schnell) + product page Try On (IDM-VTON). Local dev requires `REPLICATE_HOST_IP` set to IPv4 of `api.replicate.com`
+
 ## Up Next
-- [ ] Testing end-to-end on live Vercel deployment
 - [ ] Vendor subaccount auto-trigger on first vendor login (deferred)
-- [ ] Restore AvatarSVG / Replicate AI avatar in Studio Canvas once API keys are active
+- [ ] Restore AvatarSVG in Studio Canvas once Replicate avatar generation is verified working
+- [ ] End-to-end testing on live Vercel deployment
 
 ## Gotchas
 - `next/image` requires `images.remotePatterns` in `next.config.ts` — Unsplash + Replicate CDN already configured

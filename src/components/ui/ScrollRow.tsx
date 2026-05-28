@@ -33,84 +33,115 @@ export function ScrollRow({ children, gap = "var(--space-3)" }: Props) {
     ref.current?.scrollBy({ left: dir * 320, behavior: "smooth" });
   };
 
-  const arrowBase: React.CSSProperties = {
-    position: "absolute",
-    top: "38%",
-    transform: "translateY(-50%)",
-    zIndex: 2,
-    width: 40,
-    height: 40,
-    borderRadius: "50%",
-    border: "1.5px solid var(--color-outline-variant)",
-    background: "var(--color-surface)",
-    boxShadow: "var(--elevation-2)",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "var(--color-on-surface)",
-    fontSize: 18,
-    transition: "opacity 0.2s ease, background 0.15s ease",
-  };
-
   return (
-    <div style={{ position: "relative" }}>
-      {/* Left fade + arrow */}
-      <div
-        style={{
-          position: "absolute", left: 0, top: 0, bottom: 0, width: 64, zIndex: 1,
-          background: "linear-gradient(to right, var(--color-background) 20%, transparent 100%)",
-          pointerEvents: "none",
-          opacity: canLeft ? 1 : 0,
-          transition: "opacity 0.2s ease",
-        }}
-      />
-      <button
-        onClick={() => scroll(-1)}
-        aria-label="Scroll left"
-        style={{ ...arrowBase, left: 8, opacity: canLeft ? 1 : 0, pointerEvents: canLeft ? "auto" : "none" }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-surface-container)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "var(--color-surface)"; }}
-      >
-        ←
-      </button>
-
+    <div>
       {/* Scroll container */}
-      <div
-        ref={ref}
-        className="scrollbar-hide"
-        style={{
-          display: "flex",
-          gap,
-          overflowX: "auto",
-          paddingBottom: "var(--space-2)",
-          marginInline: "calc(-1 * var(--space-4))",
-          paddingInline: "var(--space-4)",
-          scrollSnapType: "x mandatory",
-        }}
-      >
-        {children}
+      <div style={{ position: "relative" }}>
+        {/* Left fade */}
+        <div
+          style={{
+            position: "absolute", left: 0, top: 0, bottom: 0, width: 64, zIndex: 1,
+            background: "linear-gradient(to right, var(--color-background) 20%, transparent 100%)",
+            pointerEvents: "none",
+            opacity: canLeft ? 1 : 0,
+            transition: "opacity 0.2s ease",
+          }}
+        />
+
+        <div
+          ref={ref}
+          className="scrollbar-hide"
+          style={{
+            display: "flex",
+            gap,
+            overflowX: "auto",
+            paddingBottom: "var(--space-2)",
+            marginInline: "calc(-1 * var(--space-4))",
+            paddingInline: "var(--space-4)",
+            scrollSnapType: "x mandatory",
+          }}
+        >
+          {children}
+        </div>
+
+        {/* Right fade */}
+        <div
+          style={{
+            position: "absolute", right: 0, top: 0, bottom: 0, width: 64, zIndex: 1,
+            background: "linear-gradient(to left, var(--color-background) 20%, transparent 100%)",
+            pointerEvents: "none",
+            opacity: canRight ? 1 : 0,
+            transition: "opacity 0.2s ease",
+          }}
+        />
       </div>
 
-      {/* Right fade + arrow */}
-      <div
-        style={{
-          position: "absolute", right: 0, top: 0, bottom: 0, width: 64, zIndex: 1,
-          background: "linear-gradient(to left, var(--color-background) 20%, transparent 100%)",
-          pointerEvents: "none",
-          opacity: canRight ? 1 : 0,
-          transition: "opacity 0.2s ease",
-        }}
-      />
-      <button
-        onClick={() => scroll(1)}
-        aria-label="Scroll right"
-        style={{ ...arrowBase, right: 8, opacity: canRight ? 1 : 0, pointerEvents: canRight ? "auto" : "none" }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-surface-container)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "var(--color-surface)"; }}
-      >
-        →
-      </button>
+      {/* Arrow controls — below the row, no card overlap */}
+      {(canLeft || canRight) && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "var(--space-2)",
+            marginTop: "var(--space-3)",
+          }}
+        >
+          <button
+            onClick={() => scroll(-1)}
+            aria-label="Scroll left"
+            disabled={!canLeft}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              border: "1.5px solid var(--color-outline-variant)",
+              background: "transparent",
+              cursor: canLeft ? "pointer" : "default",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: canLeft ? "var(--color-on-surface)" : "var(--color-outline-variant)",
+              fontSize: 16,
+              transition: "background 0.15s ease, color 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              if (canLeft) (e.currentTarget as HTMLElement).style.background = "var(--color-surface-variant)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "transparent";
+            }}
+          >
+            ←
+          </button>
+          <button
+            onClick={() => scroll(1)}
+            aria-label="Scroll right"
+            disabled={!canRight}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              border: "1.5px solid var(--color-outline-variant)",
+              background: "transparent",
+              cursor: canRight ? "pointer" : "default",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: canRight ? "var(--color-on-surface)" : "var(--color-outline-variant)",
+              fontSize: 16,
+              transition: "background 0.15s ease, color 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              if (canRight) (e.currentTarget as HTMLElement).style.background = "var(--color-surface-variant)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "transparent";
+            }}
+          >
+            →
+          </button>
+        </div>
+      )}
     </div>
   );
 }

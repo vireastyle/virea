@@ -145,7 +145,7 @@ export default function AvatarStudioPage() {
                       el.style.boxShadow   = "none";
                     }}
                   >
-                    <div style={{ position: "relative", width: "100%", aspectRatio: "3 / 4" }}>
+                    <div style={{ position: "relative", width: "100%", height: "120px" }}>
                       {imgUrl && (
                         <Image
                           src={imgUrl}
