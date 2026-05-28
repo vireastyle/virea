@@ -33,14 +33,14 @@ export async function GET() {
       id:          "test-product-001",
       vendorId:    vendor.id,
       name:        "Test Dress (Payment Testing)",
+      brand:       "Test Studio",
       description: "A product created for payment flow testing.",
       price:       2000000, // ₦20,000 in kobo
       category:    "DRESS",
       images:      ["https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800"],
-      colors:      ["Black"],
+      colours:     ["Black"],
       sizes:       ["S", "M", "L"],
-      inStock:     true,
-      isNew:       false,
+      stock:       10,
     },
   });
 
