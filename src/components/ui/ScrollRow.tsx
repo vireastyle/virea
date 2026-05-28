@@ -57,11 +57,13 @@ export function ScrollRow({ children, gap = "var(--space-3)" }: Props) {
             overflowX: "auto",
             paddingBottom: "var(--space-2)",
             marginInline: "calc(-1 * var(--space-4))",
-            paddingInline: "var(--space-4)",
+            paddingInlineStart: "var(--space-4)",
             scrollSnapType: "x mandatory",
           }}
         >
           {children}
+          {/* trailing spacer — browser ignores padding-right on overflow flex containers */}
+          <div aria-hidden style={{ flexShrink: 0, width: "var(--space-4)", height: 1 }} />
         </div>
 
         {/* Right fade */}
@@ -94,7 +96,7 @@ export function ScrollRow({ children, gap = "var(--space-3)" }: Props) {
               width: 36,
               height: 36,
               borderRadius: "50%",
-              border: "1.5px solid var(--color-outline-variant)",
+              border: `1.5px solid ${canLeft ? "var(--color-on-surface)" : "var(--color-outline-variant)"}`,
               background: "transparent",
               cursor: canLeft ? "pointer" : "default",
               display: "flex",
@@ -102,7 +104,7 @@ export function ScrollRow({ children, gap = "var(--space-3)" }: Props) {
               justifyContent: "center",
               color: canLeft ? "var(--color-on-surface)" : "var(--color-outline-variant)",
               fontSize: 16,
-              transition: "background 0.15s ease, color 0.15s ease",
+              transition: "background 0.15s ease",
             }}
             onMouseEnter={(e) => {
               if (canLeft) (e.currentTarget as HTMLElement).style.background = "var(--color-surface-variant)";
@@ -121,7 +123,7 @@ export function ScrollRow({ children, gap = "var(--space-3)" }: Props) {
               width: 36,
               height: 36,
               borderRadius: "50%",
-              border: "1.5px solid var(--color-outline-variant)",
+              border: `1.5px solid ${canRight ? "var(--color-on-surface)" : "var(--color-outline-variant)"}`,
               background: "transparent",
               cursor: canRight ? "pointer" : "default",
               display: "flex",
@@ -129,7 +131,7 @@ export function ScrollRow({ children, gap = "var(--space-3)" }: Props) {
               justifyContent: "center",
               color: canRight ? "var(--color-on-surface)" : "var(--color-outline-variant)",
               fontSize: 16,
-              transition: "background 0.15s ease, color 0.15s ease",
+              transition: "background 0.15s ease",
             }}
             onMouseEnter={(e) => {
               if (canRight) (e.currentTarget as HTMLElement).style.background = "var(--color-surface-variant)";
