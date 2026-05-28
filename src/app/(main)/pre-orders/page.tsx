@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
+import { BackLink } from "@/components/ui/BackLink";
 import { useOrdersStore } from "@/store/orders.store";
 import { useAuthStore } from "@/store/auth.store";
 import type { PreOrderStatus } from "@/types/order";
@@ -51,6 +52,7 @@ export default function PreOrdersPage() {
 
   return (
     <PageShell>
+      <BackLink href="/profile" label="Profile" />
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "var(--space-6)" }}>
         <h1 className="headline-medium">Pre-Orders</h1>
         <Link href="/pre-orders/new">

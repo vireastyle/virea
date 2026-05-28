@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Package, Clock } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
+import { BackLink } from "@/components/ui/BackLink";
 import { OrderCard } from "@/components/orders/OrderCard";
 import { useOrdersStore } from "@/store/orders.store";
 import { useAuthStore } from "@/store/auth.store";
@@ -25,6 +26,7 @@ export default function OrdersPage() {
 
   return (
     <PageShell>
+      <BackLink href="/profile" label="Profile" />
       <h1 className="headline-medium" style={{ marginBottom: "var(--space-6)" }}>My Orders</h1>
 
       {/* Payment verifying banner */}

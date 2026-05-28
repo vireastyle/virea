@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { RefreshCw, UserRound } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
+import { BackLink } from "@/components/ui/BackLink";
 import { useAvatarStore } from "@/store/avatar.store";
 
 export default function MyAvatarPage() {
@@ -20,6 +21,7 @@ export default function MyAvatarPage() {
   return (
     <PageShell>
       <div style={{ paddingTop: "var(--space-4)", maxWidth: "400px", margin: "0 auto" }}>
+        <BackLink href="/profile" label="Profile" />
 
         <h1 className="headline-medium" style={{ marginBottom: "var(--space-1)" }}>
           My Avatar

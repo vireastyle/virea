@@ -45,9 +45,6 @@ export default function ProfilePage() {
             <Link href="/register">
               <Button variant="outlined" fullWidth>Create Account</Button>
             </Link>
-            <Button variant="text" fullWidth onClick={() => signInAsGuest()}>
-              Continue as Guest (Demo)
-            </Button>
           </div>
           <Link
             href="/vendor/login"

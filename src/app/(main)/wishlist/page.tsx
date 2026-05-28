@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Heart, ShoppingBag } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
+import { BackLink } from "@/components/ui/BackLink";
 import { useAuthStore } from "@/store/auth.store";
 import { useCartStore } from "@/store/cart.store";
 import { useUIStore } from "@/store/ui.store";
@@ -74,6 +75,7 @@ export default function WishlistPage() {
   return (
     <PageShell>
       <div style={{ paddingTop: "var(--space-6)" }}>
+        <BackLink href="/profile" label="Profile" />
         <h1 className="headline-large" style={{ marginBottom: "var(--space-6)" }}>Wishlist</h1>
 
         {loading ? (

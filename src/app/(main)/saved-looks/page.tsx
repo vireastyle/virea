@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Heart, Trash2 } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
+import { BackLink } from "@/components/ui/BackLink";
 import { useOutfitsStore } from "@/store/outfits.store";
 
 export default function SavedLooksPage() {
@@ -13,6 +14,7 @@ export default function SavedLooksPage() {
   return (
     <PageShell>
       <div style={{ paddingTop: "var(--space-6)" }}>
+        <BackLink href="/profile" label="Profile" />
         <h1 className="headline-large" style={{ marginBottom: "var(--space-6)" }}>Saved Looks</h1>
 
         {outfits.length === 0 ? (
