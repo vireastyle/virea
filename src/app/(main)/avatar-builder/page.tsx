@@ -293,9 +293,25 @@ export default function AvatarBuilderPage() {
       <div style={{ paddingTop: "var(--space-4)" }}>
 
         {/* Header */}
-        <h1 className="headline-medium" style={{ marginBottom: "var(--space-1)" }}>
-          Build your avatar
-        </h1>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "var(--space-1)" }}>
+          <h1 className="headline-medium">Build your avatar</h1>
+          <button
+            onClick={() => router.push("/")}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--color-on-surface-variant)",
+              fontFamily: "var(--type-label-large-family)",
+              fontSize: "var(--type-label-large-size)",
+              fontWeight: "var(--type-label-large-weight)",
+              padding: "var(--space-1) 0",
+              flexShrink: 0,
+            }}
+          >
+            Skip
+          </button>
+        </div>
         <p className="body-medium" style={{ color: "var(--color-on-surface-variant)", marginBottom: "var(--space-5)" }}>
           Step {step + 1} of {STEPS.length} — {STEPS[step]}
         </p>
