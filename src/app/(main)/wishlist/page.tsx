@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingBag } from "lucide-react";
+import { Heart } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { BackLink } from "@/components/ui/BackLink";
@@ -79,13 +79,13 @@ export default function WishlistPage() {
         <h1 className="headline-large" style={{ marginBottom: "var(--space-6)" }}>Wishlist</h1>
 
         {loading ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
-            {[1, 2, 3].map((i) => (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "var(--space-2)" }}>
+            {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
                 style={{
-                  height: "112px",
-                  borderRadius: "var(--shape-md)",
+                  aspectRatio: "3 / 4",
+                  borderRadius: "var(--shape-sm)",
                   background: "var(--color-surface-variant)",
                   animation: "pulse 1.5s ease-in-out infinite",
                 }}
@@ -115,7 +115,7 @@ export default function WishlistPage() {
             </Link>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "var(--space-2)" }}>
             {entries.map(({ id, item }) => {
               const colour = item.available_colours[0];
               if (!colour) return null;
@@ -123,45 +123,34 @@ export default function WishlistPage() {
                 <div
                   key={id}
                   style={{
-                    display: "flex",
-                    gap: "var(--space-3)",
                     background: "var(--color-surface)",
-                    borderRadius: "var(--shape-md)",
-                    padding: "var(--space-3)",
+                    borderRadius: "var(--shape-sm)",
+                    overflow: "hidden",
                     boxShadow: "var(--elevation-1)",
                   }}
                 >
-                  <Link href={`/product/${item.id}`} style={{ flexShrink: 0 }}>
-                    <div
-                      style={{
-                        width: "88px",
-                        height: "112px",
-                        borderRadius: "var(--shape-sm)",
-                        overflow: "hidden",
-                        position: "relative",
-                        background: "var(--color-surface-variant)",
-                      }}
-                    >
-                      {item.image_urls[colour.name] && (
-                        <Image
-                          src={item.image_urls[colour.name]}
-                          alt={item.name}
-                          fill
-                          style={{ objectFit: "cover" }}
-                          sizes="88px"
-                        />
-                      )}
-                    </div>
+                  <Link href={`/product/${item.id}`} style={{ display: "block", position: "relative", aspectRatio: "3 / 4", background: "var(--color-surface-variant)" }}>
+                    {item.image_urls[colour.name] && (
+                      <Image
+                        src={item.image_urls[colour.name]}
+                        alt={item.name}
+                        fill
+                        style={{ objectFit: "cover" }}
+                        sizes="25vw"
+                      />
+                    )}
                   </Link>
-                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                    <div>
-                      <p className="label-small" style={{ color: "var(--color-on-surface-variant)", textTransform: "uppercase" }}>{item.brand}</p>
-                      <Link href={`/product/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-                        <p className="headline-small" style={{ marginTop: "var(--space-1)" }}>{item.name}</p>
-                      </Link>
-                      <p className="price-small" style={{ marginTop: "var(--space-1)" }}>{formatNaira(item.price)}</p>
-                    </div>
-                    <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-3)" }}>
+                  <div style={{ padding: "var(--space-2)" }}>
+                    <p
+                      className="label-small"
+                      style={{ overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}
+                    >
+                      {item.name}
+                    </p>
+                    <p style={{ fontSize: "10px", color: "var(--color-primary)", marginTop: "2px", fontFamily: "var(--type-label-small-family)" }}>
+                      {formatNaira(item.price)}
+                    </p>
+                    <div style={{ display: "flex", gap: "var(--space-1)", marginTop: "var(--space-1)" }}>
                       <button
                         onClick={() => {
                           addToCart(item, colour, (item.available_sizes[0] ?? "M") as Size);
@@ -170,40 +159,34 @@ export default function WishlistPage() {
                         aria-label={`Add ${item.name} to cart`}
                         style={{
                           flex: 1,
-                          height: "36px",
+                          height: "24px",
                           borderRadius: "var(--shape-xl)",
-                          border: "1.5px solid var(--color-outline-variant)",
+                          border: "1px solid var(--color-outline-variant)",
                           background: "transparent",
                           cursor: "pointer",
-                          fontFamily: "var(--type-label-large-family)",
-                          fontSize: "var(--type-label-large-size)",
-                          fontWeight: "var(--type-label-large-weight)",
+                          fontSize: "9px",
+                          fontFamily: "var(--type-label-small-family)",
                           color: "var(--color-primary)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "var(--space-1)",
                         }}
                       >
-                        <ShoppingBag size={14} strokeWidth={1.5} /> Add to Cart
+                        + Cart
                       </button>
                       <button
                         onClick={() => remove(id)}
                         aria-label="Remove from wishlist"
                         style={{
-                          width: "36px",
-                          height: "36px",
+                          width: "24px",
+                          height: "24px",
                           borderRadius: "var(--shape-full)",
-                          border: "1.5px solid var(--color-outline-variant)",
+                          border: "1px solid var(--color-outline-variant)",
                           background: "transparent",
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          color: "var(--color-on-surface-variant)",
                         }}
                       >
-                        <Heart size={14} fill="currentColor" strokeWidth={1.5} style={{ color: "var(--color-tertiary)" }} />
+                        <Heart size={10} fill="currentColor" strokeWidth={1.5} style={{ color: "var(--color-tertiary)" }} />
                       </button>
                     </div>
                   </div>

@@ -352,6 +352,26 @@ Business logic lives here — route handlers are thin wrappers.
   - **`src/lib/mock/clothing.ts`** — added `const MOCK_VENDOR_ID = "vendor-virea-test"` and `vendor_id: MOCK_VENDOR_ID` to all 20 items
   - **`/api/dev/seed`** — rebuilt: upserts vendor with fixed `id: "vendor-virea-test"` (predictable, not random UUID); detects and deletes any stale test vendor with same email but different id; upserts all 20 mock products by their real item IDs (`item-001`…`item-020`) using `mockClothing` import; safe to run multiple times. After one seed call all mock shop items are checkout-ready.
 
+- [x] Polish Batch 5 (2026-05-28) — UX & Auth polish
+  - **Race-condition logout fix** (`src/lib/api.ts`) — singleton `refreshPromise` pattern: concurrent 401s share one refresh call instead of each consuming the single-use rotated refresh token
+  - **Cart flash fix** (`CheckoutModal.tsx`) — removed `close()` before `window.location.href = paymentUrl`; page navigation handles teardown
+  - **BodyProfileStep gap** (`src/components/auth/BodyProfileStep.tsx`) — `--space-7` (doesn't exist) → `--space-10`
+  - **Gender selector in register flow** — gender card grid (Male/Female) added before body type; `Gender = "female" | "male"` type added to `src/types/user.ts`; female body types: hourglass/pear/apple/rectangle/inverted-triangle; male: rectangle/inverted-triangle/oval/athletic; `handleGenderSelect` resets bodyType if incompatible; `setAvatarGender` called on complete
+  - **Selfie step copy** (`SelfieUploadStep.tsx`) — subtitle now references Try On feature, not avatar generation
+  - **Avatar builder Skip** (`avatar-builder/page.tsx`) — "Skip" button top-right in header calls `router.push("/")`
+  - **Avatar builder label fix** — button uses `isComplete` flag (not `existingAvatar`) to decide "Save & Generate Avatar" vs "Update & Regenerate"; `existingAvatar` was truthy for new users because `setAvatarGender` creates partial avatar object in store
+  - **Full-body avatar generation** (`src/app/api/generate-avatar/route.ts`) — aspect ratio `"3:4"` → `"2:3"` (832×1216); prompt strengthened with "feet flat on floor, legs and feet fully visible, no cropping"
+  - **Garment thumbnail in try-on** (`TryOnView.tsx`) — 72×90px absolute top-left overlay (zIndex 10), visible when no result and not loading; replaces garment-as-background (which caused flash before avatar hydrated from localStorage)
+  - **Real Photo panel** (`TryOnView.tsx`, `useFashnTryOn.ts`) — shows `virea_user_selfie` as full background when available; shows upload icon + Link to `/profile` when no selfie; `selfieUrl` added to hook return
+  - **Back links** — `<BackLink href="/profile" label="Profile" />` added to `/orders`, `/pre-orders`, `/wishlist`, `/saved-looks`, `/my-avatar`
+  - **Guest button removed** — "Continue as Guest (Demo)" removed from `LoginForm.tsx` and `profile/page.tsx`
+  - **Vendor back navigation** — `LoginForm.tsx` vendor back: `<button onClick={() => router.back()}>← Back</button>` (was hardcoded `href="/"`); `vendor/register/page.tsx` step 0 back: `router.back()` button above logo
+  - **"Sell on Virea"** (`profile/page.tsx`) — href changed `/vendor/login` → `/vendor/register`
+
+- [x] Polish Batch 6 (2026-05-28) — Compact grid pages
+  - **Saved Looks** (`src/app/(main)/saved-looks/page.tsx`) — 2-col list → 4-col grid (`repeat(4, 1fr)`), gap `space-2`, `borderRadius: shape-sm`, padding `space-2`, `label-small` name text, 10px delete button, image `sizes="25vw"`
+  - **Wishlist** (`src/app/(main)/wishlist/page.tsx`) — horizontal card list → 4-col grid (`repeat(4, 1fr)`), aspect-ratio image, compact name + price + "+ Cart" button (24px) + heart remove (24px); loading skeletons match grid shape; `ShoppingBag` icon removed
+
 ## Up Next
 - [ ] Vendor subaccount auto-trigger on first vendor login (deferred)
 - [ ] Remove or gate `/api/dev/seed` before real production launch

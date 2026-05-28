@@ -40,13 +40,13 @@ export default function SavedLooksPage() {
             </Link>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "var(--space-3)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "var(--space-2)" }}>
             {outfits.map((outfit) => (
               <div
                 key={outfit.id}
                 style={{
                   background: "var(--color-surface)",
-                  borderRadius: "var(--shape-md)",
+                  borderRadius: "var(--shape-sm)",
                   overflow: "hidden",
                   boxShadow: "var(--elevation-1)",
                 }}
@@ -58,7 +58,7 @@ export default function SavedLooksPage() {
                       alt={outfit.name}
                       fill
                       style={{ objectFit: "cover" }}
-                      sizes="(max-width: 600px) 50vw, 33vw"
+                      sizes="25vw"
                     />
                   ) : (
                     <div
@@ -70,37 +70,35 @@ export default function SavedLooksPage() {
                         color: "var(--color-outline-variant)",
                       }}
                     >
-                      <Heart size={32} strokeWidth={1} />
+                      <Heart size={20} strokeWidth={1} />
                     </div>
                   )}
                 </div>
-                <div style={{ padding: "var(--space-3) var(--space-3)" }}>
+                <div style={{ padding: "var(--space-2)" }}>
                   <p
-                    className="headline-small"
+                    className="label-small"
                     style={{ overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}
                   >
                     {outfit.name}
-                  </p>
-                  <p className="body-small" style={{ color: "var(--color-on-surface-variant)", marginTop: "var(--space-1)" }}>
-                    {outfit.items.length} item{outfit.items.length !== 1 ? "s" : ""}
                   </p>
                   <button
                     onClick={() => remove(outfit.id)}
                     aria-label="Delete outfit"
                     style={{
-                      marginTop: "var(--space-2)",
+                      marginTop: "var(--space-1)",
                       background: "none",
                       border: "none",
                       cursor: "pointer",
                       color: "var(--color-on-surface-variant)",
                       display: "flex",
                       alignItems: "center",
-                      gap: "var(--space-1)",
+                      gap: "2px",
+                      padding: 0,
                       fontFamily: "var(--type-label-small-family)",
-                      fontSize: "var(--type-label-small-size)",
+                      fontSize: "10px",
                     }}
                   >
-                    <Trash2 size={12} strokeWidth={1.5} /> Delete
+                    <Trash2 size={10} strokeWidth={1.5} /> Delete
                   </button>
                 </div>
               </div>
