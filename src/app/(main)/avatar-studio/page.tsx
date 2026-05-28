@@ -111,7 +111,7 @@ export default function AvatarStudioPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
+                gridTemplateColumns: "repeat(4, 1fr)",
                 gap: "var(--space-2)",
               }}
             >

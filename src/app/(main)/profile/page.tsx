@@ -161,7 +161,7 @@ export default function ProfilePage() {
           }}
         >
           {[
-            { label: "My Avatar", href: "/avatar-builder", Icon: User },
+            { label: "My Avatar", href: "/my-avatar", Icon: User },
             { label: "My Orders", href: "/orders", Icon: Package },
             { label: "Pre-Orders", href: "/pre-orders", Icon: Sparkles },
             { label: "Saved Looks", href: "/saved-looks", Icon: Heart },

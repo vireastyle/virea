@@ -36,7 +36,7 @@ export function ScrollRow({ children, gap = "var(--space-3)" }: Props) {
   return (
     <div>
       {/* Scroll container */}
-      <div style={{ position: "relative" }}>
+      <div style={{ position: "relative", overflow: "hidden" }}>
         {/* Left fade */}
         <div
           style={{

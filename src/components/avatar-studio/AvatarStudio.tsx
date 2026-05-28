@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
-import { BookmarkPlus, Send, ShoppingBag } from "lucide-react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { BookmarkPlus, Send, ShoppingBag, UserRound } from "lucide-react";
 import type { Colour } from "@/types/clothing";
 import type { OutfitItem } from "@/types/outfit";
 import type { EventType } from "@/types/vendor";
@@ -32,6 +32,11 @@ export function AvatarStudio() {
 
   const [showModal, setShowModal] = useState(false);
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
+  const [avatarPhoto, setAvatarPhoto] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAvatarPhoto(localStorage.getItem("virea_avatar_photo"));
+  }, []);
 
   const focusedLayer =
     layers.find((l) => l.itemId === focusedItemId) ?? layers[layers.length - 1] ?? null;
@@ -86,10 +91,9 @@ export function AvatarStudio() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
-      {/* Avatar placeholder */}
+      {/* Avatar photo */}
       <div
         style={{
-          position: "relative",
           width: "100%",
           maxWidth: "400px",
           margin: "0 auto",
@@ -98,16 +102,38 @@ export function AvatarStudio() {
           overflow: "hidden",
           background: "var(--color-surface-variant)",
           boxShadow: "var(--elevation-2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        <Image
-          src="https://res.cloudinary.com/dwvts4iim/image/upload/v1779975510/male-avatar_med0is.png"
-          alt="Avatar"
-          fill
-          style={{ objectFit: "contain" }}
-          sizes="(max-width: 900px) 100vw, 400px"
-          priority
-        />
+        {avatarPhoto ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarPhoto}
+            alt="Your avatar"
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+          />
+        ) : (
+          <div style={{ textAlign: "center", padding: "var(--space-6)" }}>
+            <UserRound size={48} strokeWidth={1} style={{ color: "var(--color-outline-variant)", marginBottom: "var(--space-3)" }} />
+            <p className="body-small" style={{ color: "var(--color-on-surface-variant)", marginBottom: "var(--space-3)" }}>
+              No avatar yet
+            </p>
+            <Link
+              href="/avatar-builder"
+              style={{
+                color: "var(--color-primary)",
+                fontFamily: "var(--type-label-medium-family)",
+                fontSize: "var(--type-label-medium-size)",
+                fontWeight: "var(--type-label-medium-weight)",
+                textDecoration: "none",
+              }}
+            >
+              Build your avatar →
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Active layers strip */}
