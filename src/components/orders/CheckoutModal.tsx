@@ -51,9 +51,9 @@ export function CheckoutModal({ onClose }: Props) {
               body: JSON.stringify({ orderId: order.id }),
             });
 
-            // 3. Clear bag, then redirect to Flutterwave
+            // 3. Clear bag and redirect — no need to close the modal first,
+            // the page navigation handles it and avoids a cart flash.
             clear();
-            close();
             window.location.href = paymentUrl;
           } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : "Payment could not be initiated";
