@@ -30,19 +30,19 @@ type GenState = "idle" | "loading" | "done" | "error";
 
 export default function AvatarBuilderPage() {
   const router    = useRouter();
-  const { setAvatar } = useAvatarStore();
+  const { setAvatar, avatar: existingAvatar } = useAvatarStore();
   const { addToast }  = useUIStore();
 
   const [step, setStep] = useState(0);
   const [dir,  setDir]  = useState(1);
 
-  // Draft state
-  const [gender,     setGender]     = useState<AvatarGender>("female");
-  const [bodyShape,  setBodyShape]  = useState<BodyShape>(defaultAvatar.body_shape);
-  const [skinTone,   setSkinTone]   = useState<SkinTone>(defaultAvatar.skin_tone);
-  const [hairStyle,  setHairStyle]  = useState<HairStyle>(defaultAvatar.hair_style);
-  const [hairColour, setHairColour] = useState<HairColour>(defaultAvatar.hair_colour);
-  const [sizeRange,  setSizeRange]  = useState<SizeRange>(defaultAvatar.size_range);
+  // Draft state — pre-fill from existing avatar if returning user
+  const [gender,     setGender]     = useState<AvatarGender>(existingAvatar?.gender      ?? "female");
+  const [bodyShape,  setBodyShape]  = useState<BodyShape>(existingAvatar?.body_shape      ?? defaultAvatar.body_shape);
+  const [skinTone,   setSkinTone]   = useState<SkinTone>(existingAvatar?.skin_tone        ?? defaultAvatar.skin_tone);
+  const [hairStyle,  setHairStyle]  = useState<HairStyle>(existingAvatar?.hair_style      ?? defaultAvatar.hair_style);
+  const [hairColour, setHairColour] = useState<HairColour>(existingAvatar?.hair_colour    ?? defaultAvatar.hair_colour);
+  const [sizeRange,  setSizeRange]  = useState<SizeRange>(existingAvatar?.size_range      ?? defaultAvatar.size_range);
 
   // Generation phase
   const [genState,      setGenState]      = useState<GenState>("idle");
@@ -524,7 +524,7 @@ export default function AvatarBuilderPage() {
               <Button variant="filled" fullWidth onClick={goNext}>Continue</Button>
             ) : (
               <Button variant="filled" fullWidth onClick={handleSave}>
-                Save & Generate Avatar
+                {existingAvatar ? "Update & Regenerate" : "Save & Generate Avatar"}
               </Button>
             )}
           </div>
