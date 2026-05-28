@@ -41,8 +41,13 @@ export async function registerUser(data: { email: string; password: string; name
     data: { email: data.email, password: hashed, name: data.name },
   });
 
-  const tokens = await issueTokens(user.id, "user");
-  return { user: stripPassword(user), ...tokens };
+  try {
+    const tokens = await issueTokens(user.id, "user");
+    return { user: stripPassword(user), ...tokens };
+  } catch (err) {
+    await prisma.user.delete({ where: { id: user.id } }).catch(() => null);
+    throw err;
+  }
 }
 
 export async function loginUser(data: { email: string; password: string }) {
