@@ -11,7 +11,7 @@ import { SelfieUploadStep } from "@/components/auth/SelfieUploadStep";
 import { useAuthStore } from "@/store/auth.store";
 import { useAvatarStore } from "@/store/avatar.store";
 import { skinTones } from "@/lib/mock/avatars";
-import type { BodySize, BodyType, StyleType } from "@/types/user";
+import type { BodySize, BodyType, Gender, StyleType } from "@/types/user";
 
 const STEPS = ["Account", "Body", "Style", "Photo"];
 
@@ -20,7 +20,7 @@ type FormErrors = { name?: string; email?: string; password?: string; api?: stri
 export default function RegisterPage() {
   const router = useRouter();
   const { register, updateProfile } = useAuthStore();
-  const { updateSkinTone } = useAvatarStore();
+  const { updateSkinTone, updateGender: setAvatarGender } = useAvatarStore();
 
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -32,6 +32,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
 
   // Step 1 — Body profile
+  const [gender, setGender] = useState<Gender | "">("");
   const [heightCm, setHeightCm] = useState("");
   const [weightKg, setWeightKg] = useState("");
   const [colorComplexion, setColorComplexion] = useState("");
@@ -44,6 +45,15 @@ export default function RegisterPage() {
   // Step 2 — Style preferences
   const [favoriteColors, setFavoriteColors] = useState<string[]>([]);
   const [styleTypes, setStyleTypes] = useState<StyleType[]>([]);
+
+  const MALE_TYPES: BodyType[] = ["rectangle", "inverted-triangle", "oval", "athletic"];
+  const FEMALE_TYPES: BodyType[] = ["hourglass", "pear", "apple", "rectangle", "inverted-triangle"];
+
+  const handleGenderSelect = (g: Gender) => {
+    setGender(g);
+    const validTypes = g === "male" ? MALE_TYPES : FEMALE_TYPES;
+    if (bodyType && !validTypes.includes(bodyType as BodyType)) setBodyType("");
+  };
 
   const handleTextField = (
     field: "heightCm" | "weightKg" | "chestCm" | "waistCm" | "hipsCm",
@@ -109,8 +119,8 @@ export default function RegisterPage() {
   };
 
   const completeRegistration = (selfieStoredLocally = false) => {
-    // User account already created at step 0 — just persist the optional body data locally
     updateProfile({
+      gender: (gender || undefined) as Gender | undefined,
       height_cm: heightCm ? parseInt(heightCm, 10) : undefined,
       weight_kg: weightKg ? parseInt(weightKg, 10) : undefined,
       color_complexion: colorComplexion || undefined,
@@ -123,6 +133,8 @@ export default function RegisterPage() {
       style_types: styleTypes.length > 0 ? styleTypes : undefined,
       selfie_stored_locally: selfieStoredLocally,
     });
+    // Pre-populate avatar store gender so avatar builder is pre-configured
+    if (gender) setAvatarGender(gender);
     router.push("/avatar-builder");
   };
 
@@ -238,6 +250,7 @@ export default function RegisterPage() {
           {/* Step 1 — Body Profile */}
           {step === 1 && (
             <BodyProfileStep
+              gender={gender}
               heightCm={heightCm}
               weightKg={weightKg}
               colorComplexion={colorComplexion}
@@ -246,6 +259,7 @@ export default function RegisterPage() {
               chestCm={chestCm}
               waistCm={waistCm}
               hipsCm={hipsCm}
+              onGenderSelect={handleGenderSelect}
               onChangeText={handleTextField}
               onBodyTypeSelect={(t) => setBodyType(t)}
               onBodySizeSelect={(s) => setBodySize(s)}

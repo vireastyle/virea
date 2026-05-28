@@ -1,13 +1,20 @@
 "use client";
 
-import type { BodySize, BodyType } from "@/types/user";
+import type { BodySize, BodyType, Gender } from "@/types/user";
 
-const BODY_TYPES: { id: BodyType; label: string; description: string }[] = [
-  { id: "hourglass", label: "Hourglass", description: "Balanced shoulders and hips, defined waist" },
-  { id: "pear", label: "Pear", description: "Hips wider than shoulders" },
-  { id: "apple", label: "Apple", description: "Fullness around the midsection" },
-  { id: "rectangle", label: "Rectangle", description: "Similar shoulder, waist, and hip width" },
-  { id: "inverted-triangle", label: "Inverted Triangle", description: "Shoulders wider than hips" },
+const FEMALE_BODY_TYPES: { id: BodyType; label: string; description: string }[] = [
+  { id: "hourglass",          label: "Hourglass",          description: "Balanced shoulders and hips, defined waist" },
+  { id: "pear",               label: "Pear",               description: "Hips wider than shoulders" },
+  { id: "apple",              label: "Apple",              description: "Fullness around the midsection" },
+  { id: "rectangle",          label: "Rectangle",          description: "Similar shoulder, waist, and hip width" },
+  { id: "inverted-triangle",  label: "Inverted Triangle",  description: "Shoulders wider than hips" },
+];
+
+const MALE_BODY_TYPES: { id: BodyType; label: string; description: string }[] = [
+  { id: "rectangle",          label: "Rectangle",          description: "Similar shoulder, waist, and hip width" },
+  { id: "inverted-triangle",  label: "Inverted Triangle",  description: "Shoulders wider than hips" },
+  { id: "oval",               label: "Oval",               description: "Fullness around the midsection" },
+  { id: "athletic",           label: "Athletic",           description: "Broad shoulders, defined muscles, tapered waist" },
 ];
 
 const BODY_SIZES: BodySize[] = ["XS", "S", "M", "L", "XL", "XXL"];
@@ -24,6 +31,7 @@ const COMPLEXION_OPTIONS = [
 ];
 
 type Props = {
+  gender: Gender | "";
   heightCm: string;
   weightKg: string;
   colorComplexion: string;
@@ -32,6 +40,7 @@ type Props = {
   chestCm: string;
   waistCm: string;
   hipsCm: string;
+  onGenderSelect: (gender: Gender) => void;
   onChangeText: (
     field: "heightCm" | "weightKg" | "chestCm" | "waistCm" | "hipsCm",
     value: string
@@ -43,6 +52,7 @@ type Props = {
 
 
 export function BodyProfileStep({
+  gender,
   heightCm,
   weightKg,
   colorComplexion,
@@ -51,11 +61,14 @@ export function BodyProfileStep({
   chestCm,
   waistCm,
   hipsCm,
+  onGenderSelect,
   onChangeText,
   onBodyTypeSelect,
   onBodySizeSelect,
   onComplexionSelect,
 }: Props) {
+  const bodyTypes = gender === "male" ? MALE_BODY_TYPES : FEMALE_BODY_TYPES;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-10)" }}>
       <div>
@@ -65,6 +78,42 @@ export function BodyProfileStep({
         <p className="body-medium" style={{ color: "var(--color-on-surface-variant)" }}>
           All fields are optional — they help us personalise your avatar and recommendations.
         </p>
+      </div>
+
+      {/* Gender */}
+      <div>
+        <p className="title-small" style={{ marginBottom: "var(--space-3)", color: "var(--color-on-surface-variant)" }}>
+          GENDER
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)" }}>
+          {(["female", "male"] as Gender[]).map((g) => (
+            <button
+              key={g}
+              onClick={() => onGenderSelect(g)}
+              style={{
+                padding: "var(--space-4)",
+                borderRadius: "var(--shape-md)",
+                border: gender === g
+                  ? "2px solid var(--color-primary)"
+                  : "1.5px solid var(--color-outline-variant)",
+                background: gender === g ? "var(--color-primary-container)" : "var(--color-surface)",
+                textAlign: "center",
+                cursor: "pointer",
+                transition: `all var(--duration-standard) var(--easing-standard)`,
+              }}
+            >
+              <p
+                className="title-medium"
+                style={{
+                  color: gender === g ? "var(--color-on-primary-container)" : "var(--color-on-surface)",
+                  textTransform: "capitalize",
+                }}
+              >
+                {g}
+              </p>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Height & Weight */}
@@ -108,7 +157,7 @@ export function BodyProfileStep({
           BODY TYPE
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-          {BODY_TYPES.map((bt) => (
+          {bodyTypes.map((bt) => (
             <button
               key={bt.id}
               onClick={() => onBodyTypeSelect(bt.id)}

@@ -1,5 +1,7 @@
 export type Tier = "FREE" | "PRO";
 
+export type Gender = "female" | "male";
+
 export type BodySize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
 
 export type BodyType =
@@ -7,7 +9,9 @@ export type BodyType =
   | "pear"
   | "apple"
   | "rectangle"
-  | "inverted-triangle";
+  | "inverted-triangle"
+  | "oval"
+  | "athletic";
 
 export type StyleType =
   | "casual"
@@ -29,6 +33,7 @@ export type User = {
   email: string;
   profile_photo_url?: string;
   // Body profile
+  gender?: Gender;
   height_cm?: number;
   weight_kg?: number;
   color_complexion?: string;
