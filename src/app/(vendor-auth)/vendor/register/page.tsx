@@ -155,6 +155,26 @@ export default function VendorRegisterPage() {
       >
         {/* Brand */}
         <div style={{ marginBottom: "var(--space-6)" }}>
+          {step === 0 && (
+            <button
+              onClick={() => router.back()}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--color-on-surface-variant)",
+                fontFamily: "var(--type-label-large-family)",
+                fontSize: "var(--type-label-large-size)",
+                fontWeight: "var(--type-label-large-weight)",
+                padding: "0 0 var(--space-4) 0",
+                display: "flex",
+                alignItems: "center",
+                gap: "var(--space-1)",
+              }}
+            >
+              ← Back
+            </button>
+          )}
           <Link
             href="/"
             className="display-small"

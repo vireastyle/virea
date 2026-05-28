@@ -181,12 +181,21 @@ export function LoginForm({ mode }: Props) {
               color: "var(--color-on-surface-variant)",
             }}
           >
-            <Link
-              href="/"
-              style={{ color: "var(--color-on-surface-variant)", textDecoration: "none", opacity: 0.7 }}
+            <button
+              onClick={() => router.back()}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "var(--color-on-surface-variant)",
+                opacity: 0.7,
+                fontFamily: "var(--type-body-medium-family)",
+                fontSize: "var(--type-body-medium-size)",
+                padding: 0,
+              }}
             >
-              ← Back to the shop
-            </Link>
+              ← Back
+            </button>
           </p>
         )}
       </div>

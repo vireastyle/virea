@@ -220,7 +220,7 @@ export default function ProfilePage() {
 
         {/* Sell on Virea */}
         <Link
-          href="/vendor/login"
+          href="/vendor/register"
           onMouseEnter={(e) => {
             const el = e.currentTarget as HTMLElement;
             el.style.filter = "brightness(0.95)";
