@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useCallback } from "react";
-import { Sparkles, Camera, User, RefreshCw } from "lucide-react";
+import { Sparkles, Camera, User, RefreshCw, Upload } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { ClothingItem, Colour } from "@/types/clothing";
 import type { OutfitItem } from "@/types/outfit";
@@ -76,6 +76,7 @@ export function TryOnView({ initialItem, initialColour }: Props) {
   // ── Real Photo mode (selfie + IDM-VTON) ───────────────────────────────────
   const {
     hasSelfie,
+    selfieUrl,
     status:    realStatus,
     resultUrl: realResultUrl,
     error:     realError,
@@ -249,6 +250,67 @@ export function TryOnView({ initialItem, initialColour }: Props) {
               transition={{ duration: motionTokens.duration.standard }}
               style={{ position: "absolute", inset: 0 }}
             >
+              {/* Selfie shown as background when available and no result */}
+              {selfieUrl && !realShowResult && !realShowLoading && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={selfieUrl}
+                  alt="Your photo"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+              )}
+
+              {/* No selfie — upload prompt */}
+              {!hasSelfie && !realShowResult && !realShowLoading && (
+                <Link
+                  href="/profile"
+                  style={{
+                    position:       "absolute",
+                    inset:          0,
+                    display:        "flex",
+                    flexDirection:  "column",
+                    alignItems:     "center",
+                    justifyContent: "center",
+                    gap:            "var(--space-3)",
+                    textDecoration: "none",
+                    color:          "var(--color-on-surface-variant)",
+                    padding:        "var(--space-8)",
+                  }}
+                >
+                  <div style={{
+                    width:        "56px",
+                    height:       "56px",
+                    borderRadius: "var(--shape-full)",
+                    background:   "var(--color-surface)",
+                    display:      "flex",
+                    alignItems:   "center",
+                    justifyContent: "center",
+                    boxShadow:    "var(--elevation-1)",
+                  }}>
+                    <Upload size={24} strokeWidth={1.5} color="var(--color-on-surface-variant)" />
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <p style={{
+                      fontFamily:  "var(--type-label-large-family)",
+                      fontSize:    "var(--type-label-large-size)",
+                      fontWeight:  "var(--type-label-large-weight)",
+                      color:       "var(--color-on-surface-variant)",
+                      marginBottom: "var(--space-1)",
+                    }}>
+                      Upload your photo
+                    </p>
+                    <p style={{
+                      fontFamily: "var(--type-body-small-family)",
+                      fontSize:   "var(--type-body-small-size)",
+                      color:      "var(--color-on-surface-variant)",
+                      opacity:    0.7,
+                    }}>
+                      Tap to go to your profile
+                    </p>
+                  </div>
+                </Link>
+              )}
+
               {realShowLoading && <AiTryOnPanel status="loading" />}
               {realShowResult && realResultUrl && (
                 <AiTryOnPanel

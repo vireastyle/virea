@@ -37,11 +37,14 @@ export function useFashnTryOn() {
   const [status,    setStatus]    = useState<FashnStatus>("idle");
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [error,     setError]     = useState<string | null>(null);
-  // Start false (SSR-safe), set correctly after mount
-  const [hasSelfie, setHasSelfie] = useState(false);
+  // Start null (SSR-safe), set correctly after mount
+  const [hasSelfie,  setHasSelfie]  = useState(false);
+  const [selfieUrl,  setSelfieUrl]  = useState<string | null>(null);
 
   useEffect(() => {
-    setHasSelfie(!!localStorage.getItem("virea_user_selfie"));
+    const stored = localStorage.getItem("virea_user_selfie");
+    setHasSelfie(!!stored);
+    setSelfieUrl(stored);
   }, []);
 
   const getSelfie = useCallback((): string | null => {
@@ -113,6 +116,7 @@ export function useFashnTryOn() {
 
   return {
     hasSelfie,
+    selfieUrl,
     status,
     resultUrl,
     error,
