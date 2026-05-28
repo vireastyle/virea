@@ -35,7 +35,7 @@ export function ScrollRow({ children, gap = "var(--space-3)" }: Props) {
 
   const arrowBase: React.CSSProperties = {
     position: "absolute",
-    top: "50%",
+    top: "38%",
     transform: "translateY(-50%)",
     zIndex: 2,
     width: 40,

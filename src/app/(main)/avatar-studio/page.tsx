@@ -15,7 +15,7 @@ export default function AvatarStudioPage() {
   const [tab, setTab] = useState<StudioTab>("canvas");
   const [tryOnItem, setTryOnItem] = useState<ClothingItem | null>(null);
 
-  const browsable = mockClothing.filter((item) => item.is_active).slice(0, 8);
+  const browsable = mockClothing.filter((item) => item.is_active).slice(0, 12);
 
   return (
     <PageShell>
@@ -111,8 +111,8 @@ export default function AvatarStudioPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: "var(--space-3)",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "var(--space-2)",
               }}
             >
               {browsable.map((item) => {
@@ -152,11 +152,11 @@ export default function AvatarStudioPage() {
                           alt={item.name}
                           fill
                           style={{ objectFit: "cover" }}
-                          sizes="(max-width: 900px) 50vw, 220px"
+                          sizes="(max-width: 900px) 33vw, 160px"
                         />
                       )}
                     </div>
-                    <div style={{ padding: "var(--space-2) var(--space-3) var(--space-3)" }}>
+                    <div style={{ padding: "var(--space-1) var(--space-2) var(--space-2)" }}>
                       <p
                         className="label-small"
                         style={{

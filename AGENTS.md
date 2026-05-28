@@ -310,11 +310,21 @@ Business logic lives here — route handlers are thin wrappers.
   - **ScrollRow** (`src/components/ui/ScrollRow.tsx`) — reusable horizontal scroll container with fade-edge overlays and arrow buttons; `ResizeObserver` + scroll listener for button visibility; used in Trending Now on home page
   - **TopBar nav active state** — `navLinks` uses per-route `match()` functions; `background: "transparent"` added to Link style prop (prevents hover ghost on navigation); `onMouseLeave` always resets both color + background
 
+- [x] UX Polish Batch 2 (2026-05-28)
+  - **`/new-in` page** — `src/app/(main)/new-in/page.tsx` (server) + `src/components/new-in/NewInContent.tsx` (client); editorial header; sticky underline filter chips (All / 30 / 14 / 7 days); `AnimatePresence` stagger on filter change; mock-first (`getNewArrivals()`); 12 items shown
+  - **`/vendors` page** — `src/app/(main)/vendors/page.tsx` (server) + `src/components/vendors/VendorCard.tsx` (client); editorial header; `.vendor-grid` CSS class (1 col → 2 col 640px → 3 col 900px); staggered `FadeIn`; "Shop Store →" links to vendor's primary category
+  - **`.vendor-grid` CSS class** added to `globals.css` — responsive 1→2→3 column grid for the vendors page
+  - **Home links wired** — New In "View all" → `/new-in`; VendorsOfTheWeek "Browse all →" → `/vendors`; hero "Shop New Arrivals" CTA → `/new-in`
+  - **Studio item picker denser** — switched from 2 → 3 columns, gap `space-3` → `space-2`, items 8 → 12, `sizes` updated to `33vw`
+  - **Studio Canvas avatar replaced** — `AvatarSVG` swapped for Cloudinary placeholder image (`male-avatar_med0is.png`) pending Replicate API keys; `svgRef`/`clothingLayers`/`avatar` destructures removed
+  - **TopBar nav simplified** — "Try On" removed; nav is now Shop | Studio. Try-on is accessed from product pages and Studio's Try On tab
+  - **ScrollRow arrow fix** — `top: "50%"` → `top: "38%"` so arrow centres in the image area of product cards, not below it
+  - **Mock data encoding fix** — `"RubÄ""` → `"Rubē"` and `"TÃ³bi Adekoya"` → `"Tóbi Adekoya"` (Windows-1252 mojibake fixed in `clothing.ts`)
+
 ## Up Next
 - [ ] Testing end-to-end on live Vercel deployment
-- [ ] `/vendors` page — all vendors grid; "Browse all →" in VendorsOfTheWeek routes here
-- [ ] `/new-in` page — new arrivals with day-based filter chips (7 / 14 / 30 days)
 - [ ] Vendor subaccount auto-trigger on first vendor login (deferred)
+- [ ] Restore AvatarSVG / Replicate AI avatar in Studio Canvas once API keys are active
 
 ## Gotchas
 - `next/image` requires `images.remotePatterns` in `next.config.ts` — Unsplash + Replicate CDN already configured

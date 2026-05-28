@@ -92,7 +92,7 @@ export default function HomePage() {
             >
               <h2 className="headline-large">New In</h2>
               <Link
-                href="/shop/DRESS"
+                href="/new-in"
                 className="label-large"
                 style={{ color: "var(--color-primary)", textDecoration: "none", display: "flex", alignItems: "center", gap: "4px" }}
               >

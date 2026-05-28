@@ -48,7 +48,7 @@ export function VendorsOfTheWeek() {
           <h2 className="headline-large">Vendors of the Week</h2>
         </div>
         <Link
-          href="/shop/DRESS"
+          href="/vendors"
           style={{
             fontFamily: "var(--type-label-large-family)",
             fontSize: "var(--type-label-large-size)",

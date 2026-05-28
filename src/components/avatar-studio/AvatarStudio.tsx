@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { BookmarkPlus, Send, ShoppingBag } from "lucide-react";
 import type { Colour } from "@/types/clothing";
 import type { OutfitItem } from "@/types/outfit";
@@ -11,7 +12,6 @@ import { useCartStore } from "@/store/cart.store";
 import { useStylingRequestsStore } from "@/store/styling-requests.store";
 import { useUIStore } from "@/store/ui.store";
 import { Button } from "@/components/ui/Button";
-import { AvatarSVG } from "@/components/ui/AvatarSVG";
 import { ColourSwitcher } from "@/components/try-on/ColourSwitcher";
 import { ItemLayerCard } from "./ItemLayerCard";
 import { LayerPanel } from "./LayerPanel";
@@ -19,9 +19,6 @@ import { SendToVendorModal } from "./SendToVendorModal";
 
 export function AvatarStudio() {
   const {
-    svgRef,
-    avatar,
-    clothingLayers,
     layers,
     addLayer,
     removeLayer,
@@ -89,27 +86,27 @@ export function AvatarStudio() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-6)" }}>
-      {/* SVG Avatar */}
+      {/* Avatar placeholder */}
       <div
         style={{
+          position: "relative",
           width: "100%",
           maxWidth: "400px",
           margin: "0 auto",
+          aspectRatio: "2 / 3",
           borderRadius: "var(--shape-lg)",
           overflow: "hidden",
           background: "var(--color-surface-variant)",
           boxShadow: "var(--elevation-2)",
         }}
       >
-        <AvatarSVG
-          ref={svgRef}
-          gender={avatar?.gender ?? "female"}
-          bodyShape={avatar?.body_shape ?? "hourglass"}
-          skinToneHex={avatar?.skin_tone.hex ?? "#8D5524"}
-          hairStyle={avatar?.hair_style ?? "natural-coils"}
-          hairColourHex={avatar?.hair_colour.hex ?? "#0D0D0D"}
-          clothing={clothingLayers}
-          width="100%"
+        <Image
+          src="https://res.cloudinary.com/dwvts4iim/image/upload/v1779975510/male-avatar_med0is.png"
+          alt="Avatar"
+          fill
+          style={{ objectFit: "contain" }}
+          sizes="(max-width: 900px) 100vw, 400px"
+          priority
         />
       </div>
 

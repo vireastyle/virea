@@ -54,7 +54,7 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-003",
     name: "Linen Slip Dress",
-    brand: "RubÄ“",
+    brand: "Rubē",
     category: "DRESS",
     price: 2850000,
     available_colours: [
@@ -128,7 +128,7 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-006",
     name: "Draped Shoulder Top",
-    brand: "RubÄ“",
+    brand: "Rubē",
     category: "TOP",
     price: 1800000,
     available_colours: [
@@ -151,7 +151,7 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-007",
     name: "Structured Blazer",
-    brand: "TÃ³bi Adekoya",
+    brand: "Tóbi Adekoya",
     category: "TOP",
     price: 6200000,
     available_colours: [
@@ -203,7 +203,7 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-009",
     name: "Knitwear Crop Top",
-    brand: "RubÄ“",
+    brand: "Rubē",
     category: "TOP",
     price: 2200000,
     available_colours: [
@@ -228,7 +228,7 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-010",
     name: "Trench Coat",
-    brand: "TÃ³bi Adekoya",
+    brand: "Tóbi Adekoya",
     category: "OUTERWEAR",
     price: 9500000,
     available_colours: [
@@ -351,7 +351,7 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-015",
     name: "Structured Clutch",
-    brand: "TÃ³bi Adekoya",
+    brand: "Tóbi Adekoya",
     category: "BAG",
     price: 4100000,
     available_colours: [
@@ -425,7 +425,7 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-018",
     name: "Pointed Kitten Heel",
-    brand: "TÃ³bi Adekoya",
+    brand: "Tóbi Adekoya",
     category: "SHOES",
     price: 4400000,
     available_colours: [
@@ -471,7 +471,7 @@ export const mockClothing: ClothingItem[] = [
   {
     id: "item-020",
     name: "Leather Loafer",
-    brand: "RubÄ“",
+    brand: "Rubē",
     category: "SHOES",
     price: 4850000,
     available_colours: [

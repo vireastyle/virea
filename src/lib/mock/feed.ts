@@ -16,7 +16,7 @@ export const heroBanners: HeroBanner[] = [
     headline: "TIMELESS ELEGANCE",
     subheadline: "Discover the new season collection — curated for your style.",
     cta_label: "Shop New Arrivals",
-    cta_href: "/shop/DRESS",
+    cta_href: "/new-in",
     image_url: "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=1400&q=90",
   },
   {

@@ -202,6 +202,26 @@ select:focus-visible {
   }
 }
 
+/* ── Vendors page grid ── */
+.vendor-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+@media (min-width: 640px) {
+  .vendor-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .vendor-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-8);
+  }
+}
+
 /* ── Footer responsive grid ── */
 .footer-grid {
   display: grid;

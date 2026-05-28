@@ -14,11 +14,6 @@ const navLinks = [
     match: (p: string) => p.startsWith("/shop/") || p.startsWith("/product/") || p === "/new-in",
   },
   {
-    href: "/try-on",
-    label: "Try On",
-    match: (p: string) => p === "/try-on",
-  },
-  {
     href: "/avatar-studio",
     label: "Studio",
     match: (p: string) => p.startsWith("/avatar"),
