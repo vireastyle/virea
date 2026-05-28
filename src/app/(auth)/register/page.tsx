@@ -78,9 +78,12 @@ export default function RegisterPage() {
         setErrors({});
         setStep(1);
       } catch (err) {
-        setErrors({
-          api: err instanceof Error ? err.message : "Registration failed. Please try again.",
-        });
+        const msg = err instanceof Error ? err.message : "";
+        const friendly =
+          msg === "Email already in use"
+            ? "This email is already registered. Try signing in instead."
+            : "We couldn't create your account right now. Please try again.";
+        setErrors({ api: friendly });
       } finally {
         setLoading(false);
       }
