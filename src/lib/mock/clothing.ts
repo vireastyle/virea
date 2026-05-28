@@ -1,9 +1,12 @@
-﻿import type { ClothingItem } from "@/types/clothing";
+import type { ClothingItem } from "@/types/clothing";
+
+const MOCK_VENDOR_ID = "vendor-virea-test";
 
 export const mockClothing: ClothingItem[] = [
-  // â”€â”€ DRESSES â”€â”€
+  // -- DRESSES --
   {
     id: "item-001",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Satin Flow Dress",
     brand: "Adire Studio",
     category: "DRESS",
@@ -30,6 +33,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-002",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Lagos Wrap Dress",
     brand: "House of Aya",
     category: "DRESS",
@@ -53,6 +57,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-003",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Linen Slip Dress",
     brand: "Rubē",
     category: "DRESS",
@@ -76,6 +81,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-004",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Ankara Print Midi",
     brand: "Nkem Collective",
     category: "DRESS",
@@ -99,6 +105,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-005",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Pleated Maxi Dress",
     brand: "Adire Studio",
     category: "DRESS",
@@ -124,9 +131,10 @@ export const mockClothing: ClothingItem[] = [
     created_at: "2026-05-10T10:00:00Z",
   },
 
-  // â”€â”€ TOPS â”€â”€
+  // -- TOPS --
   {
     id: "item-006",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Draped Shoulder Top",
     brand: "Rubē",
     category: "TOP",
@@ -150,6 +158,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-007",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Structured Blazer",
     brand: "Tóbi Adekoya",
     category: "TOP",
@@ -176,6 +185,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-008",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Lace Trim Camisole",
     brand: "House of Aya",
     category: "TOP",
@@ -202,6 +212,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-009",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Knitwear Crop Top",
     brand: "Rubē",
     category: "TOP",
@@ -224,9 +235,10 @@ export const mockClothing: ClothingItem[] = [
     created_at: "2026-05-08T10:00:00Z",
   },
 
-  // â”€â”€ OUTERWEAR â”€â”€
+  // -- OUTERWEAR --
   {
     id: "item-010",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Trench Coat",
     brand: "Tóbi Adekoya",
     category: "OUTERWEAR",
@@ -250,6 +262,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-011",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Longline Cardigan",
     brand: "Nkem Collective",
     category: "OUTERWEAR",
@@ -276,6 +289,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-012",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Denim Jacket",
     brand: "Adire Studio",
     category: "OUTERWEAR",
@@ -298,9 +312,10 @@ export const mockClothing: ClothingItem[] = [
     created_at: "2026-04-05T10:00:00Z",
   },
 
-  // â”€â”€ BAGS â”€â”€
+  // -- BAGS --
   {
     id: "item-013",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Mini Bucket Bag",
     brand: "House of Aya",
     category: "BAG",
@@ -327,6 +342,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-014",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Woven Tote",
     brand: "Nkem Collective",
     category: "BAG",
@@ -350,6 +366,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-015",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Structured Clutch",
     brand: "Tóbi Adekoya",
     category: "BAG",
@@ -372,9 +389,10 @@ export const mockClothing: ClothingItem[] = [
     created_at: "2026-05-09T10:00:00Z",
   },
 
-  // â”€â”€ SHOES â”€â”€
+  // -- SHOES --
   {
     id: "item-016",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Block Heel Mule",
     brand: "Adire Studio",
     category: "SHOES",
@@ -398,6 +416,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-017",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Strappy Sandal",
     brand: "House of Aya",
     category: "SHOES",
@@ -424,6 +443,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-018",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Pointed Kitten Heel",
     brand: "Tóbi Adekoya",
     category: "SHOES",
@@ -447,6 +467,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-019",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Platform Sneaker",
     brand: "Nkem Collective",
     category: "SHOES",
@@ -470,6 +491,7 @@ export const mockClothing: ClothingItem[] = [
   },
   {
     id: "item-020",
+    vendor_id: MOCK_VENDOR_ID,
     name: "Leather Loafer",
     brand: "Rubē",
     category: "SHOES",
