@@ -30,7 +30,7 @@ type GenState = "idle" | "loading" | "done" | "error";
 
 export default function AvatarBuilderPage() {
   const router    = useRouter();
-  const { setAvatar, avatar: existingAvatar } = useAvatarStore();
+  const { setAvatar, avatar: existingAvatar, isComplete } = useAvatarStore();
   const { addToast }  = useUIStore();
 
   const [step, setStep] = useState(0);
@@ -540,7 +540,7 @@ export default function AvatarBuilderPage() {
               <Button variant="filled" fullWidth onClick={goNext}>Continue</Button>
             ) : (
               <Button variant="filled" fullWidth onClick={handleSave}>
-                {existingAvatar ? "Update & Regenerate" : "Save & Generate Avatar"}
+                {isComplete ? "Update & Regenerate" : "Save & Generate Avatar"}
               </Button>
             )}
           </div>
