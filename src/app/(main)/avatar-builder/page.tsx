@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Users, Sparkles, CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 import { PageShell }    from "@/components/layout/PageShell";
@@ -203,16 +202,13 @@ export default function AvatarBuilderPage() {
                 aspectRatio:  "3 / 4",
                 borderRadius: "var(--shape-lg)",
                 overflow:     "hidden",
-                position:     "relative",
                 boxShadow:    "var(--elevation-3)",
               }}>
-                <Image
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={generatedUrl}
                   alt="Your avatar"
-                  fill
-                  sizes="280px"
-                  style={{ objectFit: "cover" }}
-                  priority
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                 />
               </div>
 

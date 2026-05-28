@@ -25,6 +25,10 @@ const nextConfig: NextConfig = {
       // Replicate — AI try-on result images (Phase A — active)
       {
         protocol: "https",
+        hostname: "replicate.delivery",
+      },
+      {
+        protocol: "https",
         hostname: "*.replicate.delivery",
       },
       {
