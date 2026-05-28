@@ -57,7 +57,7 @@ export function BodyProfileStep({
   onComplexionSelect,
 }: Props) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-7)" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-10)" }}>
       <div>
         <h1 className="headline-large" style={{ marginBottom: "var(--space-1)" }}>
           Your body profile

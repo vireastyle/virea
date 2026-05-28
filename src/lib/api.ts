@@ -28,20 +28,32 @@ type ApiSuccess<T> = { success: true; data: T };
 type ApiFailure = { success: false; error: { code: string; message: string } };
 type ApiResponse<T> = ApiSuccess<T> | ApiFailure;
 
+// Singleton refresh promise — prevents race condition where multiple simultaneous
+// 401s each call /auth/refresh, consuming the single-use token and logging the user out.
+let refreshPromise: Promise<string | null> | null = null;
+
 async function tryRefresh(): Promise<string | null> {
-  try {
-    const res = await fetch("/api/v1/auth/refresh", {
-      method: "POST",
-      credentials: "include",
-    });
-    if (!res.ok) return null;
-    const body: ApiResponse<{ accessToken: string }> = await res.json();
-    if (!body.success) return null;
-    apiToken.set(body.data.accessToken);
-    return body.data.accessToken;
-  } catch {
-    return null;
-  }
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch("/api/v1/auth/refresh", {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) return null;
+      const body: ApiResponse<{ accessToken: string }> = await res.json();
+      if (!body.success) return null;
+      apiToken.set(body.data.accessToken);
+      return body.data.accessToken;
+    } catch {
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
 
 async function signOutAll() {
