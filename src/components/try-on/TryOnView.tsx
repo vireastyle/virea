@@ -212,8 +212,8 @@ export function TryOnView({ initialItem, initialColour }: Props) {
               transition={{ duration: motionTokens.duration.standard }}
               style={{ position: "absolute", inset: 0 }}
             >
-              {/* Show avatar photo when available, garment image as fallback */}
-              {avatarPhotoUrl && !avatarShowResult ? (
+              {/* Avatar photo — shown when available and no result yet */}
+              {avatarPhotoUrl && !avatarShowResult && !avatarShowLoading && (
                 <div style={{ position: "relative", width: "100%", height: "100%" }}>
                   <Image
                     src={avatarPhotoUrl}
@@ -223,19 +223,7 @@ export function TryOnView({ initialItem, initialColour }: Props) {
                     style={{ objectFit: "cover" }}
                   />
                 </div>
-              ) : !avatarShowResult && !avatarShowLoading ? (
-                /* No avatar photo yet — show garment as placeholder */
-                <div style={{ position: "relative", width: "100%", height: "100%" }}>
-                  <Image
-                    src={garmentUrl}
-                    alt={initialItem.name}
-                    fill
-                    priority
-                    sizes="(max-width: 900px) 100vw, 420px"
-                    style={{ objectFit: "contain", padding: "12px" }}
-                  />
-                </div>
-              ) : null}
+              )}
 
               {/* Loading overlay */}
               {avatarShowLoading && <AiTryOnPanel status="loading" />}
@@ -261,18 +249,6 @@ export function TryOnView({ initialItem, initialColour }: Props) {
               transition={{ duration: motionTokens.duration.standard }}
               style={{ position: "absolute", inset: 0 }}
             >
-              {!realShowResult && (
-                <div style={{ position: "relative", width: "100%", height: "100%" }}>
-                  <Image
-                    src={garmentUrl}
-                    alt={initialItem.name}
-                    fill
-                    priority
-                    sizes="(max-width: 900px) 100vw, 420px"
-                    style={{ objectFit: "contain", padding: "12px" }}
-                  />
-                </div>
-              )}
               {realShowLoading && <AiTryOnPanel status="loading" />}
               {realShowResult && realResultUrl && (
                 <AiTryOnPanel
@@ -285,6 +261,35 @@ export function TryOnView({ initialItem, initialColour }: Props) {
           )}
 
         </AnimatePresence>
+
+        {/* ── Garment thumbnail — top-left context card ──────────────────── */}
+        {!avatarShowResult && !realShowResult && !avatarShowLoading && !realShowLoading && garmentUrl && (
+          <div
+            style={{
+              position:     "absolute",
+              top:          "var(--space-3)",
+              left:         "var(--space-3)",
+              width:        "72px",
+              height:       "90px",
+              borderRadius: "var(--shape-sm)",
+              overflow:     "hidden",
+              background:   "var(--color-surface)",
+              boxShadow:    "var(--elevation-3)",
+              border:       "1.5px solid var(--color-outline-variant)",
+              zIndex:       10,
+              flexShrink:   0,
+            }}
+          >
+            <Image
+              src={garmentUrl}
+              alt={initialItem.name}
+              fill
+              priority
+              sizes="72px"
+              style={{ objectFit: "contain", padding: "6px" }}
+            />
+          </div>
+        )}
       </div>
 
       {/* ── CTA area ─────────────────────────────────────────────────────────── */}
