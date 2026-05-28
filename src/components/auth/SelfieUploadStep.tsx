@@ -88,7 +88,7 @@ export function SelfieUploadStep({ onComplete, onSkip }: Props) {
           Add your photo
         </h1>
         <p className="body-medium" style={{ color: "var(--color-on-surface-variant)" }}>
-          Your selfie helps us generate an avatar that looks like you.
+          Your photo lets you try on clothes as yourself — see exactly how they look on your body.
         </p>
       </div>
 
@@ -106,7 +106,7 @@ export function SelfieUploadStep({ onComplete, onSkip }: Props) {
         <Camera size={18} color="var(--color-on-primary-container)" style={{ marginTop: "2px", flexShrink: 0 }} />
         <p className="body-small" style={{ color: "var(--color-on-primary-container)", lineHeight: 1.5 }}>
           Your photo stays on <strong>this device only</strong> — it is never uploaded to our servers.
-          We use it locally to match your skin tone and generate your avatar.
+          We use it to power the <strong>Try On</strong> feature, so you can see clothes on your real image.
         </p>
       </div>
 
