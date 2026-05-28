@@ -12,7 +12,6 @@ type Props = { mode: "user" | "vendor" };
 export function LoginForm({ mode }: Props) {
   const router = useRouter();
   const userLogin = useAuthStore((s) => s.login);
-  const userSignInAsGuest = useAuthStore((s) => s.signInAsGuest);
   const vendorLogin = useVendorStore((s) => s.login);
 
   const [email, setEmail] = useState("");
@@ -147,26 +146,6 @@ export function LoginForm({ mode }: Props) {
           </Button>
         </form>
 
-        {mode === "user" && (
-          <>
-            <div style={{ margin: "var(--space-6) 0", textAlign: "center" }}>
-              <span className="body-medium" style={{ color: "var(--color-on-surface-variant)" }}>
-                or
-              </span>
-            </div>
-            <Button
-              variant="outlined"
-              fullWidth
-              onClick={() => {
-                userSignInAsGuest();
-                router.push("/");
-              }}
-              disabled={loading}
-            >
-              Continue as Guest
-            </Button>
-          </>
-        )}
 
         <p
           className="body-medium"
