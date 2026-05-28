@@ -45,16 +45,21 @@ function buildPrompt(p: {
   const height = HEIGHT_DESC[p.heightRange]   ?? "average-height";
 
   // Prompt tuned for IDM-VTON compatibility:
+  // — full length / head to toe phrasing repeated to force complete figure
+  // — "feet flat on floor" anchors the bottom so the model doesn't crop
   // — arms slightly away from body (needed for garment overlay)
   // — white/light bodysuit so the try-on model can cleanly replace the clothing region
   // — white studio background for clean segmentation
   return (
-    `Full body studio photograph of a ${height} ${skin}-skinned African ${gender}, ` +
+    `Full length portrait, entire body visible from head to feet, ` +
+    `studio photograph of a ${height} ${skin}-skinned African ${gender}, ` +
     `${body}, standing upright facing the camera in a relaxed T-pose, ` +
+    `feet flat on the floor, legs and feet fully visible, ` +
     `arms slightly away from the sides, ` +
     `wearing a plain white seamless bodysuit, ` +
     `white studio background, soft even lighting, ` +
-    `professional fashion photography, sharp focus, photorealistic`
+    `professional fashion photography, sharp focus, photorealistic, ` +
+    `full body shot, no cropping`
   );
 }
 
@@ -99,7 +104,7 @@ export async function POST(req: NextRequest) {
           input: {
             prompt,
             num_outputs:    1,
-            aspect_ratio:   "3:4",
+            aspect_ratio:   "2:3",
             output_format:  "webp",
             output_quality: 85,
             go_fast:        true,
