@@ -49,6 +49,7 @@ export function SelfieUploadStep({ onComplete, onSkip }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [skinToneHex, setSkinToneHex] = useState<string | null>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,15 +67,16 @@ export function SelfieUploadStep({ onComplete, onSkip }: Props) {
         // localStorage quota exceeded — silently skip storage
       }
 
-      const skinToneHex = await extractDominantTone(base64);
+      const tone = await extractDominantTone(base64);
+      setSkinToneHex(tone);
       setIsProcessing(false);
-      onComplete(true, skinToneHex);
     };
     reader.readAsDataURL(file);
   };
 
   const handleRemove = () => {
     setPreview(null);
+    setSkinToneHex(null);
     localStorage.removeItem("virea_user_selfie");
     if (inputRef.current) inputRef.current.value = "";
   };
@@ -211,22 +213,43 @@ export function SelfieUploadStep({ onComplete, onSkip }: Props) {
         aria-hidden="true"
       />
 
-      <button
-        onClick={onSkip}
-        style={{
-          background: "none",
-          border: "none",
-          color: "var(--color-on-surface-variant)",
-          fontFamily: "var(--type-label-large-family)",
-          fontSize: "var(--type-label-large-size)",
-          cursor: "pointer",
-          padding: "var(--space-2)",
-          textDecoration: "underline",
-          textUnderlineOffset: "3px",
-        }}
-      >
-        Skip this step
-      </button>
+      {preview && !isProcessing ? (
+        <button
+          onClick={() => onComplete(true, skinToneHex ?? undefined)}
+          style={{
+            width: "100%",
+            padding: "var(--space-4)",
+            borderRadius: "var(--shape-md)",
+            border: "none",
+            background: "var(--color-primary)",
+            color: "var(--color-on-primary)",
+            fontFamily: "var(--type-label-large-family)",
+            fontSize: "var(--type-label-large-size)",
+            fontWeight: 600,
+            cursor: "pointer",
+            letterSpacing: "0.04em",
+          }}
+        >
+          Build avatar →
+        </button>
+      ) : (
+        <button
+          onClick={onSkip}
+          style={{
+            background: "none",
+            border: "none",
+            color: "var(--color-on-surface-variant)",
+            fontFamily: "var(--type-label-large-family)",
+            fontSize: "var(--type-label-large-size)",
+            cursor: "pointer",
+            padding: "var(--space-2)",
+            textDecoration: "underline",
+            textUnderlineOffset: "3px",
+          }}
+        >
+          Skip this step
+        </button>
+      )}
     </div>
   );
 }

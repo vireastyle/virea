@@ -329,9 +329,27 @@ Business logic lives here — route handlers are thin wrappers.
   - **Broken image fix** — Ankara Print Midi (`item-004`) had dead Unsplash URLs; replaced with working ones
   - **Replicate connected** — Vercel integration active; `REPLICATE_API_TOKEN` auto-injected. Test: `/avatar-builder` (FLUX.1-schnell) + product page Try On (IDM-VTON). Local dev requires `REPLICATE_HOST_IP` set to IPv4 of `api.replicate.com`
 
+- [x] Polish Batch 4 (2026-05-28)
+  - **sw.js clone bug** — `response.clone()` moved before `.then()` (was inside async callback — body already consumed); CACHE_VERSION bumped v1 → v2 to clear stale cached broken manifest
+  - **manifest.json** — removed trailing comma in icons array (invalid JSON; was causing SW parse errors)
+  - **Register error messages** — API error codes mapped to user-friendly strings in `src/app/(auth)/register/page.tsx`; "Email already in use" prompts user to sign in instead
+  - **Atomic registration** (`src/lib/services/auth.service.ts`) — deletes orphaned user if `issueTokens` throws after creation. Root cause was missing `JWT_REFRESH_SECRET` on Vercel — now documented as required env var.
+  - **Avatar builder** (`src/app/(main)/avatar-builder/page.tsx`) — switched `<Image>` → `<img>` for generated Replicate photo; pre-fills existing avatar store data for returning users; button label "Update & Regenerate" when avatar exists
+  - **`next.config.ts`** — added bare `replicate.delivery` hostname to `images.remotePatterns`
+  - **Flutterwave: optional subaccount** — `flutterwave.service.ts` + `/api/v1/payments/initiate` skip the split when vendor has no `flwSubaccountId` (test convenience; full amount goes to platform)
+  - **Dev seed endpoint** — `src/app/api/dev/seed/route.ts` upserts a test vendor + product for payment testing. **Remove or gate behind `NODE_ENV !== "production"` before going live.**
+  - **AvatarStudio** (`src/components/avatar-studio/AvatarStudio.tsx`) — shows real `virea_avatar_photo` from localStorage; "Build your avatar →" link when none exists
+  - **AvatarSVG.tsx deleted** — `src/components/ui/AvatarSVG.tsx` removed; Replicate FLUX.1-schnell photos are the canonical avatar representation going forward
+  - **useTryOn.ts** — all AvatarSVG dead code removed (svgRef, clothingLayers, avatar); now pure layer-list management only
+  - **`/my-avatar` page** — `src/app/(main)/my-avatar/page.tsx` created; shows Replicate photo from localStorage + avatar profile details (gender, body shape, skin tone, hair) + "Update avatar" CTA + "Try on clothes in Studio" CTA
+  - **Profile page** — "My Avatar" menu item links to `/my-avatar` (was `/avatar-builder`)
+  - **Try On picker columns** (avatar-studio page) — `repeat(3, 1fr)` → `repeat(4, 1fr)`
+  - **LayerPanel columns** ("Add to look" grid) — `repeat(3, 1fr)` → `repeat(4, 1fr)`
+  - **SelfieUploadStep** (`src/components/auth/SelfieUploadStep.tsx`) — removed auto-advance on photo upload; skin tone stored in local state; "Build avatar →" filled CTA appears after processing; "Skip this step" replaces it until a photo is loaded
+
 ## Up Next
 - [ ] Vendor subaccount auto-trigger on first vendor login (deferred)
-- [ ] Restore AvatarSVG in Studio Canvas once Replicate avatar generation is verified working
+- [ ] Remove or gate `/api/dev/seed` before real production launch
 - [ ] End-to-end testing on live Vercel deployment
 
 ## Gotchas
