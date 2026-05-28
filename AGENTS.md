@@ -372,6 +372,13 @@ Business logic lives here — route handlers are thin wrappers.
   - **Saved Looks** (`src/app/(main)/saved-looks/page.tsx`) — 2-col list → 4-col grid (`repeat(4, 1fr)`), gap `space-2`, `borderRadius: shape-sm`, padding `space-2`, `label-small` name text, 10px delete button, image `sizes="25vw"`
   - **Wishlist** (`src/app/(main)/wishlist/page.tsx`) — horizontal card list → 4-col grid (`repeat(4, 1fr)`), aspect-ratio image, compact name + price + "+ Cart" button (24px) + heart remove (24px); loading skeletons match grid shape; `ShoppingBag` icon removed
 
+- [x] Polish Batch 7 (2026-05-29) — Vendor portal UI improvements
+  - **Vendor products grid** (`src/app/(vendor)/vendor/products/page.tsx`) — 2-col → 3-col grid, gap `space-3` → `space-2`
+  - **VendorProductCard** (`src/components/vendor/VendorProductCard.tsx`) — `shape-lg` → `shape-md` radius; padding `space-3` → `space-2`; gap `space-2` → `space-1`; name: `title-small` → `label-medium`; category removed (redundant at small size); price: `body-small` → `label-small`; stock: `body-small` → `label-small`; action buttons: 36px → 28px, icons 13-14px → 11-12px
+  - **Vendor dashboard greeting** (`src/app/(vendor)/vendor/dashboard/page.tsx`) — time-based greeting: "Good morning/afternoon/evening, [FirstName]" (hour < 12 / < 17 / else); store name moved to subdued label above; subtext "Here's what's happening with your store."
+  - **DashboardStats** (`src/components/vendor/DashboardStats.tsx`) — extended Stat type with `Icon: LucideIcon`, `bgColor`, `fgColor`; each card now has tinted background + semi-transparent icon badge (`rgba(255,255,255,0.28)`); 4 stat colors: Products=primary-container, Orders=secondary-container, Revenue=tertiary-container, Requests=error-container
+  - **Order status badges** (dashboard recent orders) — plain text replaced with pill badges; status→color map: PLACED=primary-container, CONFIRMED=secondary-container, PROCESSING=tertiary-container, SHIPPED=secondary-container, DELIVERED=rgba green, CANCELLED=error-container; orders now grouped in single surface card with dividers (not separate floating cards); shows 4 orders (was 3)
+
 ## Up Next
 - [ ] Vendor subaccount auto-trigger on first vendor login (deferred)
 - [ ] Remove or gate `/api/dev/seed` before real production launch

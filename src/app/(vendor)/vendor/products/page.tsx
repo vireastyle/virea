@@ -60,8 +60,8 @@ export default function VendorProductsPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: "var(--space-3)",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: "var(--space-2)",
             }}
           >
             {products.map((product) => (

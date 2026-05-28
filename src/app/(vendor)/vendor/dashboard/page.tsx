@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Package, ShoppingBag, Sparkles, Palette, Plus, ChevronRight } from "lucide-react";
+import { Package, ShoppingBag, Sparkles, Palette, Plus, ChevronRight, TrendingUp } from "lucide-react";
 import { useVendorStore } from "@/store/vendor.store";
 import { useOrdersStore } from "@/store/orders.store";
 import { DashboardStats } from "@/components/vendor/DashboardStats";
@@ -21,6 +21,10 @@ export default function VendorDashboardPage() {
 
   if (!isAuthenticated || !vendor) return null;
 
+  const hour = new Date().getHours();
+  const timeGreeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const firstName = vendor.owner_name.split(" ")[0];
+
   const vendorOrders = orders.filter((o) => o.vendor_id === vendor.id);
   const vendorPreOrders = preOrders.filter((p) => p.vendor_id === vendor.id);
   const pendingStyling = stylingRequests.filter((r) => r.status === "pending").length;
@@ -29,10 +33,38 @@ export default function VendorDashboardPage() {
     .reduce((sum, o) => sum + o.subtotal, 0);
 
   const stats = [
-    { label: "PRODUCTS", value: products.length.toString(), sub: `${products.filter((p) => p.is_active).length} active` },
-    { label: "ORDERS", value: vendorOrders.length.toString(), sub: `${vendorOrders.filter((o) => ["PLACED", "CONFIRMED", "PROCESSING"].includes(o.status)).length} active` },
-    { label: "REVENUE", value: formatNaira(totalRevenue), sub: "delivered only" },
-    { label: "REQUESTS", value: pendingStyling.toString(), sub: "styling pending" },
+    {
+      label: "Products",
+      value: products.length.toString(),
+      sub: `${products.filter((p) => p.is_active).length} active`,
+      Icon: Package,
+      bgColor: "var(--color-primary-container)",
+      fgColor: "var(--color-on-primary-container)",
+    },
+    {
+      label: "Orders",
+      value: vendorOrders.length.toString(),
+      sub: `${vendorOrders.filter((o) => ["PLACED", "CONFIRMED", "PROCESSING"].includes(o.status)).length} active`,
+      Icon: ShoppingBag,
+      bgColor: "var(--color-secondary-container)",
+      fgColor: "var(--color-on-secondary-container)",
+    },
+    {
+      label: "Revenue",
+      value: formatNaira(totalRevenue),
+      sub: "delivered orders",
+      Icon: TrendingUp,
+      bgColor: "var(--color-tertiary-container)",
+      fgColor: "var(--color-on-tertiary-container)",
+    },
+    {
+      label: "Requests",
+      value: pendingStyling.toString(),
+      sub: "styling pending",
+      Icon: Palette,
+      bgColor: "var(--color-error-container)",
+      fgColor: "var(--color-on-error-container)",
+    },
   ];
 
   const quickLinks = [
@@ -46,15 +78,15 @@ export default function VendorDashboardPage() {
     <div style={{ padding: "var(--space-6)", maxWidth: "700px" }}>
 
       {/* Greeting */}
-      <div style={{ marginBottom: "var(--space-7)" }}>
+      <div style={{ marginBottom: "var(--space-8)" }}>
         <p className="label-large" style={{ color: "var(--color-on-surface-variant)", letterSpacing: "0.08em", marginBottom: "var(--space-1)" }}>
-          VENDOR PORTAL
-        </p>
-        <h1 className="headline-large" style={{ color: "var(--color-primary)", marginBottom: "var(--space-1)" }}>
           {vendor.business_name}
+        </p>
+        <h1 className="headline-large" style={{ color: "var(--color-on-surface)", marginBottom: "var(--space-1)" }}>
+          {timeGreeting}, {firstName}.
         </h1>
         <p className="body-medium" style={{ color: "var(--color-on-surface-variant)" }}>
-          Welcome back, {vendor.owner_name.split(" ")[0]}.
+          Here&apos;s what&apos;s happening with your store.
         </p>
       </div>
 
@@ -109,45 +141,67 @@ export default function VendorDashboardPage() {
             <p className="label-large" style={{ color: "var(--color-on-surface-variant)", letterSpacing: "0.06em" }}>
               RECENT ORDERS
             </p>
-            <Link
-              href="/vendor/orders"
-              className="body-small"
-              style={{ color: "var(--color-primary)", textDecoration: "none" }}
-            >
+            <Link href="/vendor/orders" className="body-small" style={{ color: "var(--color-primary)", textDecoration: "none" }}>
               See all
             </Link>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
-            {vendorOrders.slice(0, 3).map((order) => (
-              <Link
-                key={order.id}
-                href={`/vendor/orders/${order.id}`}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "var(--space-3) var(--space-4)",
-                  background: "var(--color-surface)",
-                  borderRadius: "var(--shape-md)",
-                  boxShadow: "var(--elevation-1)",
-                  textDecoration: "none",
-                  color: "inherit",
-                  gap: "var(--space-3)",
-                }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <p className="body-medium" style={{ color: "var(--color-on-surface)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {order.items[0]?.item_name}
-                  </p>
-                  <p className="body-small" style={{ color: "var(--color-on-surface-variant)" }}>
-                    {formatNaira(order.subtotal)}
-                  </p>
-                </div>
-                <span className="label-small" style={{ color: "var(--color-primary)", flexShrink: 0 }}>
-                  {order.status}
-                </span>
-              </Link>
-            ))}
+          <div
+            style={{
+              background: "var(--color-surface)",
+              borderRadius: "var(--shape-lg)",
+              boxShadow: "var(--elevation-1)",
+              overflow: "hidden",
+            }}
+          >
+            {vendorOrders.slice(0, 4).map((order, i, arr) => {
+              const statusColors: Record<string, [string, string]> = {
+                PLACED: ["var(--color-primary-container)", "var(--color-on-primary-container)"],
+                CONFIRMED: ["var(--color-secondary-container)", "var(--color-on-secondary-container)"],
+                PROCESSING: ["var(--color-tertiary-container)", "var(--color-on-tertiary-container)"],
+                SHIPPED: ["var(--color-secondary-container)", "var(--color-on-secondary-container)"],
+                DELIVERED: ["rgba(46,125,50,0.12)", "rgba(27,94,32,0.9)"],
+                CANCELLED: ["var(--color-error-container)", "var(--color-on-error-container)"],
+              };
+              const [badgeBg, badgeFg] = statusColors[order.status] ?? ["var(--color-surface-variant)", "var(--color-on-surface-variant)"];
+              return (
+                <Link
+                  key={order.id}
+                  href={`/vendor/orders/${order.id}`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "var(--space-3) var(--space-4)",
+                    borderBottom: i < arr.length - 1 ? "1px solid var(--color-outline-variant)" : "none",
+                    textDecoration: "none",
+                    color: "inherit",
+                    gap: "var(--space-3)",
+                  }}
+                >
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p className="body-medium" style={{ color: "var(--color-on-surface)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {order.items[0]?.item_name}
+                    </p>
+                    <p className="body-small" style={{ color: "var(--color-on-surface-variant)" }}>
+                      {formatNaira(order.subtotal)}
+                    </p>
+                  </div>
+                  <span
+                    className="label-small"
+                    style={{
+                      flexShrink: 0,
+                      padding: "3px var(--space-2)",
+                      borderRadius: "var(--shape-full)",
+                      background: badgeBg,
+                      color: badgeFg,
+                      fontSize: "11px",
+                    }}
+                  >
+                    {order.status.charAt(0) + order.status.slice(1).toLowerCase()}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}
