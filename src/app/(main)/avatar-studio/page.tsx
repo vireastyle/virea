@@ -109,11 +109,7 @@ export default function AvatarStudioPage() {
               Select an item to try on
             </p>
             <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: "var(--space-2)",
-              }}
+              className="grid-2-4"
             >
               {browsable.map((item) => {
                 const colour  = item.available_colours[0];

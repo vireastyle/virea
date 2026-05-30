@@ -116,30 +116,27 @@ export function VendorProductCard({ product, onDelete, onToggleActive }: Props) 
         <div style={{ display: "flex", gap: "var(--space-1)", marginTop: "auto" }}>
           <Link
             href={`/vendor/products/${product.id}/edit`}
+            aria-label="Edit product"
             style={{
               flex: 1,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "var(--space-1)",
-              height: "28px",
+              height: "24px",
               borderRadius: "var(--shape-sm)",
               border: "1.5px solid var(--color-outline-variant)",
               color: "var(--color-on-surface-variant)",
               textDecoration: "none",
-              fontFamily: "var(--type-label-small-family)",
-              fontSize: "var(--type-label-small-size)",
             }}
           >
             <Pencil size={11} strokeWidth={1.5} />
-            Edit
           </Link>
           <button
             onClick={() => onToggleActive(product.id, !product.is_active)}
             aria-label={product.is_active ? "Deactivate" : "Activate"}
             style={{
-              width: "28px",
-              height: "28px",
+              width: "24px",
+              height: "24px",
               borderRadius: "var(--shape-sm)",
               border: "1.5px solid var(--color-outline-variant)",
               background: "none",
@@ -150,14 +147,14 @@ export function VendorProductCard({ product, onDelete, onToggleActive }: Props) 
               justifyContent: "center",
             }}
           >
-            {product.is_active ? <EyeOff size={12} strokeWidth={1.5} /> : <Eye size={12} strokeWidth={1.5} />}
+            {product.is_active ? <EyeOff size={11} strokeWidth={1.5} /> : <Eye size={11} strokeWidth={1.5} />}
           </button>
           <button
             onClick={() => onDelete(product.id)}
             aria-label="Delete product"
             style={{
-              width: "28px",
-              height: "28px",
+              width: "24px",
+              height: "24px",
               borderRadius: "var(--shape-sm)",
               border: "1.5px solid var(--color-error-container)",
               background: "none",
@@ -168,7 +165,7 @@ export function VendorProductCard({ product, onDelete, onToggleActive }: Props) 
               justifyContent: "center",
             }}
           >
-            <Trash2 size={12} strokeWidth={1.5} />
+            <Trash2 size={11} strokeWidth={1.5} />
           </button>
         </div>
       </div>

@@ -79,7 +79,7 @@ export default function WishlistPage() {
         <h1 className="headline-large" style={{ marginBottom: "var(--space-6)" }}>Wishlist</h1>
 
         {loading ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "var(--space-2)" }}>
+          <div className="grid-2-4">
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
@@ -115,7 +115,7 @@ export default function WishlistPage() {
             </Link>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "var(--space-2)" }}>
+          <div className="grid-2-4">
             {entries.map(({ id, item }) => {
               const colour = item.available_colours[0];
               if (!colour) return null;

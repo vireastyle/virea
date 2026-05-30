@@ -68,15 +68,19 @@ select:focus-visible {
   width: 100%;
   height: 56px;
   padding: 0 var(--space-4);
-  background: var(--color-surface-variant);
+  background: var(--color-surface-dim);
   border: 1.5px solid var(--color-outline-variant);
   border-radius: var(--shape-sm);
   font-family: var(--type-body-large-family);
   font-size: var(--type-body-large-size);
   color: var(--color-on-surface);
   outline: none;
-  transition: border-color var(--duration-standard) var(--easing-standard);
+  transition: border-color var(--duration-standard) var(--easing-standard),
+              background var(--duration-standard) var(--easing-standard);
 }
+.field:not(:placeholder-shown) { background: #ffffff; }
+.field:focus,
+.field:focus-visible { background: #ffffff; }
 .field::placeholder { color: var(--color-on-surface-variant); opacity: 0.7; }
 .field--textarea { height: auto; padding: var(--space-3) var(--space-4); resize: vertical; }
 .field--select { cursor: pointer; }
@@ -453,6 +457,128 @@ select:focus-visible {
 
   .vendor-topbar {
     display: none;
+  }
+}
+
+.vendor-dash-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+.vendor-dash-body {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 900px) {
+  .vendor-dash-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .vendor-dash-body {
+    grid-template-columns: 1fr 340px;
+  }
+}
+
+/* ── Responsive vendor page padding ── */
+.vendor-page {
+  padding: var(--space-4);
+  max-width: 1280px;
+}
+
+@media (min-width: 900px) {
+  .vendor-page {
+    padding: var(--space-8);
+  }
+}
+
+/* ── Vendor products grid: 2 → 3 → 5 cols ── */
+.vendor-products-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+@media (min-width: 480px) {
+  .vendor-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .vendor-products-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* ── 2→4 col grid (wishlist, saved looks, item pickers) ── */
+.grid-2-4 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+}
+
+@media (min-width: 640px) {
+  .grid-2-4 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .grid-2-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ── 1-col → 2-col stacking form row ── */
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 600px) {
+  .form-row-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── 2x2 mobile → 4-col desktop (pipeline, summary cards) ── */
+.grid-pipeline {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-3);
+}
+
+@media (min-width: 600px) {
+  .grid-pipeline {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ── 1-col mobile → 2-col desktop (feature/promo cards) ── */
+.grid-feature-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-3);
+}
+
+@media (min-width: 480px) {
+  .grid-feature-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── Mobile-only: show on mobile, hide on desktop ── */
+.shop-sidebar-hide-tabs {
+  display: flex;
+}
+
+@media (min-width: 900px) {
+  .shop-sidebar-hide-tabs {
+    display: none !important;
   }
 }
 

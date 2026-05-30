@@ -41,7 +41,7 @@ export default function VendorPayoutsPage() {
       </div>
 
       {/* Summary */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)", marginBottom: "var(--space-6)" }}>
+      <div className="form-row-2" style={{ marginBottom: "var(--space-6)" }}>
         <div style={{ background: "var(--color-surface)", borderRadius: "var(--shape-lg)", padding: "var(--space-5) var(--space-4)", boxShadow: "var(--elevation-1)" }}>
           <p className="label-medium" style={{ color: "var(--color-on-surface-variant)", marginBottom: "var(--space-1)", letterSpacing: "0.06em" }}>TOTAL SETTLED</p>
           <p className="headline-large" style={{ color: "var(--color-success)" }}>

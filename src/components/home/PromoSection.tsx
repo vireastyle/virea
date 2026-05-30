@@ -189,11 +189,9 @@ export function PromoSection() {
 
       {/* ── Feature strip ── */}
       <div
+        className="grid-feature-cards"
         style={{
           marginTop: "var(--space-4)",
-          display: "grid",
-          gridTemplateColumns: "repeat(2, 1fr)",
-          gap: "var(--space-3)",
           paddingBottom: "var(--space-10)",
         }}
       >

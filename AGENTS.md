@@ -32,12 +32,22 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - `.trending-card` — 160px mobile, 220px desktop
   - `.topbar-*` — responsive TopBar slots (see Layout Architecture below)
   - `.shop-sidebar` — hidden mobile, 200px desktop (categories + filters on shop page)
+  - `.shop-sidebar-hide-tabs` — `flex` mobile, `none !important` desktop (category tabs, mobile filter button/panel)
   - `.product-detail-layout` — block mobile, 55/45 grid desktop
   - `.promo-inner` / `.promo-text` / `.promo-image` — responsive promo banner (column mobile → row desktop)
   - `.vendor-week-grid` — horizontal scroll mobile → 3-col desktop grid for Vendors of the Week
   - `.footer-grid` — 1-col mobile → 2-col tablet → 5-col desktop footer layout
+  - `.vendor-dash-stats` — 2-col mobile → 4-col desktop (dashboard stat cards)
+  - `.vendor-dash-body` — 1-col mobile → `1fr 340px` desktop (dashboard main layout)
+  - `.vendor-page` — `padding: space-4` mobile → `space-8` desktop; `max-width: 1280px`
+  - `.vendor-products-grid` — 2-col → 3-col @480px → 5-col @1100px
+  - `.grid-2-4` — 2-col → 3-col @640px → 4-col @900px (wishlist, saved looks, item pickers)
+  - `.form-row-2` — 1-col mobile → 2-col @600px (form field pairs)
+  - `.grid-pipeline` — 2×2 mobile → 4-col @600px (pipeline stats, summary cards)
+  - `.grid-feature-cards` — 1-col mobile → 2-col @480px (promo feature cards)
   - `--topbar-height` CSS var — `64px` mobile, `68px` desktop; use for `top:` on any `position:sticky` element
   - `@keyframes marquee` — infinite `-50%` translateX; element must be 2× content wide for seamless loop
+  - **Responsiveness rule**: never use inline `gridTemplateColumns` for multi-column layouts. Always add a CSS class to `globals.css` with `@media` breakpoints. Inline `display: flex/grid` overrides `display: none` on CSS classes — avoid putting `display` in inline styles on elements that use show/hide CSS classes.
 
 ## Layout Architecture
 ### Shopper (main)
@@ -177,6 +187,7 @@ Business logic lives here — route handlers are thin wrappers.
 | `src/components/layout/` | TopBar, BottomNav, AppShell, PageShell, ThemeProvider, ServiceWorkerRegistrar, Footer |
 | `src/components/home/` | HeroSlider, MarqueeStrip, PromoSection, VendorsOfTheWeek |
 | `src/components/vendor/` | VendorShell, VendorSidebar, VendorTopBar, VendorDrawerNav, DashboardStats, VendorProductCard, ProductUploadForm, OrderInboxItem, PreOrderInboxItem, StylingRequestItem |
+| `src/components/catalogue/ShopFilters.tsx` | Client component — receives `items: ClothingItem[]` + `category` from server page; owns all search/filter/sort state; renders desktop sidebar (categories, sizes, colours, price brackets, new arrivals) + mobile filter panel + active tag pills + product grid |
 | `src/components/orders/` | CheckoutModal, OrderStatusTracker, OrderCard |
 | `src/components/pre-orders/` | PreOrderForm, QuoteReviewModal |
 | `src/components/try-on/` | TryOnView, LayerStack, TryOnActionBar, ColourSwitcher, AiTryOnPanel |
@@ -378,6 +389,17 @@ Business logic lives here — route handlers are thin wrappers.
   - **Vendor dashboard greeting** (`src/app/(vendor)/vendor/dashboard/page.tsx`) — time-based greeting: "Good morning/afternoon/evening, [FirstName]" (hour < 12 / < 17 / else); store name moved to subdued label above; subtext "Here's what's happening with your store."
   - **DashboardStats** (`src/components/vendor/DashboardStats.tsx`) — extended Stat type with `Icon: LucideIcon`, `bgColor`, `fgColor`; each card now has tinted background + semi-transparent icon badge (`rgba(255,255,255,0.28)`); 4 stat colors: Products=primary-container, Orders=secondary-container, Revenue=tertiary-container, Requests=error-container
   - **Order status badges** (dashboard recent orders) — plain text replaced with pill badges; status→color map: PLACED=primary-container, CONFIRMED=secondary-container, PROCESSING=tertiary-container, SHIPPED=secondary-container, DELIVERED=rgba green, CANCELLED=error-container; orders now grouped in single surface card with dividers (not separate floating cards); shows 4 orders (was 3)
+
+- [x] Polish Batch 8 (2026-05-30) — Dashboard redesign, search systems, image upload, responsiveness audit
+  - **Vendor dashboard full redesign** (`dashboard/page.tsx` + `DashboardStats.tsx`) — removed `maxWidth: 700px`; 4 stat cards stretch full width via `.vendor-dash-stats`; 2-col desktop body via `.vendor-dash-body` (left: recent orders table + pipeline, right: best sellers bar chart + pre-orders/styling mini-cards + quick actions); "Add product" pill button in header; uses `.vendor-page` for responsive padding
+  - **`DashboardStats`** — cards now horizontal (label/value/sub left, icon badge right) using `.vendor-dash-stats` responsive class
+  - **Vendor products search system** — full search bar (by name/category/colour), sort dropdown (6 options), category chips with counts, status chips (All/Active/Inactive), stock chips (All/Low/Out), active filter tags with × remove, live result count, empty state; inventory summary bar (6 metrics)
+  - **Vendor products grid** — `repeat(3, 1fr)` → `.vendor-products-grid` (2→3→5 col responsive); `VendorProductCard` action buttons icon-only (no "Edit" text label)
+  - **Input field styling** — `.field` base: `var(--color-surface-dim)` (off-white); `:not(:placeholder-shown)` + `:focus`: pure `#ffffff`; background transitions smoothly
+  - **Product image upload** (`ProductUploadForm.tsx`) — replaced URL text input with drag-and-drop / click-to-upload zone; local preview on selection; hover overlay with "Change image" + remove; on submit uploads to `POST /api/v1/vendor/products/upload-image` (uses raw `fetch` with auth token — NOT `apiFetch` which forces `Content-Type: application/json`); button disabled during upload showing "Uploading image…"; edit form preserves existing image if no new file selected
+  - **Shop search & filters** (`ShopFilters.tsx` new client component) — server page fetches items, passes to `ShopFilters`; desktop sidebar: category nav + size chips + colour swatches (dynamic from items) + price brackets (radio) + new arrivals toggle; mobile: search + "Filters (N)" expand button + panel; active filter tags (individual remove); sort dropdown; live result count; no-results empty state
+  - **Mobile responsiveness audit** — 7 new CSS classes added to `globals.css`; all hardcoded inline `gridTemplateColumns` replaced with responsive CSS classes; `display:` never set inline on elements using show/hide CSS classes (avoids specificity conflict)
+  - **Files fixed for mobile**: `wishlist/page.tsx` → `.grid-2-4`; `saved-looks/page.tsx` → `.grid-2-4`; `avatar-studio/page.tsx` item picker → `.grid-2-4`; `vendor/products/page.tsx` → `.vendor-products-grid` + `.vendor-page`; `vendor/dashboard/page.tsx` → `.vendor-page` + `.grid-pipeline`; `ProductUploadForm.tsx` category/price row → `.form-row-2`; `vendor/payouts/page.tsx` summary cards → `.form-row-2`; `PromoSection.tsx` feature cards → `.grid-feature-cards`; `ShopFilters.tsx` sidebar aside — removed inline `display` to let `.shop-sidebar` CSS control visibility; `.shop-sidebar-hide-tabs` class added to CSS (mobile show / desktop hide)
 
 ## Up Next
 - [ ] Vendor subaccount auto-trigger on first vendor login (deferred)

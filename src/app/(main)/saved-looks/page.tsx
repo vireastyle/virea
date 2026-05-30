@@ -40,7 +40,7 @@ export default function SavedLooksPage() {
             </Link>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "var(--space-2)" }}>
+          <div className="grid-2-4">
             {outfits.map((outfit) => (
               <div
                 key={outfit.id}

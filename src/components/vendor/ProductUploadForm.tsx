@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import Image from "next/image";
+import { ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { VENDOR_PRODUCT_CATEGORIES } from "@/types/vendor";
 import type { VendorProduct, VendorProductCategory } from "@/types/vendor";
 import { nairaToKobo, koboToNaira } from "@/lib/format";
+import { apiToken } from "@/lib/api-token";
 
 const ALL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 
@@ -13,7 +16,6 @@ type FormData = {
   category: VendorProductCategory;
   price: string;
   description: string;
-  image_url: string;
   available_sizes: string[];
   available_colours: string;
   stock: string;
@@ -31,10 +33,8 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
   const [form, setForm] = useState<FormData>({
     name: initial?.name ?? "",
     category: initial?.category ?? "DRESS",
-    // Price input is always in naira; convert from kobo when prefilling an existing product
     price: initial?.price != null ? koboToNaira(initial.price).toString() : "",
     description: initial?.description ?? "",
-    image_url: initial?.image_url ?? "",
     available_sizes: initial?.available_sizes ?? [],
     available_colours: initial?.available_colours?.join(", ") ?? "",
     stock: initial?.stock?.toString() ?? "",
@@ -42,7 +42,12 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
     is_active: initial?.is_active ?? true,
   });
 
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData | "image", string>>>({});
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(initial?.image_url ?? null);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const setField = (field: keyof FormData, value: FormData[keyof FormData]) =>
     setForm((f) => ({ ...f, [field]: value }));
@@ -56,6 +61,38 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
     }));
   };
 
+  const handleImageSelect = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setErrors((e) => ({ ...e, image: "Please select an image file" }));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors((e) => ({ ...e, image: "Image must be under 5 MB" }));
+      return;
+    }
+    setErrors((e) => ({ ...e, image: undefined }));
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleImageSelect(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleImageSelect(file);
+  };
+
+  const clearImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const validate = (): boolean => {
     const e: typeof errors = {};
     if (!form.name.trim()) e.name = "Product name is required";
@@ -67,15 +104,41 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+
+    setUploading(true);
+    let resolvedImageUrl = initial?.image_url ?? "";
+
+    if (imageFile) {
+      try {
+        const token = apiToken.get();
+        const fd = new FormData();
+        fd.append("image", imageFile);
+        const res = await fetch("/api/v1/vendor/products/upload-image", {
+          method: "POST",
+          body: fd,
+          credentials: "include",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error?.message ?? "Upload failed");
+        resolvedImageUrl = json.data.url;
+      } catch (err) {
+        setErrors((ex) => ({ ...ex, image: err instanceof Error ? err.message : "Image upload failed" }));
+        setUploading(false);
+        return;
+      }
+    }
+
+    setUploading(false);
     onSubmit({
       name: form.name.trim(),
       category: form.category,
-      price: nairaToKobo(form.price), // convert naira input → kobo for DB storage
+      price: nairaToKobo(form.price),
       description: form.description.trim(),
-      image_url: form.image_url.trim(),
+      image_url: resolvedImageUrl,
       available_sizes: form.available_sizes,
       available_colours: form.available_colours.split(",").map((c) => c.trim()).filter(Boolean),
       stock: Number(form.stock),
@@ -86,13 +149,115 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
+
+      {/* Image upload */}
+      <div>
+        <label className="field-label">Product image</label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={handleFileInput}
+        />
+
+        {imagePreview ? (
+          <div style={{ position: "relative", borderRadius: "var(--shape-md)", overflow: "hidden", aspectRatio: "4/3" }}>
+            <Image src={imagePreview} alt="Product preview" fill style={{ objectFit: "cover" }} unoptimized={imagePreview.startsWith("blob:")} />
+            <div style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(0,0,0,0.35)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "var(--space-3)",
+              opacity: 0,
+              transition: "opacity 0.2s ease",
+            }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.opacity = "1"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.opacity = "0"; }}
+            >
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  padding: "var(--space-2) var(--space-4)",
+                  background: "#fff",
+                  color: "var(--color-on-surface)",
+                  borderRadius: "var(--shape-full)",
+                  border: "none",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Change image
+              </button>
+              <button
+                type="button"
+                onClick={clearImage}
+                aria-label="Remove image"
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "var(--shape-full)",
+                  background: "rgba(255,255,255,0.2)",
+                  border: "1.5px solid rgba(255,255,255,0.5)",
+                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                <X size={16} strokeWidth={2} />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "var(--space-2)",
+              padding: "var(--space-10) var(--space-4)",
+              border: `2px dashed ${dragOver ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
+              borderRadius: "var(--shape-md)",
+              background: dragOver ? "var(--color-primary-container)" : "var(--color-surface-dim)",
+              cursor: "pointer",
+              transition: "border-color 0.15s ease, background 0.15s ease",
+            }}
+          >
+            <ImagePlus size={28} strokeWidth={1.5} style={{ color: "var(--color-on-surface-variant)" }} />
+            <p className="body-medium" style={{ color: "var(--color-on-surface-variant)", fontWeight: 500 }}>
+              Click to upload or drag & drop
+            </p>
+            <p className="body-small" style={{ color: "var(--color-on-surface-variant)", opacity: 0.6 }}>
+              PNG, JPG, WEBP — max 5 MB
+            </p>
+          </div>
+        )}
+        {errors.image && <p className="field-error">{errors.image}</p>}
+      </div>
+
       <div>
         <label className="field-label" htmlFor="pf-name">Product name</label>
         <input id="pf-name" type="text" className="field" value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder="e.g. Satin Flow Dress" />
         {errors.name && <p className="field-error">{errors.name}</p>}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)" }}>
+      <div className="form-row-2">
         <div>
           <label className="field-label" htmlFor="pf-cat">Category</label>
           <select id="pf-cat" className="field field--select" value={form.category} onChange={(e) => setField("category", e.target.value as VendorProductCategory)}>
@@ -110,11 +275,6 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
         <label className="field-label" htmlFor="pf-desc">Description</label>
         <textarea id="pf-desc" className="field field--textarea" value={form.description} onChange={(e) => setField("description", e.target.value)} placeholder="Describe the product — fabric, fit, occasion..." rows={3} />
         {errors.description && <p className="field-error">{errors.description}</p>}
-      </div>
-
-      <div>
-        <label className="field-label" htmlFor="pf-img">Image URL</label>
-        <input id="pf-img" type="url" className="field" value={form.image_url} onChange={(e) => setField("image_url", e.target.value)} placeholder="https://..." />
       </div>
 
       <div>
@@ -168,7 +328,9 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
         </label>
       </div>
 
-      <Button variant="filled" type="submit">{submitLabel}</Button>
+      <Button variant="filled" type="submit" disabled={uploading}>
+        {uploading ? "Uploading image…" : submitLabel}
+      </Button>
     </form>
   );
 }
