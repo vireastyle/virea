@@ -38,7 +38,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - `.vendor-week-grid` — horizontal scroll mobile → 3-col desktop grid for Vendors of the Week
   - `.footer-grid` — 1-col mobile → 2-col tablet → 5-col desktop footer layout
   - `.vendor-dash-stats` — 2-col mobile → 4-col desktop (dashboard stat cards)
-  - `.vendor-dash-body` — 1-col mobile → `1fr 340px` desktop (dashboard main layout)
+  - `.vendor-dash-body` — 1-col mobile → `3fr 1fr` desktop with `column-gap: var(--space-3)` — aligns with `.vendor-dash-stats` 4-col so left column ends at Revenue card and right column starts at Requests card
   - `.vendor-page` — `padding: space-4` mobile → `space-8` desktop; `max-width: 1280px`
   - `.vendor-products-grid` — 2-col → 3-col @480px → 5-col @1100px
   - `.grid-2-4` — 2-col → 3-col @640px → 4-col @900px (wishlist, saved looks, item pickers)
@@ -49,6 +49,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - `--topbar-height` CSS var — `64px` mobile, `68px` desktop; use for `top:` on any `position:sticky` element
   - `@keyframes marquee` — infinite `-50%` translateX; element must be 2× content wide for seamless loop
   - **Responsiveness rule**: never use inline `gridTemplateColumns` for multi-column layouts. Always add a CSS class to `globals.css` with `@media` breakpoints. Inline `display: flex/grid` overrides `display: none` on CSS classes — avoid putting `display` in inline styles on elements that use show/hide CSS classes.
+  - **`.app-bottomnav`** — `display: grid; grid-template-columns: repeat(5, 1fr)` in CSS (not inline). Previously was `display: flex` which caused all 5 nav items to shrink-wrap.
 
 ## Layout Architecture
 ### Shopper (main)
@@ -462,5 +463,6 @@ Business logic lives here — route handlers are thin wrappers.
 - **Write tool encoding** — on Windows the Write tool can produce UTF-8 BOM + Unicode curly quotes (`”` `”`) instead of straight ASCII `”`. TypeScript reports TS1127 “Invalid character”. Fix with: `node -e “const fs=require('fs');let c=fs.readFileSync(p,'utf8');if(c.charCodeAt(0)===0xFEFF)c=c.slice(1);c=c.replace(/”/g,'\”').replace(/”/g,'\”');fs.writeFileSync(p,c,'utf8')”`. Prefer Edit tool for targeted changes to avoid this.
 - **Body types convention** — `bodyTypes` (camelCase) in Prisma schema + DB + service layer; `body_types` (snake_case) in all frontend types (`ClothingItem`, `VendorProduct`). `body_types: []` semantically means “fits all body types” — items with empty arrays always pass the body type filter. Colour tokens: `--color-tertiary-container` / `--color-on-tertiary-container` for body type pills (to distinguish from size chips which use primary-container).
 - **Mobile nav architecture** — TopBar on mobile shows ONLY the VIRÉA logo (no icons). All navigation is via BottomNav (Home | Shop | Cart | Saved/Wishlist | Profile). Never add icons back to TopBar mobile without also removing them from BottomNav. BottomNav uses `useCartStore` + `useWishlistStore` for live badges.
+- **`topbar-profile-link` wrapper pattern** — desktop-only TopBar elements must be wrapped in a single `<div className="topbar-profile-link">` with NO `display` in its inline style. CSS class controls `display: none` mobile / `display: flex` desktop. Never put `topbar-profile-link` on individual links that also have `display: flex` in their inline `style` prop — inline wins over CSS and the element stays visible on mobile.
 - **Multi-image products** — `VendorProduct.images?: string[]` stores all image URLs, `image_url` is always the primary (first). DB `Product.images String[]` already supported this. `ProductUploadForm` uploads all new files sequentially before submit, reorders so primary is at index 0.
 - **`.hide-on-mobile` class** — use `className=”hide-on-mobile”` to hide any element on mobile (< 900px) and show inline on desktop. Do NOT use `topbar-profile-link` for non-TopBar elements even though the behaviour is identical.
