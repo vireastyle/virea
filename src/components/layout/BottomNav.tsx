@@ -32,7 +32,6 @@ export function BottomNav() {
         height: "64px",
         background: "var(--color-surface)",
         borderTop: "1px solid var(--color-outline-variant)",
-        gridTemplateColumns: "repeat(5, 1fr)",
         paddingBottom: "env(safe-area-inset-bottom)",
         boxShadow: "var(--elevation-2)",
         zIndex: 100,

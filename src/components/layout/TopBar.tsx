@@ -164,43 +164,40 @@ export function TopBar() {
           <Search size={20} strokeWidth={1.5} />
         </Link>
 
-        {/* Wishlist — desktop only (mobile uses bottom nav) */}
-        <Link
-          href="/wishlist"
-          aria-label={`Wishlist — ${wishCount} items`}
-          className="topbar-profile-link"
-          style={iconBtn}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
-        >
-          <Heart size={20} strokeWidth={1.5} />
-          {wishCount > 0 && <Badge count={wishCount} />}
-        </Link>
+        {/* Wishlist, Cart, Profile — desktop only. Wrapper controls visibility via CSS; never put display on individual links */}
+        <div className="topbar-profile-link" style={{ alignItems: "center", gap: "var(--space-1)" }}>
+          <Link
+            href="/wishlist"
+            aria-label={`Wishlist — ${wishCount} items`}
+            style={iconBtn}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
+          >
+            <Heart size={20} strokeWidth={1.5} />
+            {wishCount > 0 && <Badge count={wishCount} />}
+          </Link>
 
-        {/* Cart — desktop only (mobile uses bottom nav) */}
-        <Link
-          href="/bag"
-          aria-label={`Cart — ${cartCount} items`}
-          className="topbar-profile-link"
-          style={iconBtn}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
-        >
-          <ShoppingBag size={20} strokeWidth={1.5} />
-          <Badge count={cartCount} />
-        </Link>
+          <Link
+            href="/bag"
+            aria-label={`Cart — ${cartCount} items`}
+            style={iconBtn}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
+          >
+            <ShoppingBag size={20} strokeWidth={1.5} />
+            <Badge count={cartCount} />
+          </Link>
 
-        {/* Profile — desktop only */}
-        <Link
-          href="/profile"
-          aria-label="Profile"
-          className="topbar-profile-link"
-          style={iconBtn}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
-        >
-          <User size={20} strokeWidth={1.5} />
-        </Link>
+          <Link
+            href="/profile"
+            aria-label="Profile"
+            style={iconBtn}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
+          >
+            <User size={20} strokeWidth={1.5} />
+          </Link>
+        </div>
       </div>
     </header>
   );

@@ -321,7 +321,10 @@ select:focus-visible {
 .app-topbar { display: flex; }
 
 /* BottomNav — mobile only */
-.app-bottomnav { display: flex; }
+.app-bottomnav {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+}
 
 @media (min-width: 900px) {
   .app-content {
@@ -487,7 +490,8 @@ select:focus-visible {
   }
 
   .vendor-dash-body {
-    grid-template-columns: 1fr 340px;
+    grid-template-columns: 3fr 1fr;
+    column-gap: var(--space-3);
   }
 }
 
