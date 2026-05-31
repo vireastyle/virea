@@ -7,18 +7,20 @@ import { motion } from "framer-motion";
 import { motionTokens } from "@/lib/motionTokens";
 import { useCartStore } from "@/store/cart.store";
 import { useWishlistStore } from "@/store/wishlist.store";
+import { useAuthStore } from "@/store/auth.store";
 
 export function BottomNav() {
   const pathname  = usePathname();
-  const cartCount = useCartStore((s) => s.count);
-  const wishCount = useWishlistStore((s) => s.itemIds.length);
+  const cartCount      = useCartStore((s) => s.count);
+  const wishCount      = useWishlistStore((s) => s.itemIds.length);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const navItems = [
     { href: "/",          label: "Home",    Icon: Home,         badge: 0,         match: (p: string) => p === "/" },
     { href: "/shop/DRESS",label: "Shop",    Icon: Shirt,        badge: 0,         match: (p: string) => p.startsWith("/shop/") || p.startsWith("/product/") || p === "/new-in" },
     { href: "/bag",       label: "Cart",    Icon: ShoppingBag,  badge: cartCount, match: (p: string) => p === "/bag" },
     { href: "/wishlist",  label: "Saved",   Icon: Heart,        badge: wishCount, match: (p: string) => p === "/wishlist" },
-    { href: "/profile",   label: "Profile", Icon: User,         badge: 0,         match: (p: string) => p.startsWith("/profile") || p.startsWith("/orders") || p.startsWith("/pre-orders") },
+    { href: isAuthenticated ? "/profile" : "/register", label: "Profile", Icon: User, badge: 0, match: (p: string) => p.startsWith("/profile") || p.startsWith("/orders") || p.startsWith("/pre-orders") || p === "/register" || p === "/login" },
   ];
 
   return (

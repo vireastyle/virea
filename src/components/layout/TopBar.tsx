@@ -6,6 +6,7 @@ import { Search, ShoppingBag, Heart, User } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { useCartStore } from "@/store/cart.store";
 import { useWishlistStore } from "@/store/wishlist.store";
+import { useAuthStore } from "@/store/auth.store";
 
 const navLinks = [
   {
@@ -38,8 +39,10 @@ const iconBtn: React.CSSProperties = {
 
 export function TopBar() {
   const pathname  = usePathname();
-  const cartCount = useCartStore((s) => s.count);
-  const wishCount = useWishlistStore((s) => s.itemIds.length);
+  const cartCount      = useCartStore((s) => s.count);
+  const wishCount      = useWishlistStore((s) => s.itemIds.length);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const profileHref    = isAuthenticated ? "/profile" : "/register";
 
   return (
     <header
@@ -189,7 +192,7 @@ export function TopBar() {
           </Link>
 
           <Link
-            href="/profile"
+            href={profileHref}
             aria-label="Profile"
             style={iconBtn}
             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
