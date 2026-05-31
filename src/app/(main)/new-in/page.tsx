@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getNewArrivals } from "@/lib/mock/clothing";
 import { mockClothing } from "@/lib/mock/clothing";
 import { listProducts } from "@/lib/services/catalogue.service";

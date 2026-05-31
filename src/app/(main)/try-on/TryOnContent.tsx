@@ -1,19 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { PageShell } from "@/components/layout/PageShell";
 import { TryOnView } from "@/components/try-on/TryOnView";
-import { getItemById } from "@/lib/mock/clothing";
+import type { ClothingItem } from "@/types/clothing";
 
-export function TryOnContent() {
-  const params = useSearchParams();
-  const itemId = params.get("item");
-  const colourName = params.get("colour");
+type Props = {
+  item: ClothingItem | null;
+  colourName: string | null;
+};
 
-  const item = itemId ? getItemById(itemId) : null;
-
+export function TryOnContent({ item, colourName }: Props) {
   const initialColour = item
     ? (item.available_colours.find((c) => c.name === colourName) ?? item.available_colours[0])
     : null;
