@@ -17,7 +17,7 @@ export function BottomNav() {
 
   const navItems = [
     { href: "/",          label: "Home",    Icon: Home,         badge: 0,         match: (p: string) => p === "/" },
-    { href: "/shop/DRESS",label: "Shop",    Icon: Shirt,        badge: 0,         match: (p: string) => p.startsWith("/shop/") || p.startsWith("/product/") || p === "/new-in" },
+    { href: "/shop/ALL",label: "Shop",    Icon: Shirt,        badge: 0,         match: (p: string) => p.startsWith("/shop/") || p.startsWith("/product/") || p === "/new-in" },
     { href: "/bag",       label: "Cart",    Icon: ShoppingBag,  badge: cartCount, match: (p: string) => p === "/bag" },
     { href: "/wishlist",  label: "Saved",   Icon: Heart,        badge: wishCount, match: (p: string) => p === "/wishlist" },
     { href: isAuthenticated ? "/profile" : "/register", label: "Profile", Icon: User, badge: 0, match: (p: string) => p.startsWith("/profile") || p.startsWith("/orders") || p.startsWith("/pre-orders") || p === "/register" || p === "/login" },

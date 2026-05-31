@@ -10,7 +10,9 @@ import { PromoSection } from "@/components/home/PromoSection";
 import { VendorsOfTheWeek } from "@/components/home/VendorsOfTheWeek";
 import { HomeModals } from "@/components/home/HomeModals";
 import { heroBanners, getHomeFeed, categories } from "@/lib/mock/feed";
-import { getNewArrivals } from "@/lib/mock/clothing";
+import { getNewArrivals, mockClothing } from "@/lib/mock/clothing";
+import { listProducts } from "@/lib/services/catalogue.service";
+import { mapDbProduct } from "@/lib/mappers";
 
 const CategoryIcons: Record<string, React.ReactNode> = {
   DRESS: (
@@ -41,8 +43,17 @@ const CategoryIcons: Record<string, React.ReactNode> = {
   ),
 };
 
-export default function HomePage() {
-  const newArrivals = getNewArrivals().slice(0, 6);
+export default async function HomePage() {
+  const { products: dbProducts } = await listProducts({}).catch(() => ({ products: [] }));
+  const dbItems = dbProducts.map(mapDbProduct).map((item) => {
+    if ((item.body_types ?? []).length === 0) {
+      const mock = mockClothing.find((m) => m.id === item.id);
+      if (mock?.body_types?.length) return { ...item, body_types: mock.body_types };
+    }
+    return item;
+  });
+  const dbNewArrivals = dbItems.filter((i) => i.is_new_arrival);
+  const newArrivals = (dbNewArrivals.length > 0 ? dbNewArrivals : getNewArrivals()).slice(0, 6);
   const feed = getHomeFeed();
   const trending = feed.find((s) => s.id === "trending")?.items.slice(0, 6) ?? [];
 

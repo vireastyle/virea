@@ -10,7 +10,7 @@ import { useAuthStore } from "@/store/auth.store";
 
 const navLinks = [
   {
-    href: "/shop/DRESS",
+    href: "/shop/ALL",
     label: "Shop",
     match: (p: string) => p.startsWith("/shop/") || p.startsWith("/product/") || p === "/new-in",
   },
@@ -157,7 +157,7 @@ export function TopBar() {
 
         {/* Search — desktop only */}
         <Link
-          href="/shop/DRESS"
+          href="/shop/ALL"
           aria-label="Search"
           className="topbar-profile-link"
           style={iconBtn}
