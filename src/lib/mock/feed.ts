@@ -58,9 +58,10 @@ export const getHomeFeed = (): FeedSection[] => [
 ];
 
 export const categories = [
-  { id: "DRESS", label: "Dresses", emoji: "👗" },
-  { id: "TOP", label: "Tops", emoji: "👚" },
-  { id: "OUTERWEAR", label: "Outerwear", emoji: "🧥" },
-  { id: "BAG", label: "Bags", emoji: "👜" },
-  { id: "SHOES", label: "Shoes", emoji: "👠" },
+  { id: "ALL",      label: "All",       emoji: "" },
+  { id: "DRESS",    label: "Dresses",   emoji: "👗" },
+  { id: "TOP",      label: "Tops",      emoji: "👚" },
+  { id: "OUTERWEAR",label: "Outerwear", emoji: "🧥" },
+  { id: "BAG",      label: "Bags",      emoji: "👜" },
+  { id: "SHOES",    label: "Shoes",     emoji: "👠" },
 ] as const;

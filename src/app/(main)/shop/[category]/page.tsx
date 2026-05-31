@@ -8,6 +8,7 @@ import type { Category } from "@/types/clothing";
 type Props = { params: Promise<{ category: string }> };
 
 const categoryEditorial: Record<string, { headline: string; sub: string }> = {
+  ALL:       { headline: "Everything.",          sub: "Browse the full collection." },
   DRESS:     { headline: "Elevated essentials.", sub: "Pieces that define your style." },
   TOP:       { headline: "The perfect layer.",   sub: "From casual to boardroom-ready." },
   OUTERWEAR: { headline: "Make your entrance.",  sub: "Outerwear that turns heads." },
@@ -20,9 +21,12 @@ export default async function ShopPage({ params }: Props) {
   const cat = categories.find((c) => c.id === category);
   const editorial = categoryEditorial[category] ?? { headline: cat?.label ?? category, sub: "" };
 
-  const { products: dbProducts } = await listProducts({ category }).catch(() => ({ products: [] }));
+  const isAll = category === "ALL";
+  const { products: dbProducts } = await listProducts(isAll ? {} : { category }).catch(() => ({ products: [] }));
   const dbItems = dbProducts.map(mapDbProduct);
-  const mockItems = mockClothing.filter((i) => i.category === (category as Category) && i.is_active);
+  const mockItems = isAll
+    ? mockClothing.filter((i) => i.is_active)
+    : mockClothing.filter((i) => i.category === (category as Category) && i.is_active);
   const items = dbItems.length > 0 ? dbItems : mockItems;
 
   return (
