@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { ImagePlus, X } from "lucide-react";
+import { ImagePlus, X, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { VENDOR_PRODUCT_CATEGORIES } from "@/types/vendor";
 import type { VendorProduct, VendorProductCategory } from "@/types/vendor";
@@ -10,6 +10,26 @@ import { nairaToKobo, koboToNaira } from "@/lib/format";
 import { apiToken } from "@/lib/api-token";
 
 const ALL_SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
+const MAX_IMAGES = 6;
+
+const ALL_BODY_TYPES = [
+  "hourglass", "pear", "apple", "rectangle", "inverted-triangle", "oval", "athletic",
+] as const;
+
+const BODY_TYPE_LABELS: Record<string, string> = {
+  hourglass: "Hourglass",
+  pear: "Pear",
+  apple: "Apple",
+  rectangle: "Rectangle",
+  "inverted-triangle": "Inv. Triangle",
+  oval: "Oval",
+  athletic: "Athletic",
+};
+
+type ImageSlot = {
+  file: File | null;   // null = already-uploaded URL
+  preview: string;     // blob: URL for new files, CDN URL for existing
+};
 
 type FormData = {
   name: string;
@@ -18,6 +38,7 @@ type FormData = {
   description: string;
   available_sizes: string[];
   available_colours: string;
+  body_types: string[];
   stock: string;
   is_new_arrival: boolean;
   is_active: boolean;
@@ -29,6 +50,16 @@ type Props = {
   submitLabel?: string;
 };
 
+function initSlots(initial?: Partial<VendorProduct>): ImageSlot[] {
+  if (initial?.images?.length) {
+    return initial.images.map((url) => ({ file: null, preview: url }));
+  }
+  if (initial?.image_url) {
+    return [{ file: null, preview: initial.image_url }];
+  }
+  return [];
+}
+
 export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save product" }: Props) {
   const [form, setForm] = useState<FormData>({
     name: initial?.name ?? "",
@@ -37,14 +68,15 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
     description: initial?.description ?? "",
     available_sizes: initial?.available_sizes ?? [],
     available_colours: initial?.available_colours?.join(", ") ?? "",
+    body_types: initial?.body_types ?? [],
     stock: initial?.stock?.toString() ?? "",
     is_new_arrival: initial?.is_new_arrival ?? false,
     is_active: initial?.is_active ?? true,
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormData | "image", string>>>({});
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(initial?.image_url ?? null);
+  const [slots, setSlots] = useState<ImageSlot[]>(initSlots(initial));
+  const [primaryIndex, setPrimaryIndex] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,37 +93,54 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
     }));
   };
 
-  const handleImageSelect = (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      setErrors((e) => ({ ...e, image: "Please select an image file" }));
-      return;
+  const toggleBodyType = (bt: string) => {
+    setForm((f) => ({
+      ...f,
+      body_types: f.body_types.includes(bt)
+        ? f.body_types.filter((t) => t !== bt)
+        : [...f.body_types, bt],
+    }));
+  };
+
+  // ── Image helpers ───────────────────────────────────────────
+
+  const addFiles = (files: FileList | File[]) => {
+    const arr = Array.from(files);
+    const valid: ImageSlot[] = [];
+    let err = "";
+    for (const file of arr) {
+      if (!file.type.startsWith("image/")) { err = "Only image files allowed"; continue; }
+      if (file.size > 5 * 1024 * 1024) { err = "Each image must be under 5 MB"; continue; }
+      if (slots.length + valid.length >= MAX_IMAGES) { err = `Maximum ${MAX_IMAGES} images`; break; }
+      valid.push({ file, preview: URL.createObjectURL(file) });
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setErrors((e) => ({ ...e, image: "Image must be under 5 MB" }));
-      return;
-    }
-    setErrors((e) => ({ ...e, image: undefined }));
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
+    if (err) setErrors((e) => ({ ...e, image: err }));
+    else setErrors((e) => ({ ...e, image: undefined }));
+    if (valid.length) setSlots((prev) => [...prev, ...valid]);
+  };
+
+  const removeSlot = (index: number) => {
+    setSlots((prev) => prev.filter((_, i) => i !== index));
+    // Adjust primary index
+    setPrimaryIndex((prev) => {
+      if (index === prev) return 0;
+      if (index < prev) return prev - 1;
+      return prev;
+    });
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) handleImageSelect(file);
+    if (e.target.files?.length) addFiles(e.target.files);
+    e.target.value = "";
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleImageSelect(file);
+    if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
   };
 
-  const clearImage = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
+  // ── Validation ──────────────────────────────────────────────
 
   const validate = (): boolean => {
     const e: typeof errors = {};
@@ -104,33 +153,45 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
     return Object.keys(e).length === 0;
   };
 
+  // ── Submit ──────────────────────────────────────────────────
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setUploading(true);
-    let resolvedImageUrl = initial?.image_url ?? "";
 
-    if (imageFile) {
-      try {
-        const token = apiToken.get();
-        const fd = new FormData();
-        fd.append("image", imageFile);
-        const res = await fetch("/api/v1/vendor/products/upload-image", {
-          method: "POST",
-          body: fd,
-          credentials: "include",
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        const json = await res.json();
-        if (!json.success) throw new Error(json.error?.message ?? "Upload failed");
-        resolvedImageUrl = json.data.url;
-      } catch (err) {
-        setErrors((ex) => ({ ...ex, image: err instanceof Error ? err.message : "Image upload failed" }));
-        setUploading(false);
-        return;
+    // Upload any new files; keep existing CDN URLs as-is
+    const resolvedUrls: string[] = [];
+    for (const slot of slots) {
+      if (slot.file) {
+        try {
+          const token = apiToken.get();
+          const fd = new FormData();
+          fd.append("image", slot.file);
+          const res = await fetch("/api/v1/vendor/products/upload-image", {
+            method: "POST",
+            body: fd,
+            credentials: "include",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          const json = await res.json();
+          if (!json.success) throw new Error(json.error?.message ?? "Upload failed");
+          resolvedUrls.push(json.data.url);
+        } catch (err) {
+          setErrors((ex) => ({ ...ex, image: err instanceof Error ? err.message : "Image upload failed" }));
+          setUploading(false);
+          return;
+        }
+      } else {
+        resolvedUrls.push(slot.preview);
       }
     }
+
+    // Put primary image first
+    const safeIndex = primaryIndex < resolvedUrls.length ? primaryIndex : 0;
+    const primary = resolvedUrls[safeIndex];
+    const finalImages = [primary, ...resolvedUrls.filter((_, i) => i !== safeIndex)];
 
     setUploading(false);
     onSubmit({
@@ -138,85 +199,44 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
       category: form.category,
       price: nairaToKobo(form.price),
       description: form.description.trim(),
-      image_url: resolvedImageUrl,
+      image_url: finalImages[0] ?? initial?.image_url ?? "",
+      images: finalImages,
       available_sizes: form.available_sizes,
       available_colours: form.available_colours.split(",").map((c) => c.trim()).filter(Boolean),
+      body_types: form.body_types,
       stock: Number(form.stock),
       is_new_arrival: form.is_new_arrival,
       is_active: form.is_active,
     });
   };
 
+  // ── Render ──────────────────────────────────────────────────
+
+  const canAddMore = slots.length < MAX_IMAGES;
+
   return (
     <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "var(--space-5)" }}>
 
-      {/* Image upload */}
+      {/* ── Image upload ── */}
       <div>
-        <label className="field-label">Product image</label>
+        <label className="field-label">
+          Product images
+          <span style={{ fontWeight: 400, opacity: 0.6, marginLeft: "var(--space-2)" }}>
+            ({slots.length}/{MAX_IMAGES})
+          </span>
+        </label>
+
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          multiple
           style={{ display: "none" }}
           onChange={handleFileInput}
         />
 
-        {imagePreview ? (
-          <div style={{ position: "relative", borderRadius: "var(--shape-md)", overflow: "hidden", aspectRatio: "4/3" }}>
-            <Image src={imagePreview} alt="Product preview" fill style={{ objectFit: "cover" }} unoptimized={imagePreview.startsWith("blob:")} />
-            <div style={{
-              position: "absolute",
-              inset: 0,
-              background: "rgba(0,0,0,0.35)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "var(--space-3)",
-              opacity: 0,
-              transition: "opacity 0.2s ease",
-            }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.opacity = "1"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.opacity = "0"; }}
-            >
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                style={{
-                  padding: "var(--space-2) var(--space-4)",
-                  background: "#fff",
-                  color: "var(--color-on-surface)",
-                  borderRadius: "var(--shape-full)",
-                  border: "none",
-                  fontFamily: "var(--font-sans)",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Change image
-              </button>
-              <button
-                type="button"
-                onClick={clearImage}
-                aria-label="Remove image"
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "var(--shape-full)",
-                  background: "rgba(255,255,255,0.2)",
-                  border: "1.5px solid rgba(255,255,255,0.5)",
-                  color: "#fff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                }}
-              >
-                <X size={16} strokeWidth={2} />
-              </button>
-            </div>
-          </div>
-        ) : (
+        {slots.length === 0 ? (
+          /* Empty state — full drop zone */
           <div
             role="button"
             tabIndex={0}
@@ -244,9 +264,123 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
               Click to upload or drag & drop
             </p>
             <p className="body-small" style={{ color: "var(--color-on-surface-variant)", opacity: 0.6 }}>
-              PNG, JPG, WEBP — max 5 MB
+              Up to {MAX_IMAGES} images · PNG, JPG, WEBP · max 5 MB each
             </p>
           </div>
+        ) : (
+          /* Thumbnail grid */
+          <div
+            style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)" }}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={handleDrop}
+          >
+            {slots.map((slot, i) => {
+              const isPrimary = i === primaryIndex;
+              return (
+                <div
+                  key={slot.preview}
+                  style={{
+                    position: "relative",
+                    width: "88px",
+                    height: "88px",
+                    borderRadius: "var(--shape-sm)",
+                    overflow: "hidden",
+                    border: isPrimary
+                      ? "2.5px solid var(--color-primary)"
+                      : "1.5px solid var(--color-outline-variant)",
+                    cursor: isPrimary ? "default" : "pointer",
+                    flexShrink: 0,
+                  }}
+                  onClick={() => !isPrimary && setPrimaryIndex(i)}
+                  title={isPrimary ? "Display image" : "Set as display image"}
+                >
+                  <Image
+                    src={slot.preview}
+                    alt={`Product image ${i + 1}`}
+                    fill
+                    style={{ objectFit: "cover" }}
+                    unoptimized={slot.preview.startsWith("blob:")}
+                  />
+
+                  {/* Primary star badge */}
+                  {isPrimary && (
+                    <div style={{
+                      position: "absolute",
+                      top: "4px",
+                      left: "4px",
+                      width: "20px",
+                      height: "20px",
+                      borderRadius: "var(--shape-full)",
+                      background: "var(--color-primary)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}>
+                      <Star size={11} strokeWidth={2} fill="white" color="white" />
+                    </div>
+                  )}
+
+                  {/* Remove button */}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); removeSlot(i); }}
+                    aria-label="Remove image"
+                    style={{
+                      position: "absolute",
+                      top: "4px",
+                      right: "4px",
+                      width: "20px",
+                      height: "20px",
+                      borderRadius: "var(--shape-full)",
+                      background: "rgba(0,0,0,0.55)",
+                      border: "none",
+                      color: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      padding: 0,
+                    }}
+                  >
+                    <X size={11} strokeWidth={2.5} />
+                  </button>
+                </div>
+              );
+            })}
+
+            {/* Add more tile */}
+            {canAddMore && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  width: "88px",
+                  height: "88px",
+                  borderRadius: "var(--shape-sm)",
+                  border: "1.5px dashed var(--color-outline-variant)",
+                  background: "var(--color-surface-dim)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "4px",
+                  cursor: "pointer",
+                  color: "var(--color-on-surface-variant)",
+                  flexShrink: 0,
+                }}
+              >
+                <ImagePlus size={18} strokeWidth={1.5} />
+                <span style={{ fontFamily: "var(--font-sans)", fontSize: "10px", fontWeight: 500 }}>Add more</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {slots.length > 0 && (
+          <p style={{ fontFamily: "var(--font-sans)", fontSize: "12px", color: "var(--color-on-surface-variant)", marginTop: "var(--space-2)", opacity: 0.7 }}>
+            Tap any image to set it as the display image. ★ = current display.
+          </p>
         )}
         {errors.image && <p className="field-error">{errors.image}</p>}
       </div>
@@ -307,6 +441,37 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
       </div>
 
       <div>
+        <label className="field-label">Body types this garment suits</label>
+        <p style={{ fontFamily: "var(--font-sans)", fontSize: "12px", color: "var(--color-on-surface-variant)", marginBottom: "var(--space-2)", opacity: 0.8 }}>
+          Leave all unselected if it suits every body type.
+        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)" }}>
+          {ALL_BODY_TYPES.map((bt) => {
+            const selected = form.body_types.includes(bt);
+            return (
+              <button
+                key={bt}
+                type="button"
+                onClick={() => toggleBodyType(bt)}
+                style={{
+                  padding: "var(--space-2) var(--space-3)",
+                  borderRadius: "var(--shape-sm)",
+                  border: `1.5px solid ${selected ? "var(--color-tertiary)" : "var(--color-outline-variant)"}`,
+                  background: selected ? "var(--color-tertiary-container)" : "transparent",
+                  color: selected ? "var(--color-on-tertiary-container)" : "var(--color-on-surface-variant)",
+                  fontFamily: "var(--type-label-medium-family)",
+                  fontSize: "var(--type-label-medium-size)",
+                  cursor: "pointer",
+                }}
+              >
+                {BODY_TYPE_LABELS[bt]}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
         <label className="field-label" htmlFor="pf-colours">Colours (comma-separated)</label>
         <input id="pf-colours" type="text" className="field" value={form.available_colours} onChange={(e) => setField("available_colours", e.target.value)} placeholder="e.g. Midnight, Champagne, Forest" />
       </div>
@@ -329,7 +494,7 @@ export function ProductUploadForm({ initial, onSubmit, submitLabel = "Save produ
       </div>
 
       <Button variant="filled" type="submit" disabled={uploading}>
-        {uploading ? "Uploading image…" : submitLabel}
+        {uploading ? "Uploading images…" : submitLabel}
       </Button>
     </form>
   );

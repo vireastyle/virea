@@ -14,6 +14,16 @@ type ProductCardProps = {
 
 const formatPrice = formatNaira;
 
+const BODY_TYPE_LABELS: Record<string, string> = {
+  hourglass: "Hourglass",
+  pear: "Pear",
+  apple: "Apple",
+  rectangle: "Rectangle",
+  "inverted-triangle": "Inv. Triangle",
+  oval: "Oval",
+  athletic: "Athletic",
+};
+
 export function ProductCard({ item }: ProductCardProps) {
   const { toggle, has } = useWishlistStore();
   const { addToast } = useUIStore();
@@ -152,7 +162,7 @@ export function ProductCard({ item }: ProductCardProps) {
         <p
           style={{
             fontFamily: "var(--font-display)",
-            fontSize: "15px",
+            fontSize: "13px",
             lineHeight: 1.3,
             fontWeight: 400,
             color: "var(--color-on-surface)",
@@ -161,10 +171,40 @@ export function ProductCard({ item }: ProductCardProps) {
             display: "-webkit-box",
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
+            height: "calc(13px * 1.3 * 2)",
           }}
         >
           {item.name}
         </p>
+
+        {/* Body types */}
+        {(item.body_types ?? []).length > 0 && (item.body_types ?? []).length < 7 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: "var(--space-2)" }}>
+            {(item.body_types ?? []).slice(0, 3).map((bt) => (
+              <span
+                key={bt}
+                style={{
+                  padding: "2px 6px",
+                  borderRadius: "var(--shape-xs)",
+                  background: "var(--color-tertiary-container)",
+                  color: "var(--color-on-tertiary-container)",
+                  fontFamily: "var(--type-label-small-family)",
+                  fontSize: "9px",
+                  fontWeight: 500,
+                  letterSpacing: "0.04em",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {BODY_TYPE_LABELS[bt] ?? bt}
+              </span>
+            ))}
+            {(item.body_types ?? []).length > 3 && (
+              <span style={{ fontSize: "9px", color: "var(--color-on-surface-variant)", lineHeight: "18px" }}>
+                +{(item.body_types ?? []).length - 3}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Price + colour dots row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>

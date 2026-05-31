@@ -185,6 +185,7 @@ export function HeroSlider({ banners }: Props) {
 
                 <Link
                   href="/shop/DRESS"
+                  className="hide-on-mobile"
                   style={{
                     fontFamily: "var(--type-label-large-family)",
                     fontSize: "var(--type-label-large-size)",

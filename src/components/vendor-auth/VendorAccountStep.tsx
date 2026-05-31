@@ -1,3 +1,8 @@
+"use client";
+
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+
 type Props = {
   businessName: string;
   ownerName: string;
@@ -8,6 +13,7 @@ type Props = {
 };
 
 export function VendorAccountStep({ businessName, ownerName, email, password, errors, onChange }: Props) {
+  const [showPw, setShowPw] = useState(false);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
       <div>
@@ -37,7 +43,33 @@ export function VendorAccountStep({ businessName, ownerName, email, password, er
 
       <div>
         <label className="field-label" htmlFor="va-password">Password</label>
-        <input id="va-password" type="password" className="field" value={password} onChange={(e) => onChange("password", e.target.value)} placeholder="••••••••" autoComplete="new-password" />
+        <div style={{ position: "relative" }}>
+          <input
+            id="va-password"
+            type={showPw ? "text" : "password"}
+            className="field"
+            value={password}
+            onChange={(e) => onChange("password", e.target.value)}
+            placeholder="••••••••"
+            autoComplete="new-password"
+            style={{ paddingRight: "44px" }}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPw((v) => !v)}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}
+            aria-label={showPw ? "Hide password" : "Show password"}
+            style={{
+              position: "absolute", right: "var(--space-3)", top: "50%",
+              transform: "translateY(-50%)", background: "none", border: "none",
+              cursor: "pointer", padding: "var(--space-1)", opacity: 0.5,
+              color: "var(--color-on-surface-variant)", display: "flex", alignItems: "center",
+            }}
+          >
+            {showPw ? <EyeOff size={18} strokeWidth={1.5} /> : <Eye size={18} strokeWidth={1.5} />}
+          </button>
+        </div>
         {errors.password && <p className="field-error">{errors.password}</p>}
       </div>
     </div>

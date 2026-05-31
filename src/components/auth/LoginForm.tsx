@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/store/auth.store";
 import { useVendorStore } from "@/store/vendor.store";
@@ -16,6 +17,7 @@ export function LoginForm({ mode }: Props) {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -108,16 +110,34 @@ export function LoginForm({ mode }: Props) {
             <label className="field-label" htmlFor="login-password">
               Password
             </label>
-            <input
-              id="login-password"
-              type="password"
-              className="field"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              autoComplete="current-password"
-              disabled={loading}
-            />
+            <div style={{ position: "relative" }}>
+              <input
+                id="login-password"
+                type={showPw ? "text" : "password"}
+                className="field"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                disabled={loading}
+                style={{ paddingRight: "44px" }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw((v) => !v)}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}
+                aria-label={showPw ? "Hide password" : "Show password"}
+                style={{
+                  position: "absolute", right: "var(--space-3)", top: "50%",
+                  transform: "translateY(-50%)", background: "none", border: "none",
+                  cursor: "pointer", padding: "var(--space-1)", opacity: 0.5,
+                  color: "var(--color-on-surface-variant)", display: "flex", alignItems: "center",
+                }}
+              >
+                {showPw ? <EyeOff size={18} strokeWidth={1.5} /> : <Eye size={18} strokeWidth={1.5} />}
+              </button>
+            </div>
           </div>
 
           {/* Error message */}

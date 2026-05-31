@@ -28,7 +28,7 @@ export function VendorsOfTheWeek() {
           display: "flex",
           alignItems: "baseline",
           justifyContent: "space-between",
-          marginBottom: "var(--space-7)",
+          marginBottom: "var(--space-10)",
         }}
       >
         <div>

@@ -53,8 +53,10 @@ export type VendorProduct = {
   price: number;
   description: string;
   image_url: string;
+  images?: string[];
   available_sizes: string[];
   available_colours: string[];
+  body_types: string[];
   stock: number;
   is_active: boolean;
   is_new_arrival: boolean;

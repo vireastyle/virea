@@ -55,6 +55,7 @@ export async function GET() {
         images:      firstImage ? [firstImage] : [],
         colours:     item.available_colours.map((c) => c.name),
         sizes:       item.available_sizes,
+        bodyTypes:   item.body_types ?? [],
         stock:       10,
       },
     });

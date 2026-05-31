@@ -16,6 +16,7 @@ export type ClothingItem = {
   vendor_id?: string;     // set when item comes from real DB; undefined on mock items
   available_colours: Colour[];
   available_sizes: Size[];
+  body_types?: string[];  // empty = fits all; populated = specific body types only
   image_urls: Record<string, string>;
   try_on_asset_urls: Record<string, string>;
   is_new_arrival: boolean;

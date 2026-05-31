@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { OnboardingProgress } from "@/components/auth/OnboardingProgress";
 import { BodyProfileStep } from "@/components/auth/BodyProfileStep";
@@ -30,6 +31,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
 
   // Step 1 — Body profile
   const [gender, setGender] = useState<Gender | "">("");
@@ -218,15 +220,33 @@ export default function RegisterPage() {
               </div>
               <div>
                 <label htmlFor="rg-password" className="field-label">Password</label>
-                <input
-                  id="rg-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="field"
-                  disabled={loading}
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    id="rg-password"
+                    type={showPw ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="field"
+                    disabled={loading}
+                    style={{ paddingRight: "44px" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((v) => !v)}
+                    onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                    onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.5")}
+                    aria-label={showPw ? "Hide password" : "Show password"}
+                    style={{
+                      position: "absolute", right: "var(--space-3)", top: "50%",
+                      transform: "translateY(-50%)", background: "none", border: "none",
+                      cursor: "pointer", padding: "var(--space-1)", opacity: 0.5,
+                      color: "var(--color-on-surface-variant)", display: "flex", alignItems: "center",
+                    }}
+                  >
+                    {showPw ? <EyeOff size={18} strokeWidth={1.5} /> : <Eye size={18} strokeWidth={1.5} />}
+                  </button>
+                </div>
                 {errors.password && <p className="field-error">{errors.password}</p>}
               </div>
 

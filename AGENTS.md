@@ -45,6 +45,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - `.form-row-2` — 1-col mobile → 2-col @600px (form field pairs)
   - `.grid-pipeline` — 2×2 mobile → 4-col @600px (pipeline stats, summary cards)
   - `.grid-feature-cards` — 1-col mobile → 2-col @480px (promo feature cards)
+  - `.hide-on-mobile` — `display: none !important` mobile → `display: inline !important` desktop (use to hide any element on mobile only)
   - `--topbar-height` CSS var — `64px` mobile, `68px` desktop; use for `top:` on any `position:sticky` element
   - `@keyframes marquee` — infinite `-50%` translateX; element must be 2× content wide for seamless loop
   - **Responsiveness rule**: never use inline `gridTemplateColumns` for multi-column layouts. Always add a CSS class to `globals.css` with `@media` breakpoints. Inline `display: flex/grid` overrides `display: none` on CSS classes — avoid putting `display` in inline styles on elements that use show/hide CSS classes.
@@ -52,10 +53,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Layout Architecture
 ### Shopper (main)
 - **Mobile** (`< 900px`): `TopBar` (64px, fixed) + `BottomNav` (64px, fixed)
-  - TopBar layout: `[Search icon]` · `[VIRÉA logo — abs center]` · `[Wishlist + Cart]`
+  - TopBar layout: `[VIRÉA logo — abs center]` only — no icons. All nav is via BottomNav.
+  - BottomNav: **Home | Shop (Shirt) | Cart (ShoppingBag+badge) | Saved→/wishlist (Heart+badge) | Profile**
+  - Cart + Wishlist badges read from `useCartStore` + `useWishlistStore` in BottomNav
 - **Desktop** (`≥ 900px`): `TopBar` (68px, fixed) only — no sidebar, no BottomNav
-  - TopBar layout: `[VIRÉA logo]` · `[Shop · Try On · Studio — nav links]` · `[Search · Wishlist · Cart · Profile]`
-  - Uses `.topbar-*` CSS classes for responsive slot switching (`.topbar-logo-mobile/desktop`, `.topbar-nav-links`, `.topbar-search-mobile`, `.topbar-profile-link`)
+  - TopBar layout: `[VIRÉA logo]` · `[Shop · Studio — nav links]` · `[Search · Wishlist · Cart · Profile]`
+  - Uses `.topbar-*` CSS classes for responsive slot switching (`.topbar-logo-mobile/desktop`, `.topbar-nav-links`, `.topbar-profile-link`)
+  - Wishlist + Cart links in TopBar have `className="topbar-profile-link"` so they're desktop-only
 - `AppShell` wraps only `.app-content` div (Sidebar removed); used in `src/app/(main)/layout.tsx`
 - `(main)/layout.tsx` → `<ThemeProvider><TopBar /><AppShell>{children}<Footer /></AppShell><BottomNav /><ToastContainer />`
 
@@ -187,7 +191,8 @@ Business logic lives here — route handlers are thin wrappers.
 | `src/components/layout/` | TopBar, BottomNav, AppShell, PageShell, ThemeProvider, ServiceWorkerRegistrar, Footer |
 | `src/components/home/` | HeroSlider, MarqueeStrip, PromoSection, VendorsOfTheWeek |
 | `src/components/vendor/` | VendorShell, VendorSidebar, VendorTopBar, VendorDrawerNav, DashboardStats, VendorProductCard, ProductUploadForm, OrderInboxItem, PreOrderInboxItem, StylingRequestItem |
-| `src/components/catalogue/ShopFilters.tsx` | Client component — receives `items: ClothingItem[]` + `category` from server page; owns all search/filter/sort state; renders desktop sidebar (categories, sizes, colours, price brackets, new arrivals) + mobile filter panel + active tag pills + product grid |
+| `src/components/catalogue/ShopFilters.tsx` | Client component — receives `items: ClothingItem[]` + `category` from server page; owns all search/filter/sort state; renders desktop sidebar (categories, sizes, body types, colour swatches, price brackets, new arrivals) + mobile filter panel + active tag pills + product grid; colour swatches are dynamic from `item.available_colours`; sidebar sections separated by dividers |
+| `src/app/(main)/product/[id]/ShareButton.tsx` | Client component — native Web Share API with product image (`navigator.share({files})`); falls back to text-only share; falls back to clipboard copy with toast |
 | `src/components/orders/` | CheckoutModal, OrderStatusTracker, OrderCard |
 | `src/components/pre-orders/` | PreOrderForm, QuoteReviewModal |
 | `src/components/try-on/` | TryOnView, LayerStack, TryOnActionBar, ColourSwitcher, AiTryOnPanel |
@@ -292,7 +297,7 @@ Business logic lives here — route handlers are thin wrappers.
   - Skill: `skills/flutterwave-integration/SKILL.md` — load for any FLW task
 
 - [x] Phase 21 — Full Frontend-Backend Wiring (hybrid DB-first + mock fallback throughout)
-  - `src/lib/mappers.ts` — DB→frontend type mappers (mapDbProduct, mapDbProductToVendorProduct, mapDbOrder, mapDbPreOrder)
+  - `src/lib/mappers.ts` — DB→frontend type mappers (mapDbProduct, mapDbProductToVendorProduct, mapDbOrder, mapDbPreOrder); also contains `COLOUR_HEX` lookup table (~80 fashion colour names → hex) + `colourNameToHex(name)` used by `mapDbProduct` so vendor colour names resolve to real swatches instead of `#888888`
   - `GET /api/v1/vendors` — public vendor list for PreOrderForm dropdown
   - Shop/product pages: Prisma service direct call (server component), mock fallback
   - Wishlist page: `apiFetch("/wishlist")` when authenticated
@@ -401,10 +406,24 @@ Business logic lives here — route handlers are thin wrappers.
   - **Mobile responsiveness audit** — 7 new CSS classes added to `globals.css`; all hardcoded inline `gridTemplateColumns` replaced with responsive CSS classes; `display:` never set inline on elements using show/hide CSS classes (avoids specificity conflict)
   - **Files fixed for mobile**: `wishlist/page.tsx` → `.grid-2-4`; `saved-looks/page.tsx` → `.grid-2-4`; `avatar-studio/page.tsx` item picker → `.grid-2-4`; `vendor/products/page.tsx` → `.vendor-products-grid` + `.vendor-page`; `vendor/dashboard/page.tsx` → `.vendor-page` + `.grid-pipeline`; `ProductUploadForm.tsx` category/price row → `.form-row-2`; `vendor/payouts/page.tsx` summary cards → `.form-row-2`; `PromoSection.tsx` feature cards → `.grid-feature-cards`; `ShopFilters.tsx` sidebar aside — removed inline `display` to let `.shop-sidebar` CSS control visibility; `.shop-sidebar-hide-tabs` class added to CSS (mobile show / desktop hide)
 
+- [x] Polish Batch 9 (2026-05-31) — UX polish, body types feature, mobile nav overhaul
+  - **Body types feature** — `bodyTypes String[]` Prisma column (migration `20260531_add_body_types`); `body_types?: string[]` on `ClothingItem`, `body_types: string[]` on `VendorProduct`; empty array = fits all bodies; 7 types: hourglass/pear/apple/rectangle/inverted-triangle/oval/athletic; colour tokens: tertiary-container for body type pills (vs primary-container for size chips)
+  - **Colour name → hex** — `colourNameToHex()` in `mappers.ts`; ~80 fashion colour names; used in `mapDbProduct` so DB product colour swatches are real colours not grey
+  - **ShopFilters** — dividers between sidebar sections; dynamic colour swatches; body type filter section; "Explore more" rows have white card bg
+  - **ShareButton** — `src/app/(main)/product/[id]/ShareButton.tsx`; tries `navigator.share({files:[image]})` → `navigator.share({url})` → clipboard copy with toast
+  - **Multi-image upload** — `ProductUploadForm` supports up to 6 images; 88×88 thumbnail strip; star badge + teal ring on primary; click to promote; `images?: string[]` added to `VendorProduct` type
+  - **VendorCategoryStep** — custom category text input; Enter/click Add to add; chips are auto-selected; `toLabel()` for title-case display
+  - **Mobile TopBar** — left search icon removed; Wishlist + Cart given `topbar-profile-link` (desktop-only); mobile shows VIRÉA logo only
+  - **BottomNav** — Home | Shop (Shirt) | Cart (/bag, badge) | Saved (/wishlist, badge) | Profile; Studio removed from bottom nav
+  - **ProductCard name** — 15px → 13px; fixed `height: calc(13px * 1.3 * 2)` for equal card heights
+  - **Hero** — "Explore Collections" link hidden on mobile via `.hide-on-mobile` class
+  - **VendorsOfTheWeek** — header margin space-7 → space-10
+
 ## Up Next
 - [ ] Vendor subaccount auto-trigger on first vendor login (deferred)
 - [ ] Remove or gate `/api/dev/seed` before real production launch
 - [ ] End-to-end testing on live Vercel deployment
+- [ ] Re-run `/api/dev/seed` on Vercel to populate `bodyTypes` on existing DB products
 
 ## Gotchas
 - `next/image` requires `images.remotePatterns` in `next.config.ts` — Unsplash + Replicate CDN already configured
@@ -440,4 +459,8 @@ Business logic lives here — route handlers are thin wrappers.
 - **Bag → Cart** — the word "Cart" is canonical everywhere user-facing. Internal function/prop names (`handleAddToBag`, `onAddToBag`) can stay as-is since they're not visible to users.
 - **Mock clothing `vendor_id`** — all 20 items in `src/lib/mock/clothing.ts` have `vendor_id: "vendor-virea-test"`. After running `GET /api/dev/seed` once, every mock shop item is a valid DB product and checkout works end-to-end.
 - **`/api/dev/seed` uses fixed vendor ID** — vendor is upserted with `id: "vendor-virea-test"` (not a random cuid). This lets mock data reference it statically. If a stale test vendor exists with same email but different id, seed deletes it first.
-- **Write tool encoding** — on Windows the Write tool can produce UTF-8 BOM + Unicode curly quotes (`"` `"`) instead of straight ASCII `"`. TypeScript reports TS1127 "Invalid character". Fix with: `node -e "const fs=require('fs');let c=fs.readFileSync(p,'utf8');if(c.charCodeAt(0)===0xFEFF)c=c.slice(1);c=c.replace(/“/g,'\"').replace(/”/g,'\"');fs.writeFileSync(p,c,'utf8')"`. Prefer Edit tool for targeted changes to avoid this.
+- **Write tool encoding** — on Windows the Write tool can produce UTF-8 BOM + Unicode curly quotes (`”` `”`) instead of straight ASCII `”`. TypeScript reports TS1127 “Invalid character”. Fix with: `node -e “const fs=require('fs');let c=fs.readFileSync(p,'utf8');if(c.charCodeAt(0)===0xFEFF)c=c.slice(1);c=c.replace(/”/g,'\”').replace(/”/g,'\”');fs.writeFileSync(p,c,'utf8')”`. Prefer Edit tool for targeted changes to avoid this.
+- **Body types convention** — `bodyTypes` (camelCase) in Prisma schema + DB + service layer; `body_types` (snake_case) in all frontend types (`ClothingItem`, `VendorProduct`). `body_types: []` semantically means “fits all body types” — items with empty arrays always pass the body type filter. Colour tokens: `--color-tertiary-container` / `--color-on-tertiary-container` for body type pills (to distinguish from size chips which use primary-container).
+- **Mobile nav architecture** — TopBar on mobile shows ONLY the VIRÉA logo (no icons). All navigation is via BottomNav (Home | Shop | Cart | Saved/Wishlist | Profile). Never add icons back to TopBar mobile without also removing them from BottomNav. BottomNav uses `useCartStore` + `useWishlistStore` for live badges.
+- **Multi-image products** — `VendorProduct.images?: string[]` stores all image URLs, `image_url` is always the primary (first). DB `Product.images String[]` already supported this. `ProductUploadForm` uploads all new files sequentially before submit, reorders so primary is at index 0.
+- **`.hide-on-mobile` class** — use `className=”hide-on-mobile”` to hide any element on mobile (< 900px) and show inline on desktop. Do NOT use `topbar-profile-link` for non-TopBar elements even though the behaviour is identical.

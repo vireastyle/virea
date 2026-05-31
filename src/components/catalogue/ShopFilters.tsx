@@ -10,6 +10,16 @@ import type { ClothingItem, Size } from "@/types/clothing";
 
 const ALL_SIZES: Size[] = ["XS", "S", "M", "L", "XL", "XXL"];
 
+const ALL_BODY_TYPES = [
+  { key: "hourglass",         label: "Hourglass" },
+  { key: "pear",              label: "Pear" },
+  { key: "apple",             label: "Apple" },
+  { key: "rectangle",        label: "Rectangle" },
+  { key: "inverted-triangle", label: "Inv. Triangle" },
+  { key: "oval",              label: "Oval" },
+  { key: "athletic",          label: "Athletic" },
+] as const;
+
 type SortKey = "newest" | "price_asc" | "price_desc" | "name_asc";
 type PriceBracket = "any" | "under10" | "10to30" | "30to50" | "over50";
 
@@ -37,6 +47,7 @@ export function ShopFilters({ items, category }: Props) {
   const [query, setQuery]           = useState("");
   const [sizes, setSizes]           = useState<Size[]>([]);
   const [colours, setColours]       = useState<string[]>([]);
+  const [bodyTypes, setBodyTypes]   = useState<string[]>([]);
   const [price, setPrice]           = useState<PriceBracket>("any");
   const [newOnly, setNewOnly]       = useState(false);
   const [sort, setSort]             = useState<SortKey>("newest");
@@ -60,10 +71,13 @@ export function ShopFilters({ items, category }: Props) {
   const toggleColour = (name: string) =>
     setColours((prev) => prev.includes(name) ? prev.filter((x) => x !== name) : [...prev, name]);
 
-  const hasFilters = query !== "" || sizes.length > 0 || colours.length > 0 || price !== "any" || newOnly;
+  const toggleBodyType = (bt: string) =>
+    setBodyTypes((prev) => prev.includes(bt) ? prev.filter((x) => x !== bt) : [...prev, bt]);
+
+  const hasFilters = query !== "" || sizes.length > 0 || colours.length > 0 || bodyTypes.length > 0 || price !== "any" || newOnly;
 
   const clearFilters = () => {
-    setQuery(""); setSizes([]); setColours([]);
+    setQuery(""); setSizes([]); setColours([]); setBodyTypes([]);
     setPrice("any"); setNewOnly(false);
   };
 
@@ -74,13 +88,19 @@ export function ShopFilters({ items, category }: Props) {
       result = result.filter((i) =>
         i.name.toLowerCase().includes(q) ||
         i.brand.toLowerCase().includes(q) ||
-        i.available_colours.some((c) => c.name.toLowerCase().includes(q))
+        i.available_colours.some((c) => c.name.toLowerCase().includes(q)) ||
+        (i.body_types ?? []).some((bt) => bt.toLowerCase().includes(q))
       );
     }
     if (sizes.length > 0)
       result = result.filter((i) => sizes.some((s) => i.available_sizes.includes(s)));
     if (colours.length > 0)
       result = result.filter((i) => colours.some((cn) => i.available_colours.some((c) => c.name === cn)));
+    if (bodyTypes.length > 0)
+      result = result.filter((i) => {
+        const bt = i.body_types ?? [];
+        return bt.length === 0 || bodyTypes.some((selected) => bt.includes(selected));
+      });
     if (price !== "any") {
       const bracket = PRICE_BRACKETS.find((b) => b.key === price)!;
       result = result.filter((i) => bracket.test(i.price));
@@ -96,12 +116,16 @@ export function ShopFilters({ items, category }: Props) {
       }
     });
     return result;
-  }, [items, query, sizes, colours, price, newOnly, sort]);
+  }, [items, query, sizes, colours, bodyTypes, price, newOnly, sort]);
 
   // ── Active filter tags ─────────────────────────────────────────
   const activeTags: { label: string; remove: () => void }[] = [
     ...sizes.map((s) => ({ label: s, remove: () => toggleSize(s) })),
     ...colours.map((c) => ({ label: c, remove: () => toggleColour(c) })),
+    ...bodyTypes.map((bt) => ({
+      label: ALL_BODY_TYPES.find((t) => t.key === bt)?.label ?? bt,
+      remove: () => toggleBodyType(bt),
+    })),
     ...(price !== "any" ? [{ label: PRICE_BRACKETS.find((b) => b.key === price)!.label, remove: () => setPrice("any") }] : []),
     ...(newOnly ? [{ label: "New arrivals", remove: () => setNewOnly(false) }] : []),
   ];
@@ -148,10 +172,10 @@ export function ShopFilters({ items, category }: Props) {
 
       {/* ── Sidebar (desktop only) ── */}
       <aside className="shop-sidebar">
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-7)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
 
         {/* Categories */}
-        <div>
+        <div style={{ paddingBottom: "var(--space-6)" }}>
           {sectionLabel("Categories")}
           <nav style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             {categories.map((c) => {
@@ -193,16 +217,24 @@ export function ShopFilters({ items, category }: Props) {
         </div>
 
         {/* Sizes */}
-        <div>
+        <div style={{ borderTop: "1px solid var(--color-outline-variant)", paddingTop: "var(--space-5)", paddingBottom: "var(--space-5)" }}>
           {sectionLabel("Size")}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-1)" }}>
             {ALL_SIZES.map((s) => filterChip(s, sizes.includes(s), () => toggleSize(s)))}
           </div>
         </div>
 
+        {/* Body type */}
+        <div style={{ borderTop: "1px solid var(--color-outline-variant)", paddingTop: "var(--space-5)", paddingBottom: "var(--space-5)" }}>
+          {sectionLabel("Body type")}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-1)" }}>
+            {ALL_BODY_TYPES.map(({ key, label }) => filterChip(label, bodyTypes.includes(key), () => toggleBodyType(key)))}
+          </div>
+        </div>
+
         {/* Colours */}
         {availableColours.length > 0 && (
-          <div>
+          <div style={{ borderTop: "1px solid var(--color-outline-variant)", paddingTop: "var(--space-5)", paddingBottom: "var(--space-5)" }}>
             {sectionLabel("Colour")}
             <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)" }}>
               {availableColours.map(({ name, hex }) => {
@@ -237,7 +269,7 @@ export function ShopFilters({ items, category }: Props) {
         )}
 
         {/* Price */}
-        <div>
+        <div style={{ borderTop: "1px solid var(--color-outline-variant)", paddingTop: "var(--space-5)", paddingBottom: "var(--space-5)" }}>
           {sectionLabel("Price")}
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
             {PRICE_BRACKETS.map(({ key, label }) => (
@@ -268,7 +300,7 @@ export function ShopFilters({ items, category }: Props) {
         </div>
 
         {/* New arrivals */}
-        <div>
+        <div style={{ borderTop: "1px solid var(--color-outline-variant)", paddingTop: "var(--space-5)", paddingBottom: "var(--space-5)" }}>
           {sectionLabel("Availability")}
           <label style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", cursor: "pointer" }}>
             <input
@@ -424,6 +456,14 @@ export function ShopFilters({ items, category }: Props) {
               </div>
             </div>
 
+            {/* Mobile body type */}
+            <div>
+              {sectionLabel("Body type")}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-1)" }}>
+                {ALL_BODY_TYPES.map(({ key, label }) => filterChip(label, bodyTypes.includes(key), () => toggleBodyType(key)))}
+              </div>
+            </div>
+
             {/* Mobile colours */}
             {availableColours.length > 0 && (
               <div>
@@ -571,7 +611,7 @@ export function ShopFilters({ items, category }: Props) {
             background: "var(--color-surface)",
             borderRadius: "var(--shape-lg)",
           }}>
-            <Search size={32} strokeWidth={1} style={{ color: "var(--color-on-surface-variant)", opacity: 0.35, marginBottom: "var(--space-3)" }} />
+            <Search size={32} strokeWidth={1} style={{ display: "block", margin: "0 auto var(--space-3)", color: "var(--color-on-surface-variant)", opacity: 0.35 }} />
             <p className="headline-small" style={{ marginBottom: "var(--space-2)" }}>No items match</p>
             <p className="body-medium" style={{ color: "var(--color-on-surface-variant)", marginBottom: "var(--space-5)" }}>
               Try adjusting your search or filters
@@ -599,7 +639,7 @@ export function ShopFilters({ items, category }: Props) {
         {/* Explore more */}
         <div style={{ marginTop: "var(--space-12)", paddingTop: "var(--space-8)", borderTop: "1px solid var(--color-outline-variant)" }}>
           <h3 className="headline-medium" style={{ marginBottom: "var(--space-5)" }}>Explore more</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)" }}>
             {categories.filter((c) => c.id !== category).map((c) => (
               <Link
                 key={c.id}
@@ -608,21 +648,25 @@ export function ShopFilters({ items, category }: Props) {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  padding: "var(--space-3) var(--space-3)",
+                  padding: "var(--space-3) var(--space-4)",
                   borderRadius: "var(--shape-sm)",
                   textDecoration: "none",
                   color: "var(--color-on-surface-variant)",
                   fontFamily: "var(--font-sans)",
                   fontSize: "15px",
-                  transition: "background 0.15s ease, color 0.15s ease",
+                  background: "#ffffff",
+                  border: "1px solid var(--color-outline-variant)",
+                  transition: "background 0.15s ease, color 0.15s ease, border-color 0.15s ease",
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "var(--color-surface-variant)";
-                  (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface)";
+                  (e.currentTarget as HTMLElement).style.background = "var(--color-primary-container)";
+                  (e.currentTarget as HTMLElement).style.color = "var(--color-on-primary-container)";
+                  (e.currentTarget as HTMLElement).style.borderColor = "var(--color-primary)";
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.background = "transparent";
+                  (e.currentTarget as HTMLElement).style.background = "#ffffff";
                   (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)";
+                  (e.currentTarget as HTMLElement).style.borderColor = "var(--color-outline-variant)";
                 }}
               >
                 {c.label}

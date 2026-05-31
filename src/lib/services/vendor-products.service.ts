@@ -14,6 +14,7 @@ export interface CreateProductInput {
   images: string[];
   sizes: string[];
   colours: string[];
+  bodyTypes: string[];
   stock: number;
 }
 

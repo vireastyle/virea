@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, ShoppingBag, Heart, User, Shirt } from "lucide-react";
+import { Search, ShoppingBag, Heart, User } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { useCartStore } from "@/store/cart.store";
 import { useWishlistStore } from "@/store/wishlist.store";
@@ -60,18 +60,6 @@ export function TopBar() {
     >
       {/* ── LEFT SLOT ── */}
       <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
-
-        {/* Mobile: search icon */}
-        <Link
-          href="/shop/DRESS"
-          aria-label="Search"
-          className="topbar-search-mobile"
-          style={iconBtn}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
-        >
-          <Search size={20} strokeWidth={1.5} />
-        </Link>
 
         {/* Desktop: logo left */}
         <Link
@@ -176,10 +164,11 @@ export function TopBar() {
           <Search size={20} strokeWidth={1.5} />
         </Link>
 
-        {/* Wishlist */}
+        {/* Wishlist — desktop only (mobile uses bottom nav) */}
         <Link
           href="/wishlist"
           aria-label={`Wishlist — ${wishCount} items`}
+          className="topbar-profile-link"
           style={iconBtn}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
@@ -188,10 +177,11 @@ export function TopBar() {
           {wishCount > 0 && <Badge count={wishCount} />}
         </Link>
 
-        {/* Cart */}
+        {/* Cart — desktop only (mobile uses bottom nav) */}
         <Link
           href="/bag"
           aria-label={`Cart — ${cartCount} items`}
+          className="topbar-profile-link"
           style={iconBtn}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}

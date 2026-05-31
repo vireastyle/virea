@@ -78,12 +78,21 @@ select:focus-visible {
   transition: border-color var(--duration-standard) var(--easing-standard),
               background var(--duration-standard) var(--easing-standard);
 }
-.field:not(:placeholder-shown) { background: #ffffff; }
+.field:not(:placeholder-shown) { background-color: #ffffff; }
 .field:focus,
-.field:focus-visible { background: #ffffff; }
+.field:focus-visible { background-color: #ffffff; }
 .field::placeholder { color: var(--color-on-surface-variant); opacity: 0.7; }
 .field--textarea { height: auto; padding: var(--space-3) var(--space-4); resize: vertical; }
-.field--select { cursor: pointer; }
+.field--select {
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-4) center;
+  background-size: 16px;
+  padding-right: var(--space-10);
+}
 
 .field-label {
   display: block;
@@ -574,6 +583,16 @@ select:focus-visible {
 /* ── Mobile-only: show on mobile, hide on desktop ── */
 .shop-sidebar-hide-tabs {
   display: flex;
+}
+
+/* ── Desktop-only: hide on mobile, show on desktop ── */
+.hide-on-mobile {
+  display: none !important;
+}
+@media (min-width: 900px) {
+  .hide-on-mobile {
+    display: inline !important;
+  }
 }
 
 @media (min-width: 900px) {

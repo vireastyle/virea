@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Star, Share2 } from "lucide-react";
+import { Star } from "lucide-react";
 import { getProduct, listProducts } from "@/lib/services/catalogue.service";
 import { getItemById, mockClothing } from "@/lib/mock/clothing";
 import { mapDbProduct } from "@/lib/mappers";
@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/catalogue/ProductCard";
 import { BackLink } from "@/components/ui/BackLink";
 import { ProductActions } from "./ProductActions";
 import { ProductGallery } from "./ProductGallery";
+import { ShareButton } from "./ShareButton";
 import { formatNaira } from "@/lib/format";
 
 type Props = { params: Promise<{ id: string }> };
@@ -30,6 +31,16 @@ const MOCK_REVIEWS = {
     text: "Absolutely stunning quality. The fabric is incredibly smooth and the fit is perfect — I've received so many compliments wearing this.",
     date: "May 2026",
   },
+};
+
+const BODY_TYPE_LABELS: Record<string, string> = {
+  hourglass: "Hourglass",
+  pear: "Pear",
+  apple: "Apple",
+  rectangle: "Rectangle",
+  "inverted-triangle": "Inverted Triangle",
+  oval: "Oval",
+  athletic: "Athletic",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -237,27 +248,52 @@ export default async function ProductPage({ params }: Props) {
                 </p>
               </div>
             ))}
+
+            {/* Body types row */}
+            {(item.body_types ?? []).length > 0 && (item.body_types ?? []).length < 7 && (
+              <div style={{ display: "flex", gap: "var(--space-4)", alignItems: "flex-start" }}>
+                <p
+                  style={{
+                    fontFamily: "var(--type-label-medium-family)",
+                    fontSize: "var(--type-label-medium-size)",
+                    fontWeight: 600,
+                    color: "var(--color-on-surface-variant)",
+                    width: "72px",
+                    flexShrink: 0,
+                    paddingTop: "3px",
+                  }}
+                >
+                  Fits
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-1)" }}>
+                  {(item.body_types ?? []).map((bt) => (
+                    <span
+                      key={bt}
+                      style={{
+                        padding: "3px 10px",
+                        borderRadius: "var(--shape-full)",
+                        background: "var(--color-tertiary-container)",
+                        color: "var(--color-on-tertiary-container)",
+                        fontFamily: "var(--type-label-small-family)",
+                        fontSize: "12px",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {BODY_TYPE_LABELS[bt] ?? bt}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Share */}
           <div style={{ marginTop: "var(--space-5)" }}>
-            <button
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "var(--space-2)",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "var(--type-label-medium-family)",
-                fontSize: "var(--type-label-medium-size)",
-                color: "var(--color-on-surface-variant)",
-                padding: 0,
-              }}
-            >
-              <Share2 size={14} strokeWidth={1.5} />
-              Share this item
-            </button>
+            <ShareButton
+              name={item.name}
+              url={`https://virea-seven.vercel.app/product/${id}`}
+              imageUrl={Object.values(item.image_urls)[0]}
+            />
           </div>
         </div>
       </div>

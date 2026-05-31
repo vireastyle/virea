@@ -7,6 +7,58 @@ import type { ClothingItem, Colour, Size, Category } from "@/types/clothing";
 import type { Order, OrderItem, OrderStatus, PreOrder, PreOrderStatus } from "@/types/order";
 import type { VendorProduct, VendorProductCategory } from "@/types/vendor";
 
+// ─── Colour name → hex lookup ────────────────────────────────────────────────
+// Normalise the vendor-typed colour name to lowercase-no-spaces, then look up.
+// Fallback: try matching the first word. Final fallback: neutral #888888.
+const COLOUR_HEX: Record<string, string> = {
+  // Blacks / dark neutrals
+  black: "#1A1A1A", onyx: "#353935", charcoal: "#36454F", graphite: "#474747",
+  ebony: "#555D50", midnight: "#191970",
+  // Whites / light neutrals
+  white: "#FFFFFF", ivory: "#FFFFF0", cream: "#FFFDD0", ecru: "#C2B280",
+  offwhite: "#FAF9F6", nude: "#E3BC9A",
+  // Greys
+  grey: "#888888", gray: "#888888", silver: "#C0C0C0", slate: "#708090",
+  // Earth / warm neutrals
+  beige: "#F5F5DC", sand: "#C2B280", tan: "#D2B48C", camel: "#C19A6B",
+  khaki: "#C3B091", taupe: "#483C32", mushroom: "#A89070",
+  // Champagne / gold tones
+  champagne: "#F7E7CE", gold: "#D4AF37", amber: "#FFBF00",
+  mustard: "#FFDB58", saffron: "#F4C430", caramel: "#C68642",
+  // Blues
+  blue: "#0000FF", navy: "#000080", cobalt: "#0047AB",
+  royal: "#4169E1", sky: "#87CEEB", powder: "#B0E0E6",
+  teal: "#008080", indigo: "#4B0082", denim: "#1560BD", azure: "#007FFF",
+  // Greens
+  green: "#008000", forest: "#2D4A47", sage: "#8FAF8F", olive: "#808000",
+  emerald: "#50C878", mint: "#98FF98", pistachio: "#93C572",
+  // Reds & pinks
+  red: "#CC0000", burgundy: "#800020", wine: "#722F37",
+  rust: "#B7410E", terracotta: "#C07652", coral: "#FF7F50",
+  pink: "#FFC0CB", blush: "#F4A7A3", rose: "#FF007F",
+  dustyrose: "#C4A0A0", fuchsia: "#FF00FF", magenta: "#FF00FF",
+  hotpink: "#FF69B4", mauve: "#E0B0FF",
+  // Oranges
+  orange: "#FFA500", peach: "#FFE5B4", apricot: "#FBCEB1",
+  // Purples
+  purple: "#800080", plum: "#DDA0DD", lavender: "#E6E6FA",
+  lilac: "#C8A2C8", violet: "#EE82EE",
+  // Browns
+  brown: "#A52A2A", chocolate: "#4B2C20", mocha: "#967117",
+  coffee: "#6F4E37",
+  // Misc
+  lemon: "#FFF44F", yellow: "#FFFF00", aqua: "#00FFFF",
+  turquoise: "#40E0D0",
+};
+
+function colourNameToHex(name: string): string {
+  const key = name.toLowerCase().replace(/[\s\-_]/g, "");
+  if (COLOUR_HEX[key]) return COLOUR_HEX[key];
+  // Try first word only ("Dusty Rose" → "dusty")
+  const firstWord = name.toLowerCase().split(/[\s\-_]/)[0];
+  return COLOUR_HEX[firstWord] ?? "#888888";
+}
+
 // ─── DB shapes (as returned by Prisma includes) ──────────────────────────────
 
 export type DbProduct = {
@@ -21,6 +73,7 @@ export type DbProduct = {
   images: string[];
   sizes: string[];
   colours: string[];
+  bodyTypes?: string[];
   stock: number;
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -86,7 +139,7 @@ const DB_PRE_ORDER_STATUS: Record<string, PreOrderStatus> = {
 // ─── Mappers ──────────────────────────────────────────────────────────────────
 
 export function mapDbProduct(p: DbProduct): ClothingItem {
-  const colours: Colour[] = p.colours.map((name) => ({ name, hex: "#888888" }));
+  const colours: Colour[] = p.colours.map((name) => ({ name, hex: colourNameToHex(name) }));
   const imageUrls: Record<string, string> = {};
   if (p.colours.length === 0 && p.images.length > 0) {
     imageUrls["Default"] = p.images[0];
@@ -109,6 +162,7 @@ export function mapDbProduct(p: DbProduct): ClothingItem {
     vendor_id: p.vendorId,
     available_colours: colours,
     available_sizes: p.sizes as Size[],
+    body_types: p.bodyTypes ?? [],
     image_urls: imageUrls,
     try_on_asset_urls: {},
     is_new_arrival: createdDate > thirtyDaysAgo,
@@ -130,8 +184,10 @@ export function mapDbProductToVendorProduct(p: DbProduct): VendorProduct {
     price: p.price,
     description: p.description,
     image_url: p.images[0] ?? "",
+    images: p.images,
     available_sizes: p.sizes,
     available_colours: p.colours,
+    body_types: p.bodyTypes ?? [],
     stock: p.stock,
     is_active: p.stock > 0,
     is_new_arrival: createdDate > thirtyDaysAgo,
