@@ -1,18 +1,25 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Palette } from "lucide-react";
 import { useVendorStore } from "@/store/vendor.store";
 import { StylingRequestItem } from "@/components/vendor/StylingRequestItem";
+import { apiFetch } from "@/lib/api";
+import { mapDbStylingRequest, type DbStylingRequest } from "@/lib/mappers";
+import type { StylingRequest } from "@/types/vendor";
 
 export default function VendorStylingRequestsPage() {
   const router = useRouter();
-  const { isAuthenticated, stylingRequests } = useVendorStore();
+  const { isAuthenticated, stylingRequests: mockRequests } = useVendorStore();
+  const [stylingRequests, setStylingRequests] = useState<StylingRequest[]>(mockRequests);
 
   useEffect(() => {
-    if (!isAuthenticated) router.replace("/vendor/login");
-  }, [isAuthenticated, router]);
+    if (!isAuthenticated) { router.replace("/vendor/login"); return; }
+    apiFetch<DbStylingRequest[]>("/vendor/styling-requests")
+      .then((data) => { if (data.length > 0) setStylingRequests(data.map(mapDbStylingRequest)); })
+      .catch(() => null);
+  }, [isAuthenticated, router, mockRequests]);
 
   if (!isAuthenticated) return null;
 

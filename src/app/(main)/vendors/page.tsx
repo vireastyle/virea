@@ -1,9 +1,35 @@
+import { prisma } from "@/lib/prisma";
 import { FadeIn } from "@/components/ui/FadeIn";
 import { VendorCard } from "@/components/vendors/VendorCard";
 import { mockVendors } from "@/lib/mock/vendors";
+import type { Vendor } from "@/types/vendor";
 
-export default function VendorsPage() {
-  const vendors = mockVendors;
+async function getVendors(): Promise<Vendor[]> {
+  try {
+    const rows = await prisma.vendor.findMany({
+      select: { id: true, businessName: true, bio: true, categories: true, accountName: true },
+      orderBy: { businessName: "asc" },
+    });
+    return rows.map((v) => ({
+      id: v.id,
+      email: "",
+      business_name: v.businessName,
+      owner_name: v.accountName,
+      category_tags: v.categories,
+      bio: v.bio ?? "",
+      bank_account_number: "",
+      bank_name: "",
+      bvn: "",
+      flutterwave_subaccount_id: "",
+    }));
+  } catch {
+    return mockVendors;
+  }
+}
+
+export default async function VendorsPage() {
+  const dbVendors = await getVendors();
+  const vendors = dbVendors.length > 0 ? dbVendors : mockVendors;
 
   return (
     <main style={{ background: "var(--color-background)", minHeight: "100%" }}>

@@ -6,6 +6,7 @@ import { useVendorStore } from "@/store/vendor.store";
 import { useUIStore } from "@/store/ui.store";
 import { Button } from "@/components/ui/Button";
 import { VENDOR_PRODUCT_CATEGORIES } from "@/types/vendor";
+import { apiFetch } from "@/lib/api";
 
 export default function VendorProfilePage() {
   const router = useRouter();
@@ -35,11 +36,19 @@ export default function VendorProfilePage() {
     );
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!businessName.trim() || !ownerName.trim()) return;
-    updateVendor({ business_name: businessName.trim(), owner_name: ownerName.trim(), bio: bio.trim(), category_tags: categoryTags });
-    addToast("Profile updated", "success");
+    if (!businessName.trim()) return;
+    try {
+      await apiFetch("/vendor/me", {
+        method: "PATCH",
+        body: JSON.stringify({ businessName: businessName.trim(), bio: bio.trim(), categories: categoryTags }),
+      });
+      updateVendor({ business_name: businessName.trim(), bio: bio.trim(), category_tags: categoryTags });
+      addToast("Profile updated", "success");
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : "Update failed", "error");
+    }
   };
 
   return (

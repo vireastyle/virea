@@ -223,8 +223,13 @@ export const useVendorStore = create<VendorState>()(
       updateProduct: (id, partial) =>
         set({ products: get().products.map((p) => (p.id === id ? { ...p, ...partial } : p)) }),
 
-      removeProduct: (id) =>
-        set({ products: get().products.filter((p) => p.id !== id) }),
+      removeProduct: (id) => {
+        // Optimistic local remove; fire-and-forget API call
+        set({ products: get().products.filter((p) => p.id !== id) });
+        import("@/lib/api").then(({ apiFetch }) =>
+          apiFetch(`/vendor/products/${id}`, { method: "DELETE" }).catch(() => null)
+        );
+      },
 
       respondToStylingRequest: (id, response) =>
         set({

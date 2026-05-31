@@ -8,21 +8,27 @@ import { useVendorStore } from "@/store/vendor.store";
 import { useUIStore } from "@/store/ui.store";
 import { Button } from "@/components/ui/Button";
 import { BackLink } from "@/components/ui/BackLink";
+import { apiFetch } from "@/lib/api";
+import { mapDbStylingRequest, type DbStylingRequest } from "@/lib/mappers";
+import type { StylingRequest } from "@/types/vendor";
 
 export default function VendorStylingRequestDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
-  const { isAuthenticated, stylingRequests, respondToStylingRequest, declineStylingRequest } = useVendorStore();
+  const { isAuthenticated, stylingRequests } = useVendorStore();
   const addToast = useUIStore((s) => s.addToast);
 
+  const [request, setRequest] = useState<StylingRequest | undefined>();
   const [responseText, setResponseText] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated) router.replace("/vendor/login");
-  }, [isAuthenticated, router]);
-
-  const request = stylingRequests.find((r) => r.id === id);
+    if (!isAuthenticated) { router.replace("/vendor/login"); return; }
+    apiFetch<DbStylingRequest>(`/vendor/styling-requests/${id}`)
+      .then((data) => setRequest(mapDbStylingRequest(data)))
+      .catch(() => setRequest(stylingRequests.find((r) => r.id === id)));
+  }, [id, isAuthenticated, router, stylingRequests]);
 
   if (!isAuthenticated) return null;
 
@@ -35,16 +41,28 @@ export default function VendorStylingRequestDetailPage({ params }: { params: Pro
     );
   }
 
-  const handleRespond = () => {
+  const handleRespond = async () => {
     if (!responseText.trim()) return;
-    respondToStylingRequest(id, responseText.trim());
+    setLoading(true);
+    try {
+      await apiFetch(`/vendor/styling-requests/${id}/respond`, {
+        method: "POST",
+        body: JSON.stringify({ response: responseText.trim() }),
+      });
+    } catch { /* optimistic for mock requests */ }
+    setRequest((r) => r ? { ...r, status: "responded", vendor_response: responseText.trim() } : r);
     addToast("Response sent", "success");
     setShowForm(false);
+    setLoading(false);
   };
 
-  const handleDecline = () => {
-    declineStylingRequest(id);
+  const handleDecline = async () => {
+    setLoading(true);
+    try {
+      await apiFetch(`/vendor/styling-requests/${id}/decline`, { method: "POST" });
+    } catch { /* optimistic for mock requests */ }
     addToast("Request declined", "error");
+    setLoading(false);
     router.push("/vendor/styling-requests");
   };
 
@@ -137,14 +155,14 @@ export default function VendorStylingRequestDetailPage({ params }: { params: Pro
                 className="field field--textarea"
               />
               <div style={{ display: "flex", gap: "var(--space-3)" }}>
-                <Button variant="filled" onClick={handleRespond}>Send response</Button>
-                <Button variant="outlined" onClick={() => setShowForm(false)}>Cancel</Button>
+                <Button variant="filled" onClick={handleRespond} disabled={loading}>Send response</Button>
+                <Button variant="outlined" onClick={() => setShowForm(false)} disabled={loading}>Cancel</Button>
               </div>
             </div>
           ) : (
             <div style={{ display: "flex", gap: "var(--space-3)" }}>
               <Button variant="filled" onClick={() => setShowForm(true)}>Respond</Button>
-              <Button variant="outlined" onClick={handleDecline}>Decline</Button>
+              <Button variant="outlined" onClick={handleDecline} disabled={loading}>Decline</Button>
             </div>
           )}
         </>

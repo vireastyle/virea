@@ -5,7 +5,7 @@
 
 import type { ClothingItem, Colour, Size, Category } from "@/types/clothing";
 import type { Order, OrderItem, OrderStatus, PreOrder, PreOrderStatus } from "@/types/order";
-import type { VendorProduct, VendorProductCategory } from "@/types/vendor";
+import type { VendorProduct, VendorProductCategory, StylingRequest, StylingRequestStatus } from "@/types/vendor";
 
 // ─── Colour name → hex lookup ────────────────────────────────────────────────
 // Normalise the vendor-typed colour name to lowercase-no-spaces, then look up.
@@ -231,5 +231,41 @@ export function mapDbPreOrder(po: DbPreOrder): PreOrder {
     vendor_note: po.quotedMessage ?? undefined,
     status: DB_PRE_ORDER_STATUS[po.status] ?? "SUBMITTED",
     created_at: new Date(po.createdAt as string).toISOString(),
+  };
+}
+
+// ─── Styling request ──────────────────────────────────────────────────────────
+
+export type DbStylingRequest = {
+  id: string;
+  userId: string;
+  vendorId: string;
+  vendor?: { id: string; businessName: string } | null;
+  user?: { id: string; name: string } | null;
+  message: string;
+  status: string;
+  response?: string | null;
+  outfitId?: string | null;
+  createdAt: Date | string;
+};
+
+const DB_STYLING_STATUS: Record<string, StylingRequestStatus> = {
+  OPEN:      "pending",
+  RESPONDED: "responded",
+  DECLINED:  "declined",
+};
+
+export function mapDbStylingRequest(sr: DbStylingRequest): StylingRequest {
+  return {
+    id: sr.id,
+    user_id: sr.userId,
+    vendor_id: sr.vendorId,
+    vendor_name: sr.vendor?.businessName ?? "",
+    outfit_item_ids: sr.outfitId ? [sr.outfitId] : [],
+    event_type: "Casual",
+    notes: sr.message,
+    status: DB_STYLING_STATUS[sr.status] ?? "pending",
+    vendor_response: sr.response ?? undefined,
+    created_at: new Date(sr.createdAt as string).toISOString(),
   };
 }
