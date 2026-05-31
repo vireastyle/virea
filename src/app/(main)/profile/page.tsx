@@ -8,62 +8,18 @@ import { Button } from "@/components/ui/Button";
 import { SelfieUploadSection } from "@/components/profile/SelfieUploadSection";
 import { useAuthStore } from "@/store/auth.store";
 import { useUIStore } from "@/store/ui.store";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { useWishlistStore } from "@/store/wishlist.store";
 import { useOutfitsStore } from "@/store/outfits.store";
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, signInAsGuest, signOut } = useAuthStore();
+  const isAuthenticated = useRequireAuth();
+  const { user, signOut } = useAuthStore();
   const { theme, toggleTheme } = useUIStore();
   const wishlistCount = useWishlistStore((s) => s.itemIds.length);
   const outfitCount = useOutfitsStore((s) => s.outfits.length);
 
-  if (!isAuthenticated) {
-    return (
-      <PageShell>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            minHeight: "60vh",
-            gap: "var(--space-4)",
-            textAlign: "center",
-          }}
-        >
-          <User size={64} strokeWidth={1} style={{ color: "var(--color-outline-variant)" }} />
-          <div>
-            <p className="headline-medium">Sign in to your account</p>
-            <p className="body-medium" style={{ color: "var(--color-on-surface-variant)", marginTop: "var(--space-2)" }}>
-              Save outfits, build your avatar, and shop your style.
-            </p>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", width: "100%", maxWidth: "320px" }}>
-            <Link href="/login">
-              <Button variant="outlined" fullWidth>Sign In</Button>
-            </Link>
-            <Link href="/register">
-              <Button variant="outlined" fullWidth>Create Account</Button>
-            </Link>
-          </div>
-          <Link
-            href="/vendor/login"
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.textDecoration = "underline"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.textDecoration = "none"; }}
-            style={{
-              marginTop: "var(--space-6)",
-              color: "var(--color-primary)",
-              textDecoration: "none",
-              fontFamily: "var(--type-body-medium-family)",
-              fontSize: "var(--type-body-medium-size)",
-            }}
-          >
-            Are you a vendor? Go to your store →
-          </Link>
-        </div>
-      </PageShell>
-    );
-  }
+  if (!isAuthenticated) return null;
 
   const menuEnter = (e: React.MouseEvent) =>
     ((e.currentTarget as HTMLElement).style.background = "var(--color-surface-container)");

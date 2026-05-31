@@ -8,8 +8,10 @@ import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { BackLink } from "@/components/ui/BackLink";
 import { useAvatarStore } from "@/store/avatar.store";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 export default function MyAvatarPage() {
+  const isAuthenticated = useRequireAuth();
   const router = useRouter();
   const avatar = useAvatarStore((s) => s.avatar);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
@@ -17,6 +19,8 @@ export default function MyAvatarPage() {
   useEffect(() => {
     setPhotoUrl(localStorage.getItem("virea_avatar_photo"));
   }, []);
+
+  if (!isAuthenticated) return null;
 
   return (
     <PageShell>

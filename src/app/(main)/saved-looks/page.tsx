@@ -7,9 +7,13 @@ import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { BackLink } from "@/components/ui/BackLink";
 import { useOutfitsStore } from "@/store/outfits.store";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 
 export default function SavedLooksPage() {
+  const isAuthenticated = useRequireAuth();
   const { outfits, remove } = useOutfitsStore();
+
+  if (!isAuthenticated) return null;
 
   return (
     <PageShell>

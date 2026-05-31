@@ -7,7 +7,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { BackLink } from "@/components/ui/BackLink";
 import { useOrdersStore } from "@/store/orders.store";
-import { useAuthStore } from "@/store/auth.store";
+import { useRequireAuth } from "@/hooks/useRequireAuth";
 import type { PreOrderStatus } from "@/types/order";
 import { formatNaira } from "@/lib/format";
 
@@ -42,13 +42,15 @@ const STATUS_BG: Record<PreOrderStatus, string> = {
 };
 
 export default function PreOrdersPage() {
+  const isAuthenticated = useRequireAuth();
   const preOrders = useOrdersStore((s) => s.preOrders);
   const fetchPreOrders = useOrdersStore((s) => s.fetchPreOrders);
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   useEffect(() => {
     if (isAuthenticated) fetchPreOrders();
   }, [isAuthenticated, fetchPreOrders]);
+
+  if (!isAuthenticated) return null;
 
   return (
     <PageShell>
