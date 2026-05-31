@@ -13,6 +13,9 @@ import { AiTryOnPanel }    from "./AiTryOnPanel";
 import { useFashnTryOn }   from "@/hooks/useFashnTryOn";
 import { useAvatarTryOn }  from "@/hooks/useAvatarTryOn";
 import { useAvatarStore }  from "@/store/avatar.store";
+import { skinTones, defaultAvatar } from "@/lib/mock/avatars";
+import type { AvatarGender } from "@/types/avatar";
+import type { SkinTone }     from "@/types/avatar";
 import { useWishlistStore } from "@/store/wishlist.store";
 import { useCartStore }    from "@/store/cart.store";
 import { useOutfitsStore } from "@/store/outfits.store";
@@ -31,7 +34,8 @@ export function TryOnView({ initialItem, initialColour }: Props) {
   const [selectedColour, setSelectedColour] = useState<Colour>(initialColour);
 
   // ── Avatar mode (FLUX-generated photo + IDM-VTON) ─────────────────────────
-  const avatar = useAvatarStore((s) => s.avatar);
+  const avatar    = useAvatarStore((s) => s.avatar);
+  const setAvatar = useAvatarStore((s) => s.setAvatar);
   const {
     hasAvatarPhoto,
     avatarPhotoUrl,
@@ -45,8 +49,12 @@ export function TryOnView({ initialItem, initialColour }: Props) {
   } = useAvatarTryOn();
 
   // Inline avatar photo generation state (when user hasn't generated yet)
-  const [generatingPhoto,    setGeneratingPhoto]    = useState(false);
-  const [photoGenError,      setPhotoGenError]      = useState<string | null>(null);
+  const [generatingPhoto, setGeneratingPhoto] = useState(false);
+  const [photoGenError,   setPhotoGenError]   = useState<string | null>(null);
+
+  // Quick avatar setup — for users with no avatar at all
+  const [quickGender,   setQuickGender]   = useState<AvatarGender | null>(null);
+  const [quickSkinTone, setQuickSkinTone] = useState<SkinTone | null>(null);
 
   const generateAvatarPhoto = useCallback(async () => {
     if (!avatar) return;
@@ -72,6 +80,45 @@ export function TryOnView({ initialItem, initialColour }: Props) {
       setGeneratingPhoto(false);
     }
   }, [avatar, saveAvatarPhoto]);
+
+  const handleQuickGenerate = useCallback(async () => {
+    if (!quickGender || !quickSkinTone) return;
+    const bodyShape = quickGender === "female" ? "hourglass" : "rectangle";
+    // Persist minimal avatar to store so future visits work
+    setAvatar({
+      id:           crypto.randomUUID(),
+      user_id:      "",
+      gender:       quickGender,
+      body_shape:   bodyShape,
+      skin_tone:    quickSkinTone,
+      hair_style:   defaultAvatar.hair_style,
+      hair_colour:  defaultAvatar.hair_colour,
+      height_range: defaultAvatar.height_range,
+      size_range:   defaultAvatar.size_range,
+      updated_at:   new Date().toISOString(),
+    });
+    setGeneratingPhoto(true);
+    setPhotoGenError(null);
+    try {
+      const res = await fetch("/api/generate-avatar", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gender:      quickGender,
+          bodyShape,
+          skinToneHex: quickSkinTone.hex,
+          heightRange: defaultAvatar.height_range,
+        }),
+      });
+      const data = await res.json() as { avatarUrl?: string; error?: string };
+      if (!res.ok || !data.avatarUrl) throw new Error(data.error ?? "Generation failed.");
+      saveAvatarPhoto(data.avatarUrl);
+    } catch (err) {
+      setPhotoGenError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setGeneratingPhoto(false);
+    }
+  }, [quickGender, quickSkinTone, setAvatar, saveAvatarPhoto]);
 
   // ── Real Photo mode (selfie + IDM-VTON) ───────────────────────────────────
   const {
@@ -226,8 +273,8 @@ export function TryOnView({ initialItem, initialColour }: Props) {
                 </div>
               )}
 
-              {/* Loading overlay */}
-              {avatarShowLoading && <AiTryOnPanel status="loading" />}
+              {/* Loading overlay — avatar photo generation OR try-on */}
+              {(avatarShowLoading || generatingPhoto) && <AiTryOnPanel status="loading" />}
 
               {/* Try-on result */}
               {avatarShowResult && avatarResultUrl && (
@@ -367,30 +414,129 @@ export function TryOnView({ initialItem, initialColour }: Props) {
             transition={{ duration: motionTokens.duration.standard, ease: motionTokens.easing.decelerate }}
             style={{ marginTop: "var(--space-4)" }}
           >
-            {/* Case A: no avatar built at all */}
+            {/* Case A: no avatar — inline quick setup */}
             {!avatar && (
-              <Link
-                href="/avatar-builder"
+              <div
                 style={{
-                  display:        "flex",
-                  alignItems:     "center",
-                  justifyContent: "center",
-                  gap:            "var(--space-2)",
-                  width:          "100%",
-                  height:         "52px",
-                  borderRadius:   "var(--shape-full)",
-                  border:         "1.5px dashed var(--color-outline-variant)",
-                  background:     "var(--color-surface-variant)",
-                  color:          "var(--color-on-surface-variant)",
-                  textDecoration: "none",
-                  fontFamily:     "var(--type-label-large-family)",
-                  fontSize:       "var(--type-label-large-size)",
-                  fontWeight:     "var(--type-label-large-weight)",
+                  background:   "var(--color-surface)",
+                  borderRadius: "var(--shape-lg)",
+                  padding:      "var(--space-4)",
+                  boxShadow:    "var(--elevation-1)",
+                  display:      "flex",
+                  flexDirection:"column",
+                  gap:          "var(--space-4)",
                 }}
               >
-                <User size={18} strokeWidth={1.8} />
-                Set up your avatar first
-              </Link>
+                <div>
+                  <p style={{ fontFamily: "var(--font-sans)", fontSize: "15px", fontWeight: 600, color: "var(--color-on-surface)", marginBottom: "2px" }}>
+                    See how this looks on you
+                  </p>
+                  <p style={{ fontFamily: "var(--font-sans)", fontSize: "13px", color: "var(--color-on-surface-variant)" }}>
+                    Pick your gender and skin tone — we&apos;ll generate your avatar in ~10 seconds.
+                  </p>
+                </div>
+
+                {/* Gender */}
+                <div>
+                  <p style={{ fontFamily: "var(--font-sans)", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-on-surface-variant)", marginBottom: "var(--space-2)" }}>
+                    Gender
+                  </p>
+                  <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                    {(["female", "male"] as AvatarGender[]).map((g) => {
+                      const active = quickGender === g;
+                      return (
+                        <button
+                          key={g}
+                          type="button"
+                          onClick={() => setQuickGender(g)}
+                          style={{
+                            flex:         1,
+                            height:       "40px",
+                            borderRadius: "var(--shape-sm)",
+                            border:       `1.5px solid ${active ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
+                            background:   active ? "var(--color-primary-container)" : "transparent",
+                            color:        active ? "var(--color-on-primary-container)" : "var(--color-on-surface-variant)",
+                            fontFamily:   "var(--font-sans)",
+                            fontSize:     "14px",
+                            fontWeight:   active ? 600 : 400,
+                            cursor:       "pointer",
+                            transition:   "all 0.15s ease",
+                          }}
+                        >
+                          {g.charAt(0).toUpperCase() + g.slice(1)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Skin tone */}
+                <div>
+                  <p style={{ fontFamily: "var(--font-sans)", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-on-surface-variant)", marginBottom: "var(--space-2)" }}>
+                    Skin tone
+                  </p>
+                  <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
+                    {skinTones.map((tone) => {
+                      const active = quickSkinTone?.id === tone.id;
+                      return (
+                        <button
+                          key={tone.id}
+                          type="button"
+                          onClick={() => setQuickSkinTone(tone)}
+                          title={tone.label}
+                          style={{
+                            width:         "32px",
+                            height:        "32px",
+                            borderRadius:  "var(--shape-full)",
+                            background:    tone.hex,
+                            border:        `2.5px solid ${active ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
+                            outline:       active ? "2px solid var(--color-primary)" : "none",
+                            outlineOffset: "2px",
+                            cursor:        "pointer",
+                            transition:    "border-color 0.15s ease",
+                            flexShrink:    0,
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Generate */}
+                <motion.button
+                  onClick={handleQuickGenerate}
+                  disabled={!quickGender || !quickSkinTone || generatingPhoto}
+                  whileTap={quickGender && quickSkinTone && !generatingPhoto ? { scale: 0.97 } : {}}
+                  transition={{ duration: motionTokens.duration.fast }}
+                  style={{
+                    width:          "100%",
+                    height:         "48px",
+                    display:        "flex",
+                    alignItems:     "center",
+                    justifyContent: "center",
+                    gap:            "var(--space-2)",
+                    borderRadius:   "var(--shape-full)",
+                    border:         "none",
+                    background:     "var(--color-primary)",
+                    color:          "var(--color-on-primary)",
+                    fontFamily:     "var(--type-label-large-family)",
+                    fontSize:       "var(--type-label-large-size)",
+                    fontWeight:     "var(--type-label-large-weight)",
+                    cursor:         (!quickGender || !quickSkinTone || generatingPhoto) ? "not-allowed" : "pointer",
+                    opacity:        (!quickGender || !quickSkinTone || generatingPhoto) ? 0.5 : 1,
+                    transition:     "opacity 0.15s ease",
+                  }}
+                >
+                  <Sparkles size={16} strokeWidth={1.8} />
+                  {generatingPhoto ? "Generating your avatar…" : "Generate avatar & try on"}
+                </motion.button>
+
+                {photoGenError && (
+                  <p style={{ fontFamily: "var(--font-sans)", fontSize: "13px", color: "var(--color-error)", textAlign: "center" }}>
+                    {photoGenError}
+                  </p>
+                )}
+              </div>
             )}
 
             {/* Case B: avatar built, but no photo generated yet */}
