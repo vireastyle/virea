@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { BackLink } from "@/components/ui/BackLink";
 import { OrderCard } from "@/components/orders/OrderCard";
 import { useOrdersStore } from "@/store/orders.store";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useRequireAuth, AuthCover } from "@/hooks/useRequireAuth";
 
 export default function OrdersPage() {
   const isAuthenticated = useRequireAuth();
@@ -21,7 +21,7 @@ export default function OrdersPage() {
     if (isAuthenticated) fetchOrders();
   }, [isAuthenticated, fetchOrders]);
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated) return <AuthCover />;
   // Flutterwave redirects back with ?ref=<txRef> — show a "verifying" banner.
   // The actual confirmation happens via webhook; this is display-only.
   const pendingRef    = searchParams.get("ref");

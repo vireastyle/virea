@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { SelfieUploadSection } from "@/components/profile/SelfieUploadSection";
 import { useAuthStore } from "@/store/auth.store";
 import { useUIStore } from "@/store/ui.store";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useRequireAuth, AuthCover } from "@/hooks/useRequireAuth";
 import { useWishlistStore } from "@/store/wishlist.store";
 import { useOutfitsStore } from "@/store/outfits.store";
 
@@ -19,7 +19,7 @@ export default function ProfilePage() {
   const wishlistCount = useWishlistStore((s) => s.itemIds.length);
   const outfitCount = useOutfitsStore((s) => s.outfits.length);
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated) return <AuthCover />;
 
   const menuEnter = (e: React.MouseEvent) =>
     ((e.currentTarget as HTMLElement).style.background = "var(--color-surface-container)");

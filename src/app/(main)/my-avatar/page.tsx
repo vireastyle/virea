@@ -8,7 +8,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { BackLink } from "@/components/ui/BackLink";
 import { useAvatarStore } from "@/store/avatar.store";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useRequireAuth, AuthCover } from "@/hooks/useRequireAuth";
 
 export default function MyAvatarPage() {
   const isAuthenticated = useRequireAuth();
@@ -20,7 +20,7 @@ export default function MyAvatarPage() {
     setPhotoUrl(localStorage.getItem("virea_avatar_photo"));
   }, []);
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated) return <AuthCover />;
 
   return (
     <PageShell>

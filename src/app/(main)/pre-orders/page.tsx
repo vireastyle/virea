@@ -7,7 +7,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/Button";
 import { BackLink } from "@/components/ui/BackLink";
 import { useOrdersStore } from "@/store/orders.store";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useRequireAuth, AuthCover } from "@/hooks/useRequireAuth";
 import type { PreOrderStatus } from "@/types/order";
 import { formatNaira } from "@/lib/format";
 
@@ -50,7 +50,7 @@ export default function PreOrdersPage() {
     if (isAuthenticated) fetchPreOrders();
   }, [isAuthenticated, fetchPreOrders]);
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated) return <AuthCover />;
 
   return (
     <PageShell>

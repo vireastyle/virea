@@ -9,7 +9,7 @@ import { Button }       from "@/components/ui/Button";
 import { ColourSwatch } from "@/components/ui/ColourSwatch";
 import { useAvatarStore } from "@/store/avatar.store";
 import { useUIStore }     from "@/store/ui.store";
-import { useRequireAuth } from "@/hooks/useRequireAuth";
+import { useRequireAuth, AuthCover } from "@/hooks/useRequireAuth";
 import { apiFetch }       from "@/lib/api";
 import {
   bodyShapes, skinTones, hairStyles, hairColours,
@@ -35,7 +35,7 @@ export default function AvatarBuilderPage() {
   const { setAvatar, avatar: existingAvatar, isComplete } = useAvatarStore();
   const { addToast }  = useUIStore();
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated) return <AuthCover />;
 
   const [step, setStep] = useState(0);
   const [dir,  setDir]  = useState(1);
