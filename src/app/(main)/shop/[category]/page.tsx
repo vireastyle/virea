@@ -23,7 +23,14 @@ export default async function ShopPage({ params }: Props) {
 
   const isAll = category === "ALL";
   const { products: dbProducts } = await listProducts(isAll ? {} : { category }).catch(() => ({ products: [] }));
-  const dbItems = dbProducts.map(mapDbProduct);
+  const dbItems = dbProducts.map(mapDbProduct).map((item) => {
+    // Back-fill body_types from mock data for products seeded before the bodyTypes column existed
+    if ((item.body_types ?? []).length === 0) {
+      const mock = mockClothing.find((m) => m.id === item.id);
+      if (mock?.body_types?.length) return { ...item, body_types: mock.body_types };
+    }
+    return item;
+  });
   const mockItems = isAll
     ? mockClothing.filter((i) => i.is_active)
     : mockClothing.filter((i) => i.category === (category as Category) && i.is_active);

@@ -43,7 +43,7 @@ export async function GET() {
     const firstImage = Object.values(item.image_urls).find(Boolean) ?? "";
     await prisma.product.upsert({
       where:  { id: item.id },
-      update: { vendorId: VENDOR_ID },
+      update: { vendorId: VENDOR_ID, bodyTypes: item.body_types ?? [], colours: item.available_colours.map((c) => c.name), sizes: item.available_sizes },
       create: {
         id:          item.id,
         vendorId:    VENDOR_ID,
