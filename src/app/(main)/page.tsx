@@ -8,6 +8,7 @@ import { HeroSlider } from "@/components/home/HeroSlider";
 import { MarqueeStrip } from "@/components/home/MarqueeStrip";
 import { PromoSection } from "@/components/home/PromoSection";
 import { VendorsOfTheWeek } from "@/components/home/VendorsOfTheWeek";
+import { HomeModals } from "@/components/home/HomeModals";
 import { heroBanners, getHomeFeed, categories } from "@/lib/mock/feed";
 import { getNewArrivals } from "@/lib/mock/clothing";
 
@@ -47,6 +48,7 @@ export default function HomePage() {
 
   return (
     <main style={{ background: "var(--color-background)", minHeight: "100%" }}>
+      <HomeModals />
 
       {/* ── Hero ── */}
       <HeroSlider banners={heroBanners} />
