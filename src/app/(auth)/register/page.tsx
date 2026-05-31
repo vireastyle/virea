@@ -135,10 +135,11 @@ export default function RegisterPage() {
       style_types: styleTypes.length > 0 ? styleTypes : undefined,
       selfie_stored_locally: selfieStoredLocally,
     });
-    // Pre-populate avatar store gender so avatar builder is pre-configured
     if (gender) setAvatarGender(gender);
-    router.push("/avatar-builder");
+    router.push("/");
   };
+
+  const handleSkipSetup = () => completeRegistration(false);
 
   return (
     <div
@@ -308,17 +309,42 @@ export default function RegisterPage() {
 
         {/* Navigation — hidden on step 3 (selfie handles its own actions) */}
         {step < 3 && (
-          <div style={{ display: "flex", gap: "var(--space-3)", marginTop: "var(--space-10)" }}>
-            {step > 0 && (
-              <Button variant="outlined" onClick={() => setStep((s) => s - 1)} disabled={loading}>
-                Back
-              </Button>
-            )}
-            <div style={{ flex: 1 }}>
-              <Button variant="filled" fullWidth onClick={handleContinue} disabled={loading}>
-                {loading ? "Creating account…" : step === 2 ? "Continue to Photo" : "Continue"}
-              </Button>
+          <div style={{ marginTop: "var(--space-10)" }}>
+            <div style={{ display: "flex", gap: "var(--space-3)" }}>
+              {step > 0 && (
+                <Button variant="outlined" onClick={() => setStep((s) => s - 1)} disabled={loading}>
+                  Back
+                </Button>
+              )}
+              <div style={{ flex: 1 }}>
+                <Button variant="filled" fullWidth onClick={handleContinue} disabled={loading}>
+                  {loading ? "Creating account…" : step === 2 ? "Continue to Photo" : "Continue"}
+                </Button>
+              </div>
             </div>
+            {step > 0 && (
+              <button
+                type="button"
+                onClick={handleSkipSetup}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  marginTop: "var(--space-3)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-sans)",
+                  fontSize: "14px",
+                  color: "var(--color-on-surface-variant)",
+                  textAlign: "center",
+                  padding: "var(--space-2) 0",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-primary)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--color-on-surface-variant)"; }}
+              >
+                Skip for now — I&apos;ll set this up later
+              </button>
+            )}
           </div>
         )}
 
