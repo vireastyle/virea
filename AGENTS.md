@@ -422,10 +422,12 @@ Business logic lives here — route handlers are thin wrappers.
   - **VendorsOfTheWeek** — header margin space-7 → space-10
 
 ## Up Next
-- [ ] Vendor subaccount auto-trigger on first vendor login (deferred)
+- [ ] Email verification on signup (Resend + VerificationToken Prisma model)
+- [ ] Forgot password flow (/forgot-password + /reset-password/[token], 1hr expiry)
+- [ ] Rate limiting on login (5 attempts/IP/10min — Upstash Redis or in-memory)
+- [ ] Vendor payout auto-trigger on first vendor login
 - [ ] Remove or gate `/api/dev/seed` before real production launch
-- [ ] End-to-end testing on live Vercel deployment
-- [ ] Re-run `/api/dev/seed` on Vercel to populate `bodyTypes` on existing DB products
+- [ ] Full E2E payment test on live Vercel
 
 ## Gotchas
 - `next/image` requires `images.remotePatterns` in `next.config.ts` — Unsplash + Replicate CDN already configured
@@ -464,7 +466,11 @@ Business logic lives here — route handlers are thin wrappers.
 - **Write tool encoding** — on Windows the Write tool can produce UTF-8 BOM + Unicode curly quotes (`”` `”`) instead of straight ASCII `”`. TypeScript reports TS1127 “Invalid character”. Fix with: `node -e “const fs=require('fs');let c=fs.readFileSync(p,'utf8');if(c.charCodeAt(0)===0xFEFF)c=c.slice(1);c=c.replace(/”/g,'\”').replace(/”/g,'\”');fs.writeFileSync(p,c,'utf8')”`. Prefer Edit tool for targeted changes to avoid this.
 - **Body types convention** — `bodyTypes` (camelCase) in Prisma schema + DB + service layer; `body_types` (snake_case) in all frontend types (`ClothingItem`, `VendorProduct`). `body_types: []` semantically means “fits all body types” — items with empty arrays always pass the body type filter. Colour tokens: `--color-tertiary-container` / `--color-on-tertiary-container` for body type pills (to distinguish from size chips which use primary-container).
 - **Mobile nav architecture** — TopBar on mobile shows ONLY the VIRÉA logo (no icons). All navigation is via BottomNav (Home | Shop | Cart | Saved/Wishlist | Profile). Never add icons back to TopBar mobile without also removing them from BottomNav. BottomNav uses `useCartStore` + `useWishlistStore` for live badges.
-- **Profile icon routing** — both `TopBar` and `BottomNav` read `isAuthenticated` from `useAuthStore`. Unauthenticated users → `/register` (create account first, onboarding-first UX). Authenticated users → `/profile`. BottomNav Profile `match()` covers `/register` and `/login` so the tab stays active on auth pages.
+- **Profile icon routing** — both `TopBar` and `BottomNav` read `isAuthenticated` from `useAuthStore`. Unauthenticated users → `/welcome` (auth gateway). Authenticated users → `/profile`. BottomNav Profile `match()` covers `/welcome`, `/register`, and `/login` so the tab stays active on all auth pages.
 - **`topbar-profile-link` wrapper pattern** — desktop-only TopBar elements must be wrapped in a single `<div className="topbar-profile-link">` with NO `display` in its inline style. CSS class controls `display: none` mobile / `display: flex` desktop. Never put `topbar-profile-link` on individual links that also have `display: flex` in their inline `style` prop — inline wins over CSS and the element stays visible on mobile.
 - **Multi-image products** — `VendorProduct.images?: string[]` stores all image URLs, `image_url` is always the primary (first). DB `Product.images String[]` already supported this. `ProductUploadForm` uploads all new files sequentially before submit, reorders so primary is at index 0.
+- **Auth gateway page** — `/welcome` (`src/app/(auth)/welcome/page.tsx`) is the unauthenticated entry point for the Profile tab. 45/55 split: top = fashion image + VIRÉA logo; bottom = bottom-sheet card with Create account / Sign in / vendor link. Authenticated users are redirected to `/profile` on mount. No TopBar/BottomNav (lives in `(auth)` route group).
+- **Framer Motion + CSS transform conflict** — never put `transform: translateX/Y` in the inline `style` of a `motion.div` that also uses `y`/`x` in its animation props. Framer Motion replaces the entire `transform` string and the CSS offset is lost. Fix: use a plain wrapper `div` for CSS-based positioning, and let the `motion.div` only own animation-driven transforms.
+- **Server page caching** — async server components that call Prisma directly are statically cached by Next.js unless you add `export const dynamic = "force-dynamic"`. Any page that must show live DB data (home, new-in, shop) needs this export.
+- **Try-on with DB products** — `/try-on` page is async server-side; reads `searchParams` as a prop, tries mock `getItemById()` first then `getProduct()` (DB) fallback. `TryOnContent` receives `item` and `colourName` as props — it no longer reads searchParams itself. Do NOT revert to client-side `useSearchParams` + mock lookup or vendor-uploaded products will break.
 - **`.hide-on-mobile` class** — use `className=”hide-on-mobile”` to hide any element on mobile (< 900px) and show inline on desktop. Do NOT use `topbar-profile-link` for non-TopBar elements even though the behaviour is identical.
