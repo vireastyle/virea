@@ -81,6 +81,7 @@ export function HeroSlider({ banners }: Props) {
             flexDirection: "column",
             justifyContent: "flex-end",
             padding: "clamp(var(--space-8), 5vw, var(--space-16))",
+            paddingBottom: "clamp(100px, 14vw, var(--space-16))",
             maxWidth: "clamp(340px, 68vw, 780px)",
           }}
         >

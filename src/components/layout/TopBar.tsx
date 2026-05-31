@@ -42,7 +42,7 @@ export function TopBar() {
   const cartCount      = useCartStore((s) => s.count);
   const wishCount      = useWishlistStore((s) => s.itemIds.length);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const profileHref    = isAuthenticated ? "/profile" : "/register";
+  const profileHref    = isAuthenticated ? "/profile" : "/welcome";
 
   return (
     <header
