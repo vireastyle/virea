@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Search, X, SlidersHorizontal } from "lucide-react";
+import { Search, X, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { ProductCard } from "@/components/catalogue/ProductCard";
 import { categories } from "@/lib/mock/feed";
 import { formatNaira } from "@/lib/format";
@@ -53,6 +53,7 @@ export function ShopFilters({ items, category }: Props) {
   const [sort, setSort]             = useState<SortKey>("newest");
   const [searchFocused, setSearchFocused] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [colourOpen, setColourOpen] = useState(false);
 
   // Unique colours available in this category
   const availableColours = useMemo(() => {
@@ -232,38 +233,81 @@ export function ShopFilters({ items, category }: Props) {
           </div>
         </div>
 
-        {/* Colours */}
+        {/* Colours — collapsible dropdown */}
         {availableColours.length > 0 && (
           <div style={{ borderTop: "1px solid var(--color-outline-variant)", paddingTop: "var(--space-5)", paddingBottom: "var(--space-5)" }}>
-            {sectionLabel("Colour")}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)" }}>
-              {availableColours.map(({ name, hex }) => {
-                const active = colours.includes(name);
-                return (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => toggleColour(name)}
-                    title={name}
-                    style={{
-                      width: "28px",
-                      height: "28px",
-                      borderRadius: "var(--shape-full)",
-                      border: `2.5px solid ${active ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
-                      background: hex,
-                      cursor: "pointer",
-                      outline: active ? `2px solid var(--color-primary)` : "none",
-                      outlineOffset: "2px",
-                      transition: "border-color 0.15s ease",
-                    }}
-                  />
-                );
-              })}
-            </div>
-            {colours.length > 0 && (
-              <p style={{ fontSize: "12px", color: "var(--color-on-surface-variant)", marginTop: "var(--space-2)" }}>
-                {colours.join(", ")}
+            {/* Header row — click to expand/collapse */}
+            <button
+              type="button"
+              onClick={() => setColourOpen((v) => !v)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: 0,
+                marginBottom: colourOpen ? "var(--space-3)" : 0,
+              }}
+            >
+              <p style={{
+                fontFamily: "var(--font-sans)",
+                fontSize: "11px",
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "var(--color-on-surface-variant)",
+                margin: 0,
+              }}>
+                Colour{colours.length > 0 ? ` (${colours.length})` : ""}
               </p>
+              <ChevronDown
+                size={14}
+                strokeWidth={2}
+                style={{
+                  color: "var(--color-on-surface-variant)",
+                  transform: colourOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s ease",
+                  flexShrink: 0,
+                }}
+              />
+            </button>
+
+            {/* Swatches — only shown when open */}
+            {colourOpen && (
+              <>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)" }}>
+                  {availableColours.map(({ name, hex }) => {
+                    const active = colours.includes(name);
+                    return (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => toggleColour(name)}
+                        title={name}
+                        style={{
+                          width: "28px",
+                          height: "28px",
+                          borderRadius: "var(--shape-full)",
+                          border: `2.5px solid ${active ? "var(--color-primary)" : "var(--color-outline-variant)"}`,
+                          background: hex,
+                          cursor: "pointer",
+                          outline: active ? `2px solid var(--color-primary)` : "none",
+                          outlineOffset: "2px",
+                          transition: "border-color 0.15s ease",
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                {colours.length > 0 && (
+                  <p style={{ fontSize: "12px", color: "var(--color-on-surface-variant)", marginTop: "var(--space-2)" }}>
+                    {colours.join(", ")}
+                  </p>
+                )}
+              </>
             )}
           </div>
         )}
