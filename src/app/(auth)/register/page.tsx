@@ -348,21 +348,28 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {/* Sign in link */}
+        {/* Sign in + vendor links */}
         {step === 0 && (
-          <p
-            className="body-medium"
-            style={{
-              textAlign: "center",
-              marginTop: "var(--space-6)",
-              color: "var(--color-on-surface-variant)",
-            }}
-          >
-            Already have an account?{" "}
-            <Link href="/login" style={{ color: "var(--color-primary)", textDecoration: "none" }}>
-              Sign in
-            </Link>
-          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-2)", marginTop: "var(--space-6)" }}>
+            <p
+              className="body-medium"
+              style={{ textAlign: "center", color: "var(--color-on-surface-variant)" }}
+            >
+              Already have an account?{" "}
+              <Link href="/login" style={{ color: "var(--color-primary)", textDecoration: "none" }}>
+                Sign in
+              </Link>
+            </p>
+            <p
+              className="body-medium"
+              style={{ textAlign: "center", color: "var(--color-on-surface-variant)" }}
+            >
+              Are you a vendor?{" "}
+              <Link href="/vendor/register" style={{ color: "var(--color-primary)", textDecoration: "none" }}>
+                Create a vendor account
+              </Link>
+            </p>
+          </div>
         )}
       </div>
     </div>

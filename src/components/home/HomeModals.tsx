@@ -60,30 +60,40 @@ export function HomeModals() {
             }}
           />
 
-          {/* Card */}
-          <motion.div
-            key="modal"
-            initial={{ opacity: 0, scale: 0.92, y: 24 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 16 }}
-            transition={{ duration: motionTokens.duration.emphasis, ease: motionTokens.easing.decelerate }}
+          {/* Centering container — static, no transform so Framer Motion's y/scale don't fight translateX */}
+          <div
             style={{
               position: "fixed",
               bottom: "var(--space-6)",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "calc(100% - var(--space-8))",
-              maxWidth: "400px",
-              background: "var(--color-surface)",
-              borderRadius: "var(--shape-xl)",
-              boxShadow: "var(--elevation-4, 0 8px 32px rgba(0,0,0,0.18))",
+              left: 0,
+              right: 0,
+              display: "flex",
+              justifyContent: "center",
+              paddingInline: "var(--space-4)",
               zIndex: 1001,
-              overflow: "hidden",
+              pointerEvents: "none",
             }}
           >
-            {modal === "account" && <AccountModal onClose={close} />}
-            {modal === "avatar"  && <AvatarModal  onClose={close} />}
-          </motion.div>
+            <motion.div
+              key="modal"
+              initial={{ opacity: 0, scale: 0.92, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 16 }}
+              transition={{ duration: motionTokens.duration.emphasis, ease: motionTokens.easing.decelerate }}
+              style={{
+                width: "100%",
+                maxWidth: "400px",
+                background: "var(--color-surface)",
+                borderRadius: "var(--shape-xl)",
+                boxShadow: "var(--elevation-4, 0 8px 32px rgba(0,0,0,0.18))",
+                overflow: "hidden",
+                pointerEvents: "auto",
+              }}
+            >
+              {modal === "account" && <AccountModal onClose={close} />}
+              {modal === "avatar"  && <AvatarModal  onClose={close} />}
+            </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
