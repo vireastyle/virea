@@ -28,8 +28,8 @@ export default function WelcomePage() {
       <div
         style={{
           position: "relative",
-          flex: "0 0 58dvh",
-          minHeight: "58dvh",
+          flex: "0 0 45dvh",
+          minHeight: "45dvh",
           overflow: "hidden",
         }}
       >
@@ -100,10 +100,10 @@ export default function WelcomePage() {
           background: "var(--color-background)",
           borderRadius: "28px 28px 0 0",
           marginTop: "-28px",
-          padding: "var(--space-8) var(--space-6) var(--space-10)",
+          padding: "var(--space-6) var(--space-6) var(--space-8)",
           display: "flex",
           flexDirection: "column",
-          gap: "var(--space-4)",
+          gap: "var(--space-3)",
           maxWidth: "480px",
           width: "100%",
           alignSelf: "center",
@@ -122,7 +122,7 @@ export default function WelcomePage() {
           }}
         />
 
-        <div style={{ marginBottom: "var(--space-2)" }}>
+        <div style={{ marginBottom: "var(--space-1)" }}>
           <p
             className="headline-medium"
             style={{ color: "var(--color-on-surface)", marginBottom: "var(--space-1)" }}
@@ -184,7 +184,7 @@ export default function WelcomePage() {
             display: "flex",
             alignItems: "center",
             gap: "var(--space-3)",
-            marginBlock: "var(--space-1)",
+            marginBlock: "0",
           }}
         >
           <div style={{ flex: 1, height: "1px", background: "var(--color-outline-variant)" }} />
