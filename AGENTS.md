@@ -421,6 +421,10 @@ Business logic lives here — route handlers are thin wrappers.
   - **Hero** — "Explore Collections" link hidden on mobile via `.hide-on-mobile` class
   - **VendorsOfTheWeek** — header margin space-7 → space-10
 
+- [x] Polish Batch 10 (2026-06-04) — Vendor NIN label + favicon/OG image
+  - **Vendor registration NIN** — `VendorBankStep.tsx` label changed "BVN" → "NIN"; validation error in `vendor/register/page.tsx` changed "BVN must be 11 digits" → "NIN must be 11 digits". Internal field name (`bvn`) and all logic unchanged.
+  - **Favicon + OG image** — `src/app/layout.tsx` metadata updated: `icons.icon` + `icons.apple` → `/images/logo.png`; `openGraph.images` + `twitter.images` → `/images/logo.png`. Logo file at `public/images/logo.png`.
+
 ## Up Next
 - [ ] Email verification on signup (Resend + VerificationToken Prisma model)
 - [ ] Forgot password flow (/forgot-password + /reset-password/[token], 1hr expiry)
