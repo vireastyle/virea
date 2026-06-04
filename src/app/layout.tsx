@@ -7,6 +7,24 @@ export const metadata: Metadata = {
   description:
     "Virea is a virtual try-on fashion app. Build your avatar, browse a curated catalogue, and see outfits on you — before you buy.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/images/logo.png",
+    apple: "/images/logo.png",
+  },
+  openGraph: {
+    title: "Virea — See it on you. Before you buy.",
+    description:
+      "Virea is a virtual try-on fashion app. Build your avatar, browse a curated catalogue, and see outfits on you — before you buy.",
+    images: [{ url: "/images/logo.png" }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Virea — See it on you. Before you buy.",
+    description:
+      "Virea is a virtual try-on fashion app. Build your avatar, browse a curated catalogue, and see outfits on you — before you buy.",
+    images: ["/images/logo.png"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

@@ -64,7 +64,7 @@ export default function VendorRegisterPage() {
     const e: BankErrors = {};
     if (!bankName) e.bankName = "Select your bank";
     if (accountNumber.length !== 10) e.accountNumber = "Account number must be 10 digits";
-    if (bvn.length !== 11) e.bvn = "BVN must be 11 digits";
+    if (bvn.length !== 11) e.bvn = "NIN must be 11 digits";
     setBankErrors(e);
     return Object.keys(e).length === 0;
   };

@@ -39,7 +39,7 @@ export function VendorBankStep({ accountNumber, bankName, bvn, errors, onChange 
       </div>
 
       <div>
-        <label className="field-label" htmlFor="vb-bvn">BVN</label>
+        <label className="field-label" htmlFor="vb-bvn">NIN</label>
         <input id="vb-bvn" type="text" className="field" inputMode="numeric" maxLength={11} value={bvn} onChange={(e) => onChange("bvn", e.target.value.replace(/\D/g, ""))} placeholder="••••••••••• (11 digits)" />
         {errors.bvn && <p className="field-error">{errors.bvn}</p>}
         <p className="body-small" style={{ color: "var(--color-on-surface-variant)", marginTop: "var(--space-2)" }}>
